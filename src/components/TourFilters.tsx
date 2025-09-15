@@ -16,7 +16,6 @@ interface TourFiltersProps {
     search: string;
     region: string;
     difficulty: string;
-    duration: string;
   };
   setFilters: (filters: TourFiltersProps["filters"]) => void;
   regions: string[];
@@ -30,15 +29,14 @@ export function TourFilters({ filters, setFilters, regions, difficulties }: Tour
       search: '',
       region: '',
       difficulty: '',
-      duration: '',
     });
   }
 
-  const isFiltered = filters.search || filters.region || filters.difficulty || filters.duration;
+  const isFiltered = filters.search || filters.region || filters.difficulty;
 
   return (
     <div className="bg-card p-4 rounded-lg shadow-sm mb-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Input
           placeholder="Search by name..."
           value={filters.search}
@@ -73,13 +71,12 @@ export function TourFilters({ filters, setFilters, regions, difficulties }: Tour
             ))}
           </SelectContent>
         </Select>
-        <div className="flex items-center">
-            {isFiltered && (
-                <Button variant="ghost" onClick={handleReset} className="w-full">
-                    <X className="mr-2 h-4 w-4" /> Reset
-                </Button>
-            )}
-        </div>
+        
+        {isFiltered && (
+            <Button variant="ghost" onClick={handleReset} className="w-full">
+                <X className="mr-2 h-4 w-4" /> Reset
+            </Button>
+        )}
       </div>
     </div>
   );

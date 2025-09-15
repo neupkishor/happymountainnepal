@@ -20,11 +20,10 @@ export default function ToursPage() {
     search: initialSearch,
     region: initialRegion,
     difficulty: '',
-    duration: '',
   });
 
   useEffect(() => {
-    setFilters(f => ({ ...f, region: initialRegion, search: initialSearch }));
+    setFilters(f => ({ ...f, region: initialRegion, search: initialSearch, difficulty: '' }));
   }, [initialRegion, initialSearch]);
   
 
