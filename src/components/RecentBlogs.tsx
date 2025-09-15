@@ -1,0 +1,34 @@
+import { blogPosts } from "@/lib/data";
+import { BlogCard } from "./BlogCard";
+import Link from "next/link";
+import { Button } from "./ui/button";
+import { ArrowRight } from "lucide-react";
+
+export function RecentBlogs() {
+  const recentPosts = blogPosts.slice(0, 3);
+
+  return (
+    <section className="py-16 lg:py-24 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold !font-headline">From Our Travel Journal</h2>
+          <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
+            Tips, stories, and guides to inspire your next Himalayan journey.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {recentPosts.map((post) => (
+            <BlogCard key={post.id} post={post} />
+          ))}
+        </div>
+        <div className="text-center mt-12">
+          <Link href="/blog">
+            <Button size="lg" variant="outline">
+              Read More Articles <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressProvider } from '@/providers/ProgressProvider';
+import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 
 export const metadata: Metadata = {
   title: 'Happy Mountain Nepal',

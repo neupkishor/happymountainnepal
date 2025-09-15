@@ -21,6 +21,7 @@ export function Footer() {
               <li><Link href="/tours?region=Everest" className="text-sm text-muted-foreground hover:text-primary">Everest</Link></li>
               <li><Link href="/tours?region=Annapurna" className="text-sm text-muted-foreground hover:text-primary">Annapurna</Link></li>
               <li><Link href="/tours?region=Langtang" className="text-sm text-muted-foreground hover:text-primary">Langtang</Link></li>
+              <li><Link href="/tours" className="text-sm text-muted-foreground hover:text-primary">All Tours</Link></li>
             </ul>
           </div>
           <div>
@@ -29,6 +30,7 @@ export function Footer() {
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary">About Us</Link></li>
               <li><Link href="/about/teams" className="text-sm text-muted-foreground hover:text-primary">Our Team</Link></li>
               <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
+              <li><Link href="/testimonials" className="text-sm text-muted-foreground hover:text-primary">Testimonials</Link></li>
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">Contact</Link></li>
             </ul>
           </div>

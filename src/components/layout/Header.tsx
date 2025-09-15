@@ -7,31 +7,76 @@ import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-const navLinks = [
+
+const mainNavLinks = [
   { href: '/tours', label: 'Tours' },
   { href: '/blog', label: 'Blog' },
   { href: '/about', label: 'About Us' },
   { href: '/contact', label: 'Contact' },
 ];
 
+const aboutSubLinks = [
+    { href: '/about/teams', label: 'Our Team' },
+    { href: '/testimonials', label: 'Testimonials' },
+]
+
 function NavLinks() {
   const pathname = usePathname();
 
   return (
     <nav className="flex items-center gap-4 md:gap-6">
-      {navLinks.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
+       <Link
+          href="/tours"
           className={cn(
-            'text-sm font-medium transition-colors hover:text-primary flex items-center gap-2',
-            pathname === link.href ? 'text-primary' : 'text-foreground/80'
+            'text-sm font-medium transition-colors hover:text-primary',
+            pathname === "/tours" ? 'text-primary' : 'text-foreground/80'
           )}
         >
-          {link.label}
+          Tours
         </Link>
-      ))}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <button className={cn(
+            'text-sm font-medium transition-colors hover:text-primary flex items-center gap-1',
+            (pathname.startsWith('/about') || pathname === '/testimonials') ? 'text-primary' : 'text-foreground/80'
+          )}>
+                About
+            </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem asChild><Link href="/about">About Us</Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/about/teams">Our Team</Link></DropdownMenuItem>
+          <DropdownMenuItem asChild><Link href="/testimonials">Testimonials</Link></DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Link
+          href="/blog"
+          className={cn(
+            'text-sm font-medium transition-colors hover:text-primary',
+            pathname.startsWith('/blog') ? 'text-primary' : 'text-foreground/80'
+          )}
+        >
+          Blog
+      </Link>
+      <Link
+          href="/contact"
+          className={cn(
+            'text-sm font-medium transition-colors hover:text-primary',
+            pathname === "/contact" ? 'text-primary' : 'text-foreground/80'
+          )}
+        >
+          Contact
+      </Link>
     </nav>
   );
 }
@@ -58,14 +103,14 @@ function MobileNav() {
             <Mountain className="h-6 w-6 text-primary" />
             <span className="font-headline">Happy Mountain</span>
           </Link>
-          {navLinks.map((link) => (
+          {mainNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)}
               className={cn(
                 "flex items-center gap-4 transition-colors hover:text-primary",
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
+                pathname.startsWith(link.href) ? "text-primary" : "text-muted-foreground"
               )}
             >
               {link.label}
@@ -119,6 +164,9 @@ export function Header() {
                 </Button>
               </Link>
             )}
+            <Link href="/customize" passHref>
+                <Button>Customize Trip</Button>
+            </Link>
           </div>
         </div>
       </div>
