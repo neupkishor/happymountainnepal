@@ -8,14 +8,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
@@ -24,6 +16,7 @@ import {
   NavigationMenuTrigger,
   ListItem
 } from "@/components/ui/navigation-menu";
+import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 
 
 const mainNavLinks = [
@@ -42,7 +35,7 @@ function NavLinks() {
         <NavigationMenuItem>
           <Link href="/tours" legacyBehavior passHref>
             <NavigationMenuLink className={cn(
-              'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
+              navigationMenuTriggerStyle(),
               pathname === "/tours" ? 'bg-accent/50' : ''
             )}>
               Tours
@@ -84,27 +77,26 @@ function NavLinks() {
           </NavigationMenuItem>
 
          <NavigationMenuItem>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <button className={cn(
-                'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
-                (pathname.startsWith('/about') || pathname === '/testimonials') ? 'bg-accent/50' : ''
-              )}>
-                    About
-                </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem asChild><Link href="/about">About Us</Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/about/teams">Our Team</Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link href="/testimonials">Testimonials</Link></DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </NavigationMenuItem>
+            <NavigationMenuTrigger className={cn((pathname.startsWith('/about') || pathname === '/testimonials') ? 'bg-accent/50' : '')}>About</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-[200px] gap-3 p-4 md:w-[250px] lg:w-[300px] ">
+                <ListItem href="/about" title="About Us">
+                  Learn about our story and mission.
+                </ListItem>
+                <ListItem href="/about/teams" title="Our Team">
+                  Meet the experts behind your adventure.
+                </ListItem>
+                <ListItem href="/testimonials" title="Testimonials">
+                  Read stories from our happy travelers.
+                </ListItem>
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
 
         <NavigationMenuItem>
            <Link href="/blog" legacyBehavior passHref>
              <NavigationMenuLink className={cn(
-              'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
+              navigationMenuTriggerStyle(),
               pathname.startsWith('/blog') ? 'bg-accent/50' : ''
             )}>
               Blog
@@ -115,7 +107,7 @@ function NavLinks() {
         <NavigationMenuItem>
           <Link href="/contact" legacyBehavior passHref>
             <NavigationMenuLink className={cn(
-              'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
+              navigationMenuTriggerStyle(),
               pathname === "/contact" ? 'bg-accent/50' : ''
             )}>
               Contact
@@ -178,7 +170,7 @@ export function Header() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background shadow-lg">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         {/* Mobile Header */}
         <div className="flex w-full items-center justify-between md:hidden">
@@ -223,3 +215,5 @@ export function Header() {
     </header>
   );
 }
+
+    
