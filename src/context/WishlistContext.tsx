@@ -16,7 +16,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      const savedWishlist = localStorage.getItem('trek-explorer-wishlist');
+      const savedWishlist = localStorage.getItem('happy-mountain-wishlist');
       if (savedWishlist) {
         setWishlist(JSON.parse(savedWishlist));
       }
@@ -28,7 +28,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-        localStorage.setItem('trek-explorer-wishlist', JSON.stringify(wishlist));
+        localStorage.setItem('happy-mountain-wishlist', JSON.stringify(wishlist));
     } catch (error) {
         console.error("Failed to save wishlist to localStorage", error);
     }

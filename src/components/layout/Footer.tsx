@@ -9,7 +9,7 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
               <Mountain className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold font-headline">Trek Explorer</span>
+              <span className="text-xl font-bold font-headline">Happy Mountain Nepal</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Your gateway to Himalayan adventures.
@@ -40,7 +40,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Trek Explorer. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Happy Mountain Nepal. All rights reserved.</p>
         </div>
       </div>
     </footer>

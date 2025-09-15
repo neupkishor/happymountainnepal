@@ -44,7 +44,7 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center gap-2">
           <Mountain className="h-6 w-6 text-primary" />
-          <span className="hidden font-bold sm:inline-block font-headline">Trek Explorer</span>
+          <span className="hidden font-bold sm:inline-block font-headline">Happy Mountain Nepal</span>
         </Link>
         
         <div className="flex-1">
@@ -76,7 +76,7 @@ export function Header() {
               <div className="flex flex-col p-6">
                 <Link href="/" className="mb-8 flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
                   <Mountain className="h-6 w-6 text-primary" />
-                  <span className="font-bold font-headline">Trek Explorer</span>
+                  <span className="font-bold font-headline">Happy Mountain Nepal</span>
                 </Link>
                 <div className="flex flex-col gap-4">
                   <NavLinksComponent isMobile={true} />

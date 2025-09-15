@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
 
 export const metadata: Metadata = {
-  title: 'Trek Explorer',
+  title: 'Happy Mountain Nepal',
   description: 'Explore the best treks and tours in the Himalayas.',
 };
 
