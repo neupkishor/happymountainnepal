@@ -30,14 +30,14 @@ export default function ContactPage() {
               <Mail className="h-6 w-6 text-primary mt-1 shrink-0" />
               <div>
                 <h3 className="font-semibold">Email Us</h3>
-                <a href="mailto:info@happymountain.com" className="text-muted-foreground hover:text-primary">info@happymountain.com</a>
+                <a href="mailto:info@happymountainnepal.com" className="text-muted-foreground hover:text-primary">info@happymountainnepal.com</a>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <Phone className="h-6 w-6 text-primary mt-1 shrink-0" />
               <div>
                 <h3 className="font-semibold">Call Us</h3>
-                <a href="tel:+9779876543210" className="text-muted-foreground hover:text-primary">+977 987 654 3210</a>
+                <a href="tel:+9779843725521" className="text-muted-foreground hover:text-primary">+977 984-3725521</a>
               </div>
             </div>
           </div>

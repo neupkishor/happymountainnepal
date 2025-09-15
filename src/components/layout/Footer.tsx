@@ -44,7 +44,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Happy Mountain Nepal. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Happy Mountain Nepal Private Limited. All rights reserved.</p>
         </div>
       </div>
     </footer>
