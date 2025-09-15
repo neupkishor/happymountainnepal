@@ -36,7 +36,7 @@ export function WhyUs() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (
-            <Card key={index} className="text-center">
+            <Card key={index} className="text-center bg-card">
               <CardHeader className="items-center">
                 <div className="bg-primary/10 p-3 rounded-full">
                   <feature.icon className="h-8 w-8 text-primary" />

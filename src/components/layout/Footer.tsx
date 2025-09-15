@@ -3,7 +3,7 @@ import { Mountain } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background/80">
+    <footer className="border-t bg-secondary">
       <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">

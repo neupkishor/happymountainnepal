@@ -11,13 +11,21 @@ export default function Home() {
   return (
     <>
       <HeroSection />
-      <FavoriteDestinations />
+      <div className="bg-secondary">
+        <FavoriteDestinations />
+      </div>
       <FeaturedTours />
-      <PopularPackages />
+      <div className="bg-secondary">
+        <PopularPackages />
+      </div>
       <WhyUs />
-      <Testimonials />
+      <div className="bg-secondary">
+        <Testimonials />
+      </div>
       <RecentBlogs />
-      <CustomizeTrip />
+      <div className="bg-secondary">
+        <CustomizeTrip />
+      </div>
     </>
   );
 }
