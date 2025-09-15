@@ -274,14 +274,14 @@ export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
     try {
         const slug = slugify(data.name);
         const newMember = { ...data, slug };
-        const docRef = await addDoc(collection(firestore, 'teamMembers'), newMember);
+        await addDoc(collection(firestore, 'teamMembers'), newMember);
         revalidatePath('/manage/team');
         revalidatePath('/about/teams');
-        redirect(`/manage/team`);
     } catch (error) {
         console.error("Error adding team member: ", error);
         throw new Error("Could not add team member.");
     }
+    redirect(`/manage/team`);
 }
 
 export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 'slug'>) {
@@ -294,11 +294,11 @@ export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 
         revalidatePath('/manage/team');
         revalidatePath(`/manage/team/${id}/edit`);
         revalidatePath('/about/teams');
-        redirect(`/manage/team`);
     } catch (error) {
         console.error("Error updating team member: ", error);
         throw new Error("Could not update team member.");
     }
+    redirect(`/manage/team`);
 }
 
 // Destination Functions
