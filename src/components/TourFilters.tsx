@@ -32,11 +32,11 @@ export function TourFilters({ filters, setFilters, regions, difficulties }: Tour
     });
   }
 
-  const isFiltered = filters.search || filters.region || filters.difficulty;
+  const isFiltered = !!filters.search || !!filters.region || !!filters.difficulty;
 
   return (
     <div className="bg-card p-4 rounded-lg shadow-sm mb-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
         <Input
           placeholder="Search by name..."
           value={filters.search}
@@ -45,13 +45,13 @@ export function TourFilters({ filters, setFilters, regions, difficulties }: Tour
         />
         <Select
           value={filters.region}
-          onValueChange={(value) => setFilters({ ...filters, region: value })}
+          onValueChange={(value) => setFilters({ ...filters, region: value === 'all' ? '' : value })}
         >
           <SelectTrigger>
             <SelectValue placeholder="All Regions" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Regions</SelectItem>
+            <SelectItem value="all">All Regions</SelectItem>
             {regions.map((region) => (
               <SelectItem key={region} value={region}>{region}</SelectItem>
             ))}
@@ -59,13 +59,13 @@ export function TourFilters({ filters, setFilters, regions, difficulties }: Tour
         </Select>
         <Select
           value={filters.difficulty}
-          onValueChange={(value) => setFilters({ ...filters, difficulty: value })}
+          onValueChange={(value) => setFilters({ ...filters, difficulty: value === 'all' ? '' : value })}
         >
           <SelectTrigger>
             <SelectValue placeholder="All Difficulties" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Difficulties</SelectItem>
+            <SelectItem value="all">All Difficulties</SelectItem>
             {difficulties.map((difficulty) => (
               <SelectItem key={difficulty} value={difficulty}>{difficulty}</SelectItem>
             ))}
@@ -73,9 +73,11 @@ export function TourFilters({ filters, setFilters, regions, difficulties }: Tour
         </Select>
         
         {isFiltered && (
-            <Button variant="ghost" onClick={handleReset} className="w-full">
-                <X className="mr-2 h-4 w-4" /> Reset
-            </Button>
+            <div className="lg:col-start-4">
+                <Button variant="ghost" onClick={handleReset} className="w-full">
+                    <X className="mr-2 h-4 w-4" /> Reset Filters
+                </Button>
+            </div>
         )}
       </div>
     </div>
