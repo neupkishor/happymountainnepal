@@ -1,13 +1,14 @@
 "use client";
 
 import Link from 'next/link';
-import { Mountain, Heart, Menu } from 'lucide-react';
+import { Mountain, Heart, Menu, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWishlist } from '@/context/WishlistContext';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useSearch } from '@/context/SearchContext';
 
 const navLinks = [
   { href: '/tours', label: 'Tours' },
@@ -18,8 +19,25 @@ const navLinks = [
 
 function NavLinks() {
   const pathname = usePathname();
+  const { setIsSearchActive } = useSearch();
+
+  const handleSearchClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      setIsSearchActive(true);
+    }
+  };
+
   return (
     <nav className="flex items-center gap-4 md:gap-6">
+      <Link
+        href={pathname === '/' ? '#' : '/tours'}
+        onClick={handleSearchClick}
+        className='text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 text-foreground/80'
+      >
+        <Search className="h-4 w-4" />
+        Search
+      </Link>
       {navLinks.map((link) => (
         <Link
           key={link.href}
@@ -39,6 +57,16 @@ function NavLinks() {
 function MobileNav() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const { setIsSearchActive } = useSearch();
+
+  const handleSearchClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      setIsSearchActive(true);
+      setIsOpen(false);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -56,6 +84,16 @@ function MobileNav() {
           >
             <Mountain className="h-6 w-6 text-primary" />
             <span className="font-headline">Happy Mountain</span>
+          </Link>
+          <Link
+            href={pathname === '/' ? '#' : '/tours'}
+            onClick={handleSearchClick}
+            className={cn(
+                "flex items-center gap-4 transition-colors hover:text-primary text-muted-foreground"
+            )}
+            >
+             <Search className="h-5 w-5" />
+             Search
           </Link>
           {navLinks.map((link) => (
             <Link
@@ -93,7 +131,7 @@ export function Header() {
         <div className="flex w-full items-center justify-between md:hidden">
           <Link href="/" className="flex items-center gap-2">
             <Mountain className="h-6 w-6 text-primary" />
-            <span className="font-bold font-headline">Happy Mountain Nepal</span>
+            <span className="font-bold font-headline">Happy Mountain</span>
           </Link>
           {isMounted && <MobileNav />}
         </div>

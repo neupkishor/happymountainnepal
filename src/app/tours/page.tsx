@@ -14,17 +14,18 @@ const allDifficulties = ['Easy', 'Moderate', 'Strenuous', 'Challenging'];
 export default function ToursPage() {
   const searchParams = useSearchParams();
   const initialRegion = searchParams.get('region') || '';
+  const initialSearch = searchParams.get('search') || '';
 
   const [filters, setFilters] = useState({
-    search: '',
+    search: initialSearch,
     region: initialRegion,
     difficulty: '',
     duration: '',
   });
 
   useEffect(() => {
-    setFilters(f => ({ ...f, region: initialRegion }));
-  }, [initialRegion]);
+    setFilters(f => ({ ...f, region: initialRegion, search: initialSearch }));
+  }, [initialRegion, initialSearch]);
   
 
   const filteredTours = useMemo(() => {
