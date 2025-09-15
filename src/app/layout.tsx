@@ -1,26 +1,34 @@
 
+'use client';
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressProvider } from '@/providers/ProgressProvider';
-import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 import { Header } from '@/components/layout/Header';
+import { usePathname } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Happy Mountain Nepal',
-  description: 'Explore the best treks and tours in the Himalayas.',
-};
+// Using a separate component for metadata to allow usePathname in the layout
+// export const metadata: Metadata = {
+//   title: 'Happy Mountain Nepal',
+//   description: 'Explore the best treks and tours in the Himalayas.',
+// };
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isManagePage = pathname.startsWith('/manage');
+
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
+        <title>Happy Mountain Nepal</title>
+        <meta name="description" content="Explore the best treks and tours in the Himalayas." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
@@ -32,7 +40,7 @@ export default function RootLayout({
             <div className="flex flex-col min-h-screen">
               <Header />
               <main className="flex-grow">{children}</main>
-              <Footer />
+              {!isManagePage && <Footer />}
             </div>
             <Toaster />
           </WishlistProvider>
@@ -41,5 +49,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
