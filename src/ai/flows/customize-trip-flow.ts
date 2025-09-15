@@ -56,7 +56,7 @@ const customizeTripFlow = ai.defineFlow(
       prompt: `You are an expert travel agent for "Happy Mountain Nepal", specializing in treks and tours in the Himalayas. Your goal is to create a personalized trip for the user. You must ask clarifying questions one by one to gather the necessary information.
 
       Follow these steps:
-      1. The user has provided their initial interests, and potentially email/phone. This is their first message in the conversation history.
+      1. The user has provided their initial interests and contact information in a single field. The AI should parse this information. This is their first message in the conversation history.
       2. Based on the user's response, ask a relevant follow-up question. Examples: "What is your fitness level (e.g., beginner, moderate, expert)?", "Are you interested in a specific region like Everest or Annapurna?", "What's your ideal trip duration?".
       3. After the second user response, ask a third question. The third question should be "Do you have any other specific requests or remarks (e.g., interest in cultural sites, photography, dietary needs)?".
       4. After the third user response, ask the final question: "How many individuals are you planning to travel with?".

@@ -20,7 +20,7 @@ import {
   customizeTrip,
   CustomizeTripInput,
 } from '@/ai/flows/customize-trip-flow';
-import { Loader2, ArrowRight, Wand2, Mail, Check, Phone } from 'lucide-react';
+import { Loader2, ArrowRight, Wand2, Mail, Check, Phone, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -32,12 +32,8 @@ const formSchema = z.object({
     })
   ),
   currentUserInput: z.string().min(1, 'Please provide an answer.').optional(),
-  email: z.string().email({ message: 'Please enter a valid email.' }).optional(),
-  phone: z.string().optional(),
+  contactInfo: z.string().min(1, 'Please provide your email or phone number.'),
   initialInterest: z.string().min(10, 'Please tell us a bit more about your desired trip.'),
-}).refine(data => !!data.email || !!data.phone, {
-    message: 'Either email or phone number is required.',
-    path: ['email'],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -53,8 +49,7 @@ export default function CustomizePage() {
     defaultValues: {
       conversation: [],
       currentUserInput: '',
-      email: '',
-      phone: '',
+      contactInfo: '',
       initialInterest: '',
     },
   });
@@ -75,13 +70,7 @@ export default function CustomizePage() {
   const handleInitialSubmit = async (values: FormValues) => {
     setIsLoading(true);
 
-    const initialPayload = {
-        interest: values.initialInterest,
-        email: values.email,
-        phone: values.phone,
-    };
-    
-    const initialUserMessage = `Initial interest: ${initialPayload.interest}. Contact: ${initialPayload.email || ''} / ${initialPayload.phone || ''}`;
+    const initialUserMessage = `Initial interest: ${values.initialInterest}. Contact Info: ${values.contactInfo}`;
 
     const newConversation: CustomizeTripInput = [{ role: 'user', text: initialUserMessage }];
     
@@ -160,8 +149,7 @@ export default function CustomizePage() {
     form.reset({
       conversation: [],
       currentUserInput: '',
-      email: '',
-      phone: '',
+      contactInfo: '',
       initialInterest: '',
     });
     setIsFinished(false);
@@ -216,40 +204,22 @@ export default function CustomizePage() {
                             </FormItem>
                         )}
                     />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                    <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input placeholder="you@example.com" {...field} className="pl-10" />
-                                    </div>
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="phone"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Phone (Optional)</FormLabel>
-                                <FormControl>
-                                    <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input placeholder="+1 555-123-4567" {...field} className="pl-10" />
-                                    </div>
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
+                    <FormField
+                        control={form.control}
+                        name="contactInfo"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Contact Info</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input placeholder="Your email and/or phone number" {...field} className="pl-10" />
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <Button type="submit" size="lg" disabled={isLoading} className="w-full">
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Start Customization'}
                         <ArrowRight className="ml-2 h-4 w-4" />
