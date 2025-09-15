@@ -13,7 +13,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const firestore = getFirestore(app);
+let app;
+if (getApps().length === 0) {
+  if (!firebaseConfig.projectId) {
+    console.error("Firebase config is not set. Please update your .env file.");
+    app = null;
+  } else {
+    app = initializeApp(firebaseConfig);
+  }
+} else {
+  app = getApp();
+}
+
+const firestore = app ? getFirestore(app) : null;
 
 export { app, firestore };
