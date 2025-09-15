@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,7 +20,7 @@ import {
   customizeTrip,
   CustomizeTripInput,
 } from '@/ai/flows/customize-trip-flow';
-import { Loader2, ArrowRight, Wand2, Mail, Check } from 'lucide-react';
+import { Loader2, ArrowRight, Wand2, Mail, Check, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -30,8 +31,13 @@ const formSchema = z.object({
       text: z.string(),
     })
   ),
-  currentUserInput: z.string().min(1, 'Please provide an answer.'),
+  currentUserInput: z.string().min(1, 'Please provide an answer.').optional(),
   email: z.string().email({ message: 'Please enter a valid email.' }).optional(),
+  phone: z.string().optional(),
+  initialInterest: z.string().min(10, 'Please tell us a bit more about your desired trip.'),
+}).refine(data => !!data.email || !!data.phone, {
+    message: 'Either email or phone number is required.',
+    path: ['email'],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -39,39 +45,72 @@ type FormValues = z.infer<typeof formSchema>;
 export default function CustomizePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [isInitialStep, setIsInitialStep] = useState(true);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      conversation: [
-        {
-          role: 'model',
-          text: 'What kind of travel or trek are you looking for?',
-        },
-      ],
+      conversation: [],
       currentUserInput: '',
       email: '',
+      phone: '',
+      initialInterest: '',
     },
   });
 
   const conversation = form.watch('conversation');
-  const currentQuestion = conversation[conversation.length - 1];
-  const questionNumber = conversation.filter(q => q.role === 'model').length;
+  const currentQuestion = isInitialStep ? {
+      role: 'model',
+      text: 'What kind of travel or trek are you looking for?',
+    } : conversation[conversation.length - 1];
 
+  const questionNumber = conversation.filter(q => q.role === 'model').length;
 
   const handleSkip = async () => {
     form.setValue('currentUserInput', 'User skipped the question.');
-    await handleSubmit();
+    await handleAiSubmit();
   };
 
-  const handleSubmit = async (values?: FormValues) => {
+  const handleInitialSubmit = async (values: FormValues) => {
+    setIsLoading(true);
+
+    const initialPayload = {
+        interest: values.initialInterest,
+        email: values.email,
+        phone: values.phone,
+    };
+    
+    const initialUserMessage = `Initial interest: ${initialPayload.interest}. Contact: ${initialPayload.email || ''} / ${initialPayload.phone || ''}`;
+
+    const newConversation: CustomizeTripInput = [{ role: 'user', text: initialUserMessage }];
+    
+    try {
+      const result = await customizeTrip(newConversation);
+      form.setValue('conversation', [
+        ...newConversation, 
+        { role: 'model', text: result.nextQuestion }
+      ]);
+      setIsInitialStep(false);
+    } catch (error) {
+       console.error('AI Error:', error);
+       toast({
+         variant: 'destructive',
+         title: 'Error',
+         description: 'There was a problem starting the customization. Please try again.',
+       });
+    } finally {
+        setIsLoading(false);
+    }
+  }
+
+  const handleAiSubmit = async () => {
     // Manually trigger validation for currentUserInput
     const isInputValid = await form.trigger('currentUserInput');
     if (!isInputValid) return;
 
-    const currentValues = values || form.getValues();
-    const userInput = currentValues.currentUserInput.trim();
+    const currentValues = form.getValues();
+    const userInput = currentValues.currentUserInput!.trim();
 
     setIsLoading(true);
 
@@ -82,7 +121,6 @@ export default function CustomizePage() {
     
     form.setValue('conversation', newConversation);
     form.reset({ ...currentValues, conversation: newConversation, currentUserInput: '' });
-
 
     try {
       const result = await customizeTrip(newConversation);
@@ -100,10 +138,8 @@ export default function CustomizePage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          'There was a problem communicating with the AI. Please try again.',
+        description: 'There was a problem communicating with the AI. Please try again.',
       });
-       // If there's an error, revert conversation to not show the user's failed input
       form.setValue('conversation', currentValues.conversation);
     } finally {
       setIsLoading(false);
@@ -111,11 +147,7 @@ export default function CustomizePage() {
   };
   
   const handleFinalSubmit = async (values: FormValues) => {
-    const isEmailValid = await form.trigger('email');
-    if (!isEmailValid) return;
-
     console.log("Final submission payload:", {
-      email: values.email,
       conversation: values.conversation,
     });
     
@@ -126,16 +158,18 @@ export default function CustomizePage() {
 
     // Reset the entire experience
     form.reset({
-      conversation: [{ role: 'model', text: 'What kind of travel or trek are you looking for?' }],
+      conversation: [],
       currentUserInput: '',
       email: '',
+      phone: '',
+      initialInterest: '',
     });
     setIsFinished(false);
+    setIsInitialStep(true);
   };
 
-
   return (
-    <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[70vh]">
+    <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[80vh]">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
           <Wand2 className="mx-auto h-12 w-12 text-primary" />
@@ -150,38 +184,92 @@ export default function CustomizePage() {
         <Card className="overflow-hidden">
         <FormProvider {...form}>
          <form 
-            onSubmit={isFinished ? form.handleSubmit(handleFinalSubmit) : form.handleSubmit(handleSubmit)} 
+            onSubmit={form.handleSubmit(isInitialStep ? handleInitialSubmit : (isFinished ? handleFinalSubmit : handleAiSubmit))} 
             className="p-6 md:p-8"
         >
-            {isFinished ? (
-                 <div className="space-y-6 text-center">
-                    <Check className="mx-auto h-12 w-12 text-green-500 bg-green-100 rounded-full p-2" />
-                     <h2 className="text-2xl font-bold !font-headline">Almost there!</h2>
-                    <p className="text-muted-foreground">{currentQuestion.text}</p>
+            {isInitialStep ? (
+                <div className="space-y-6">
+                    <div>
+                        <span className="text-primary font-semibold flex items-center gap-2">
+                           Start Here <ArrowRight className="h-4 w-4" />
+                        </span>
+                        <h2 className="text-2xl md:text-3xl font-bold !font-headline mt-1">
+                            {currentQuestion.text}
+                        </h2>
+                         <p className="text-muted-foreground mt-2">Tell us your ideas. Are you looking for a challenging trek, a cultural tour, a family vacation, or something else?</p>
+                    </div>
                     <FormField
                         control={form.control}
-                        name="email"
+                        name="initialInterest"
                         render={({ field }) => (
                             <FormItem>
                             <FormControl>
-                                <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <Input placeholder="you@example.com" {...field} className="pl-10 text-center" />
-                                </div>
+                                <Textarea
+                                    {...field}
+                                    placeholder="e.g., 'I want a 10-day moderate trek in the Annapurna region with great mountain views and some cultural experiences.'"
+                                    autoComplete="off"
+                                    disabled={isLoading}
+                                    className="text-lg h-24"
+                                />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Get My Custom Plan'}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input placeholder="you@example.com" {...field} className="pl-10" />
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Phone (Optional)</FormLabel>
+                                <FormControl>
+                                    <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input placeholder="+1 555-123-4567" {...field} className="pl-10" />
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <Button type="submit" size="lg" disabled={isLoading} className="w-full">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Start Customization'}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
+            ) : isFinished ? (
+                 <div className="space-y-6 text-center">
+                    <Check className="mx-auto h-12 w-12 text-green-500 bg-green-100 rounded-full p-2" />
+                     <h2 className="text-2xl font-bold !font-headline">All Set!</h2>
+                    <p className="text-muted-foreground">{currentQuestion.text}</p>
+                    <p className="text-sm text-muted-foreground">Our team will review your responses and get back to you shortly with a personalized plan.</p>
+                    <Button type="submit" className="w-full" onClick={() => handleFinalSubmit(form.getValues())}>
+                        Finish
                     </Button>
                  </div>
             ) : (
                 <div className="space-y-6">
                     <div>
                         <span className="text-primary font-semibold flex items-center gap-2">
-                           {questionNumber} <ArrowRight className="h-4 w-4" />
+                           Question {questionNumber} <ArrowRight className="h-4 w-4" />
                         </span>
                         <h2 className="text-2xl md:text-3xl font-bold !font-headline mt-1">
                             {currentQuestion.text}
@@ -210,16 +298,14 @@ export default function CustomizePage() {
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Proceed'}
                             <Check className="ml-2 h-4 w-4" />
                         </Button>
-                        {questionNumber > 1 && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={handleSkip}
-                                disabled={isLoading}
-                            >
-                                Skip
-                            </Button>
-                        )}
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={handleSkip}
+                            disabled={isLoading}
+                        >
+                            Skip
+                        </Button>
                     </div>
                 </div>
             )}

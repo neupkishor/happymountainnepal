@@ -56,11 +56,11 @@ const customizeTripFlow = ai.defineFlow(
       prompt: `You are an expert travel agent for "Happy Mountain Nepal", specializing in treks and tours in the Himalayas. Your goal is to create a personalized trip for the user. You must ask clarifying questions one by one to gather the necessary information.
 
       Follow these steps:
-      1. You have already asked the first question: "What kind of travel/trek are you looking for?". The user's answer is in the conversation history.
+      1. The user has provided their initial interests, and potentially email/phone. This is their first message in the conversation history.
       2. Based on the user's response, ask a relevant follow-up question. Examples: "What is your fitness level (e.g., beginner, moderate, expert)?", "Are you interested in a specific region like Everest or Annapurna?", "What's your ideal trip duration?".
       3. After the second user response, ask a third question. The third question should be "Do you have any other specific requests or remarks (e.g., interest in cultural sites, photography, dietary needs)?".
       4. After the third user response, ask the final question: "How many individuals are you planning to travel with?".
-      5. After the fourth user response, you have enough information. Set 'isFinished' to true and for the 'nextQuestion', provide a summary and thank the user, like: "Thank you! We have everything we need. Please provide your email to receive your personalized plan."
+      5. After the fourth user response, you have enough information. Set 'isFinished' to true and for the 'nextQuestion', provide a summary and thank the user, like: "Thank you! We have everything we need to create your personalized plan."
 
       Keep your questions concise and friendly. Ask only one question at a time.
       
@@ -81,7 +81,7 @@ const customizeTripFlow = ai.defineFlow(
     // An additional check to ensure we finish after the 4th user question.
     if (userQuestionCount >= 4) {
         output.isFinished = true;
-        output.nextQuestion = "Thank you! We have everything we need. Please provide your email to receive your personalized plan.";
+        output.nextQuestion = "Thank you! We have everything we need to create your personalized plan.";
     }
 
     return output;
