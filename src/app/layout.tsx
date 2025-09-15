@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type {Metadata} from 'next';
@@ -37,11 +38,15 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ProgressProvider>
           <WishlistProvider>
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-grow">{children}</main>
-              {!isManagePage && <Footer />}
-            </div>
+            {isManagePage ? (
+              <div className="min-h-screen bg-secondary/30">{children}</div>
+            ) : (
+              <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+              </div>
+            )}
             <Toaster />
           </WishlistProvider>
         </ProgressProvider>

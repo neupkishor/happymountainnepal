@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -97,21 +98,6 @@ const getGridCols = (items?: NavLink[]): string => {
 export function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-
-  if (pathname.startsWith('/manage')) {
-    return (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-16 items-center">
-                 <Link href="/" className="mr-6 flex items-center space-x-2">
-                    <Mountain className="h-6 w-6 text-primary" />
-                    <span className="font-bold sm:inline-block">
-                    Happy Mountain
-                    </span>
-                </Link>
-            </div>
-        </header>
-    )
-  }
 
   const renderNavLinks = (links: NavLink[], isSubmenu = false) => {
     return links.map(link => {
