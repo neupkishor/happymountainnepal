@@ -44,9 +44,7 @@ export default function ManagePage() {
                             Welcome to the management panel.
                         </p>
                     </div>
-                    <SidebarTrigger asChild className="md:hidden">
-                        <Button variant="ghost" size="icon" />
-                    </SidebarTrigger>
+                    <SidebarTrigger variant="ghost" size="icon" className="md:hidden" />
                 </header>
                 
                 <InquiriesList />
