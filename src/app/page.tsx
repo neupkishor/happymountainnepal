@@ -11,8 +11,8 @@ export default function Home() {
   return (
     <>
       <HeroSection />
-      <FeaturedTours />
       <FavoriteDestinations />
+      <FeaturedTours />
       <PopularPackages />
       <WhyUs />
       <Testimonials />
