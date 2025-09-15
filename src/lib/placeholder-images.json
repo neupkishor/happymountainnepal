@@ -1,3 +1,88 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "everest-hero",
+      "description": "A majestic view of Mount Everest at sunrise.",
+      "imageUrl": "https://picsum.photos/seed/everest-hero/1600/900",
+      "imageHint": "mountain sunrise"
+    },
+    {
+      "id": "tour-ebc",
+      "description": "Trekkers on their way to Everest Base Camp.",
+      "imageUrl": "https://picsum.photos/seed/tour-ebc/600/400",
+      "imageHint": "mountain trekking"
+    },
+    {
+      "id": "tour-annapurna",
+      "description": "Annapurna circuit view with a tea house.",
+      "imageUrl": "https://picsum.photos/seed/tour-annapurna/600/400",
+      "imageHint": "mountain village"
+    },
+    {
+      "id": "tour-langtang",
+      "description": "A serene valley in the Langtang region.",
+      "imageUrl": "https://picsum.photos/seed/tour-langtang/600/400",
+      "imageHint": "mountain valley"
+    },
+    {
+      "id": "tour-poonhill",
+      "description": "Sunrise view from Poon Hill.",
+      "imageUrl": "https://picsum.photos/seed/tour-poonhill/600/400",
+      "imageHint": "mountain sunrise"
+    },
+    {
+      "id": "map-placeholder",
+      "description": "A generic map illustration.",
+      "imageUrl": "https://picsum.photos/seed/map-placeholder/800/600",
+      "imageHint": "map illustration"
+    },
+    {
+      "id": "blog-packing",
+      "description": "A backpack with trekking gear.",
+      "imageUrl": "https://picsum.photos/seed/blog-packing/800/500",
+      "imageHint": "backpack gear"
+    },
+    {
+      "id": "blog-culture",
+      "description": "A colorful cultural festival in Nepal.",
+      "imageUrl": "https://picsum.photos/seed/blog-culture/800/500",
+      "imageHint": "cultural festival"
+    },
+    {
+      "id": "team-member-1",
+      "description": "Portrait of a friendly trekking guide.",
+      "imageUrl": "https://picsum.photos/seed/team-1/400/400",
+      "imageHint": "guide portrait"
+    },
+    {
+      "id": "team-member-2",
+      "description": "Portrait of a team manager.",
+      "imageUrl": "https://picsum.photos/seed/team-2/400/400",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "team-member-3",
+      "description": "Portrait of an operations staff member.",
+      "imageUrl": "https://picsum.photos/seed/team-3/400/400",
+      "imageHint": "person smiling"
+    },
+    {
+      "id": "tour-detail-1",
+      "description": "A close-up of a suspension bridge on a trek.",
+      "imageUrl": "https://picsum.photos/seed/tour-detail-1/1200/800",
+      "imageHint": "suspension bridge"
+    },
+    {
+      "id": "tour-detail-2",
+      "description": "A group of trekkers resting and enjoying the view.",
+      "imageUrl": "https://picsum.photos/seed/tour-detail-2/1200/800",
+      "imageHint": "trekkers resting"
+    },
+    {
+      "id": "tour-detail-3",
+      "description": "A beautiful mountain monastery.",
+      "imageUrl": "https://picsum.photos/seed/tour-detail-3/1200/800",
+      "imageHint": "mountain monastery"
+    }
+  ]
 }
