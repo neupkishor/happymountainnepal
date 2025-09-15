@@ -164,9 +164,6 @@ export function Header() {
                 </Button>
               </Link>
             )}
-            <Link href="/customize" passHref>
-                <Button>Customize Trip</Button>
-            </Link>
           </div>
         </div>
       </div>
