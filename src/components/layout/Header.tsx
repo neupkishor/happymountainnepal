@@ -119,7 +119,7 @@ export function Header() {
                 <Button variant="ghost" size="icon" aria-label="Wishlist" className="relative">
                   <Heart className="h-5 w-5" />
                   {wishlist.length > 0 && (
-                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground">
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                       {wishlist.length}
                     </span>
                   )}
@@ -127,7 +127,7 @@ export function Header() {
               </Link>
             )}
             <Link href="/contact" passHref>
-              <Button className="hidden sm:inline-flex bg-accent hover:bg-accent/90 text-accent-foreground">Custom Trip</Button>
+              <Button className="hidden sm:inline-flex">Custom Trip</Button>
             </Link>
           </div>
         </div>

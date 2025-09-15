@@ -16,8 +16,8 @@
     --secondary-foreground: 20 14% 4%;
     --muted: 60 25% 85%;
     --muted-foreground: 20 14% 25%;
-    --accent: 36 100% 50%; /* #FF9800 - Sunrise Orange */
-    --accent-foreground: 20 14% 4%; /* Black for on-orange buttons */
+    --accent: 120 39% 49%; /* Use primary color as accent */
+    --accent-foreground: 60 100% 99%; /* Use primary-foreground for accent text */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 60 30% 82%;
@@ -44,8 +44,8 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 36 100% 50%;
-    --accent-foreground: 20 14% 4%;
+    --accent: 120 39% 49%; /* Use primary color as accent */
+    --accent-foreground: 60 100% 99%; /* Use primary-foreground for accent text */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;

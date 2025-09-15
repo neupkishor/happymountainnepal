@@ -82,7 +82,7 @@ export function BookingWidget({ tour }: BookingWidgetProps) {
             Dates in green are guaranteed departures.
           </p>
         </div>
-        <Button onClick={handleBooking} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg h-12">
+        <Button onClick={handleBooking} className="w-full text-lg h-12">
           Book Now
         </Button>
         <Button onClick={handleWishlistToggle} variant="outline" className="w-full">
