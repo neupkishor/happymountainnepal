@@ -15,17 +15,15 @@ export default function Home() {
         <FavoriteDestinations />
       </div>
       <FeaturedTours />
+      <PopularPackages />
       <div className="bg-secondary">
-        <PopularPackages />
+        <WhyUs />
       </div>
-      <WhyUs />
+      <Testimonials />
       <div className="bg-secondary">
-        <Testimonials />
+        <RecentBlogs />
       </div>
-      <RecentBlogs />
-      <div className="bg-secondary">
-        <CustomizeTrip />
-      </div>
+      <CustomizeTrip />
     </>
   );
 }
