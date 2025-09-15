@@ -58,16 +58,12 @@ export default function ManageLayout({
                                       <span>Users</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
-                          </SidebarMenu>
-                      </SidebarGroup>
-                      <SidebarGroup>
-                          <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton href="/" variant="ghost">
-                                    <ArrowLeft />
-                                    <span>Back to Site</span>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
+                               <SidebarMenuItem>
+                                  <SidebarMenuButton href="/" tooltip="Back to Site">
+                                      <ArrowLeft />
+                                      <span>Back to Site</span>
+                                  </SidebarMenuButton>
+                              </SidebarMenuItem>
                           </SidebarMenu>
                       </SidebarGroup>
                   </SidebarContent>
