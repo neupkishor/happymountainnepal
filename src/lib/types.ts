@@ -39,7 +39,7 @@ export interface BlogPost {
   image: string;
 }
 
-export interface TeamMember {
+export type TeamMember = {
   id: string;
   slug: string;
   name: string;

@@ -3,9 +3,12 @@
 
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import { firestore } from './firebase'; // Your initialized Firebase app
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc } from 'firebase/firestore';
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review } from './types';
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { slugify } from "./utils";
+import { revalidatePath } from "next/cache";
+
 
 export interface Inquiry {
   id: string;
@@ -209,6 +212,24 @@ async function getDocBySlug<T>(collectionName: string, slug: string): Promise<T 
   }
 }
 
+async function getDocById<T>(collectionName: string, id: string): Promise<T | null> {
+  if (!firestore) {
+    console.error("Firestore is not initialized.");
+    return null;
+  }
+  try {
+    const docRef = doc(firestore, collectionName, id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) {
+      return null;
+    }
+    return { id: docSnap.id, ...docSnap.data() } as T;
+  } catch (error) {
+    console.error(`Error fetching doc from ${collectionName} with id ${id}:`, error);
+    throw new Error(`Could not fetch from ${collectionName}.`);
+  }
+}
+
 // Tour Functions
 export async function getTours(): Promise<Tour[]> {
     return getCollection<Tour>('tours');
@@ -244,6 +265,41 @@ export async function getTeamMemberBySlug(slug: string) {
 if (!member) notFound();
     return member;
 }
+export async function getTeamMemberById(id: string): Promise<TeamMember | null> {
+    return getDocById<TeamMember>('teamMembers', id);
+}
+
+export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const slug = slugify(data.name);
+        const newMember = { ...data, slug };
+        const docRef = await addDoc(collection(firestore, 'teamMembers'), newMember);
+        revalidatePath('/manage/team');
+        revalidatePath('/about/teams');
+        redirect(`/manage/team`);
+    } catch (error) {
+        console.error("Error adding team member: ", error);
+        throw new Error("Could not add team member.");
+    }
+}
+
+export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 'slug'>) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const slug = slugify(data.name);
+        const updatedMember = { ...data, slug };
+        const docRef = doc(firestore, 'teamMembers', id);
+        await updateDoc(docRef, updatedMember);
+        revalidatePath('/manage/team');
+        revalidatePath(`/manage/team/${id}/edit`);
+        revalidatePath('/about/teams');
+        redirect(`/manage/team`);
+    } catch (error) {
+        console.error("Error updating team member: ", error);
+        throw new Error("Could not update team member.");
+    }
+}
 
 // Destination Functions
 export async function getDestinations(): Promise<Destination[]> {
@@ -273,4 +329,3 @@ export async function getAllReviews(): Promise<(Review & { tourName: string })[]
   }
   return reviews;
 }
-
