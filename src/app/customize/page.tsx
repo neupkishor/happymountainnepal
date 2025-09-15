@@ -195,7 +195,7 @@ export default function CustomizePage() {
                                     placeholder="e.g., 'I want a 10-day moderate trek in the Annapurna region with great mountain views and some cultural experiences.'"
                                     autoComplete="off"
                                     disabled={isLoading}
-                                    className="text-lg h-24"
+                                    className="text-lg h-24 bg-card"
                                 />
                             </FormControl>
                             <FormMessage />
@@ -211,7 +211,7 @@ export default function CustomizePage() {
                             <FormControl>
                                 <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <Input placeholder="Your email and/or phone number" {...field} className="pl-10" />
+                                <Input placeholder="Your email and/or phone number" {...field} className="pl-10 bg-card" />
                                 </div>
                             </FormControl>
                             <FormMessage />
@@ -228,7 +228,7 @@ export default function CustomizePage() {
                     <Check className="mx-auto h-12 w-12 text-green-500 bg-green-100 rounded-full p-2" />
                      <h2 className="text-2xl font-bold !font-headline">All Set!</h2>
                     <p className="text-muted-foreground">{currentQuestion.text}</p>
-                    <p className="text-sm text-muted-foreground">Our team will review your responses and get back to you shortly with a personalized plan.</p>
+                    <p className="text-sm text-muted-foreground">Our team will review your responses and get back to you with a personalized plan.</p>
                     <Button type="submit" className="w-full sm:w-auto" onClick={() => handleFinalSubmit(form.getValues())}>
                         Finish
                     </Button>
@@ -254,7 +254,7 @@ export default function CustomizePage() {
                                 placeholder="Type your answer here..."
                                 autoComplete="off"
                                 disabled={isLoading}
-                                className="text-lg h-12"
+                                className="text-lg h-12 bg-card"
                             />
                         </FormControl>
                         <FormMessage />
