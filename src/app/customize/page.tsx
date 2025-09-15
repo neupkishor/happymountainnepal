@@ -195,7 +195,8 @@ export default function CustomizePage() {
                                     placeholder="e.g., 'I want a 10-day moderate trek in the Annapurna region with great mountain views and some cultural experiences.'"
                                     autoComplete="off"
                                     disabled={isLoading}
-                                    className="text-lg h-24 bg-card"
+                                    className="text-lg bg-card"
+                                    rows={5}
                                 />
                             </FormControl>
                             <FormMessage />

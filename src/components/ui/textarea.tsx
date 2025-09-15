@@ -1,9 +1,19 @@
 import * as React from 'react';
 
 import {cn} from '@/lib/utils';
+import { useFormField } from './form';
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'>>(
   ({className, ...props}, ref) => {
+    const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
+    const body = error ? String(error?.message) : null
+    
+    const handleInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
+      const textarea = event.currentTarget;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
     return (
       <textarea
         className={cn(
@@ -11,6 +21,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
           className
         )}
         ref={ref}
+        onInput={handleInput}
         {...props}
       />
     );
