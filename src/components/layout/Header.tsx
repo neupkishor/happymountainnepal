@@ -1,9 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { Mountain, Heart, Menu } from 'lucide-react';
+import { Mountain, Menu, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useWishlist } from '@/context/WishlistContext';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from 'react';
@@ -80,7 +79,6 @@ function MobileNav() {
 
 
 export function Header() {
-  const { wishlist } = useWishlist();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -115,20 +113,10 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             {isMounted && (
-              <Link href="/wishlist" passHref>
-                <Button variant="ghost" size="icon" aria-label="Wishlist" className="relative">
-                  <Heart className="h-5 w-5" />
-                  {wishlist.length > 0 && (
-                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                      {wishlist.length}
-                    </span>
-                  )}
-                </Button>
-              </Link>
+              <Button variant="ghost" size="icon" aria-label="Profile">
+                <User className="h-5 w-5" />
+              </Button>
             )}
-            <Link href="/contact" passHref>
-              <Button className="hidden sm:inline-flex">Custom Trip</Button>
-            </Link>
           </div>
         </div>
       </div>
