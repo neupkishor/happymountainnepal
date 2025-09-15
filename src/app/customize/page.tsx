@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -19,10 +19,8 @@ import {
   customizeTrip,
   CustomizeTripInput,
 } from '@/ai/flows/customize-trip-flow';
-import { Loader2, Bot, User, Wand2, Send, Mail } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, ArrowRight, Wand2, Mail, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const formSchema = z.object({
@@ -32,7 +30,7 @@ const formSchema = z.object({
       text: z.string(),
     })
   ),
-  currentUserInput: z.string(),
+  currentUserInput: z.string().min(1, 'Please provide an answer.'),
   email: z.string().email({ message: 'Please enter a valid email.' }).optional(),
 });
 
@@ -57,10 +55,10 @@ export default function CustomizePage() {
     },
   });
 
-  const { fields, append } = useFieldArray({
-    control: form.control,
-    name: 'conversation',
-  });
+  const conversation = form.watch('conversation');
+  const currentQuestion = conversation[conversation.length - 1];
+  const questionNumber = conversation.filter(q => q.role === 'model').length;
+
 
   const handleSkip = async () => {
     form.setValue('currentUserInput', 'User skipped the question.');
@@ -68,10 +66,12 @@ export default function CustomizePage() {
   };
 
   const handleSubmit = async (values?: FormValues) => {
+    // Manually trigger validation for currentUserInput
+    const isInputValid = await form.trigger('currentUserInput');
+    if (!isInputValid) return;
+
     const currentValues = values || form.getValues();
     const userInput = currentValues.currentUserInput.trim();
-
-    if (!userInput) return;
 
     setIsLoading(true);
 
@@ -79,15 +79,19 @@ export default function CustomizePage() {
       ...currentValues.conversation,
       { role: 'user', text: userInput },
     ];
-    append({ role: 'user', text: userInput });
-    form.reset({ ...currentValues, currentUserInput: '' });
+    
+    form.setValue('conversation', newConversation);
+    form.reset({ ...currentValues, conversation: newConversation, currentUserInput: '' });
 
 
     try {
       const result = await customizeTrip(newConversation);
 
-      append({ role: 'model', text: result.nextQuestion });
-
+      form.setValue('conversation', [
+        ...newConversation, 
+        { role: 'model', text: result.nextQuestion }
+      ]);
+      
       if (result.isFinished) {
         setIsFinished(true);
       }
@@ -99,12 +103,17 @@ export default function CustomizePage() {
         description:
           'There was a problem communicating with the AI. Please try again.',
       });
+       // If there's an error, revert conversation to not show the user's failed input
+      form.setValue('conversation', currentValues.conversation);
     } finally {
       setIsLoading(false);
     }
   };
   
   const handleFinalSubmit = async (values: FormValues) => {
+    const isEmailValid = await form.trigger('email');
+    if (!isEmailValid) return;
+
     console.log("Final submission payload:", {
       email: values.email,
       conversation: values.conversation,
@@ -126,117 +135,80 @@ export default function CustomizePage() {
 
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-2xl mx-auto">
+    <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[70vh]">
+      <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
           <Wand2 className="mx-auto h-12 w-12 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold !font-headline mt-4">
-            Create Your Dream Trip with AI
+            Create Your Dream Trip
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Answer a few questions and let our AI craft the perfect itinerary just for you.
+            Let our AI craft the perfect itinerary just for you.
           </p>
         </div>
 
-        <Card>
-            <CardContent className="p-6 space-y-6">
-                {fields.map((field, index) => (
-                    <div
-                    key={field.id}
-                    className={cn(
-                        'flex items-start gap-4',
-                        field.role === 'user' ? 'justify-end' : ''
-                    )}
-                    >
-                    {field.role === 'model' && (
-                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                        <AvatarFallback>
-                            <Bot className="h-5 w-5" />
-                        </AvatarFallback>
-                        </Avatar>
-                    )}
-
-                    <div
-                        className={cn(
-                        'rounded-lg px-4 py-3 max-w-[80%] text-sm',
-                        field.role === 'model'
-                            ? 'bg-muted text-foreground'
-                            : 'bg-primary text-primary-foreground'
-                        )}
-                    >
-                        {field.text}
-                    </div>
-
-                    {field.role === 'user' && (
-                        <Avatar className="h-8 w-8 bg-secondary text-secondary-foreground">
-                        <AvatarFallback>
-                            <User className="h-5 w-5" />
-                        </AvatarFallback>
-                        </Avatar>
-                    )}
-                    </div>
-                ))}
-                {isLoading && (
-                    <div className="flex items-start gap-4">
-                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                            <AvatarFallback>
-                                <Bot className="h-5 w-5" />
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="rounded-lg px-4 py-3 bg-muted text-foreground">
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        </div>
-                    </div>
-                )}
-            </CardContent>
-           
-            <CardFooter>
+        <Card className="overflow-hidden">
+        <FormProvider {...form}>
+         <form 
+            onSubmit={isFinished ? form.handleSubmit(handleFinalSubmit) : form.handleSubmit(handleSubmit)} 
+            className="p-6 md:p-8"
+        >
             {isFinished ? (
-                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="w-full space-y-4">
-                         <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Your Email</FormLabel>
-                                <p className='text-xs text-muted-foreground'>Enter your email so we can send you the personalized plan.</p>
-                                <FormControl>
-                                    <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input placeholder="you@example.com" {...field} className="pl-10" />
-                                    </div>
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Get My Custom Plan'}
-                        </Button>
-                    </form>
-                </Form>
-            ) : (
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="w-full flex items-center gap-2">
-                        <FormField
+                 <div className="space-y-6 text-center">
+                    <Check className="mx-auto h-12 w-12 text-green-500 bg-green-100 rounded-full p-2" />
+                     <h2 className="text-2xl font-bold !font-headline">Almost there!</h2>
+                    <p className="text-muted-foreground">{currentQuestion.text}</p>
+                    <FormField
                         control={form.control}
-                        name="currentUserInput"
+                        name="email"
                         render={({ field }) => (
-                            <FormItem className="flex-grow">
+                            <FormItem>
                             <FormControl>
-                                <Input
-                                {...field}
-                                placeholder="Type your answer..."
-                                autoComplete="off"
-                                disabled={isLoading}
-                                />
+                                <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input placeholder="you@example.com" {...field} className="pl-10 text-center" />
+                                </div>
                             </FormControl>
+                            <FormMessage />
                             </FormItem>
                         )}
-                        />
-                        <Button type="submit" size="icon" disabled={isLoading}>
-                            <Send className="h-5 w-5" />
+                    />
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Get My Custom Plan'}
+                    </Button>
+                 </div>
+            ) : (
+                <div className="space-y-6">
+                    <div>
+                        <span className="text-primary font-semibold flex items-center gap-2">
+                           {questionNumber} <ArrowRight className="h-4 w-4" />
+                        </span>
+                        <h2 className="text-2xl md:text-3xl font-bold !font-headline mt-1">
+                            {currentQuestion.text}
+                        </h2>
+                    </div>
+                    <FormField
+                    control={form.control}
+                    name="currentUserInput"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormControl>
+                            <Input
+                                {...field}
+                                placeholder="Type your answer here..."
+                                autoComplete="off"
+                                disabled={isLoading}
+                                className="text-lg h-12"
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <div className='flex items-center gap-4'>
+                        <Button type="submit" size="lg" disabled={isLoading}>
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Proceed'}
+                            <Check className="ml-2 h-4 w-4" />
                         </Button>
                         <Button
                             type="button"
@@ -246,11 +218,11 @@ export default function CustomizePage() {
                         >
                             Skip
                         </Button>
-                    </form>
-                </Form>
+                    </div>
+                </div>
             )}
-
-            </CardFooter>
+            </form>
+        </FormProvider>
         </Card>
       </div>
     </div>
