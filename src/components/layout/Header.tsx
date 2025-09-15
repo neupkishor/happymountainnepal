@@ -113,9 +113,11 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             {isMounted && (
-              <Button variant="ghost" size="icon" aria-label="Profile">
-                <User className="h-5 w-5" />
-              </Button>
+              <Link href="/profile" passHref>
+                <Button asChild variant="ghost" size="icon" aria-label="Profile">
+                    <User className="h-5 w-5" />
+                </Button>
+              </Link>
             )}
           </div>
         </div>
