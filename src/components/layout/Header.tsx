@@ -17,41 +17,152 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Mountain, Search, User } from "lucide-react";
-import type { Destination } from "@/lib/types";
 import { destinations } from "@/lib/data";
 
-const aboutLinks: { title: string; href: string; description: string }[] = [
-  {
-    title: "About Us",
-    href: "/about",
-    description: "Learn about our story, mission, and values.",
+interface NavLink {
+  title: string;
+  href?: string;
+  description?: string;
+  items?: NavLink[];
+}
+
+const navLinks: NavLink[] = [
+    { href: "/tours", title: "Tours" },
+      {
+    title: "Destinations",
+    items: destinations.map(d => ({
+        title: d.name,
+        href: `/tours?region=${d.name}`,
+        description: d.tourCount > 0 ? `${d.tourCount}+ tours available` : 'Coming soon'
+    }))
   },
   {
-    title: "Our Team",
-    href: "/about/teams",
-    description: "Meet the experts behind your Himalayan adventure.",
+    title: "About",
+    items: [
+      {
+        title: "About Us",
+        href: "/about",
+        description: "Learn about our story, mission, and values.",
+      },
+      {
+        title: "Our Team",
+        href: "/about/teams",
+        description: "Meet the experts behind your Himalayan adventure.",
+      },
+      {
+        title: "Testimonials",
+        href: "/testimonials",
+        description: "Read stories from our happy and satisfied travelers.",
+      },
+      {
+        title: "Legal",
+        description: "Legal information and licenses.",
+        items: [
+            {
+                title: 'Documents',
+                href: '/legal/documents',
+                description: "View our company's legal information and licenses."
+            },
+            {
+                title: 'Terms & Conditions',
+                href: '/legal/terms',
+                description: 'Read our terms and conditions.'
+            },
+            {
+                title: 'Privacy Policy',
+                href: '/legal/privacy',
+                description: 'Our privacy policy.'
+            }
+        ]
+      },
+    ],
   },
-  {
-    title: "Testimonials",
-    href: "/testimonials",
-    description: "Read stories from our happy and satisfied travelers.",
-  },
-  {
-    title: "Legal Documents",
-    href: "/legal/documents",
-    description: "View our company's legal information and licenses.",
-  }
+    { href: "/blog", title: "Blog" },
+    { href: "/contact", title: "Contact" },
 ];
 
-const mainNavLinks = [
-    { href: "/tours", label: "Tours" },
-    { href: "/blog", label: "Blog" },
-    { href: "/contact", label: "Contact" },
-]
+
+const getGridCols = (items?: NavLink[]): string => {
+    if(!items) return "";
+    const hasSubItems = items.some(item => item.items && item.items.length > 0);
+    if(hasSubItems) {
+        const hasSubSubItems = items.some(item => item.items && item.items.some(subItem => subItem.items && subItem.items.length > 0));
+        if (hasSubSubItems) return "md:grid-cols-3"
+        return "md:grid-cols-2"
+    }
+    return "md:grid-cols-1"
+}
+
 
 export function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  const renderNavLinks = (links: NavLink[], isSubmenu = false) => {
+    return links.map(link => {
+        if(link.items) {
+            return (
+                <NavigationMenuItem key={link.title}>
+                    <NavigationMenuTrigger>{link.title}</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                        <ul className={cn("grid w-[400px] gap-3 p-4 md:w-[500px] lg:w-[600px]", getGridCols(link.items))}>
+                            {renderNavLinks(link.items, true)}
+                        </ul>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+            )
+        }
+        if(link.href && !isSubmenu){
+            return (
+                <NavigationMenuItem key={link.title}>
+                    <Link href={link.href} legacyBehavior passHref>
+                        <NavigationMenuLink
+                        className={cn(
+                            navigationMenuTriggerStyle(),
+                            pathname === link.href ? "bg-accent text-accent-foreground" : ""
+                        )}
+                        >
+                        {link.title}
+                        </NavigationMenuLink>
+                    </Link>
+                </NavigationMenuItem>
+            )
+        }
+
+        return (
+            <ListItem
+                key={link.title}
+                title={link.title}
+                href={link.href}
+                >
+                {link.description}
+            </ListItem>
+        )
+    })
+  }
+
+  const renderMobileNavLinks = (links: NavLink[], isSubmenu = false) => {
+    return links.map(link => {
+        if(link.items) {
+            return (
+                <div className={isSubmenu ? "pl-5" : ""} key={link.title}>
+                    <h3 className="font-semibold text-muted-foreground my-2">{link.title}</h3>
+                    {renderMobileNavLinks(link.items, true)}
+                </div>
+            )
+        }
+        return (
+            <MobileLink
+                key={link.href}
+                href={link.href!}
+                pathname={pathname}
+                setOpen={setIsMobileMenuOpen}
+                >
+                {link.title}
+            </MobileLink>
+        )
+    })
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -65,74 +176,7 @@ export function Header() {
           </Link>
           <NavigationMenu>
             <NavigationMenuList>
-                <NavigationMenuItem>
-                    <Link href="/tours" legacyBehavior passHref>
-                        <NavigationMenuLink
-                        className={cn(
-                            navigationMenuTriggerStyle(),
-                            pathname === "/tours" ? "bg-accent text-accent-foreground" : ""
-                        )}
-                        >
-                        Tours
-                        </NavigationMenuLink>
-                    </Link>
-                </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>Destinations</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                    {destinations.map((destination) => (
-                      <ListItem
-                        key={destination.name}
-                        title={destination.name}
-                        href={`/tours?region=${destination.name}`}
-                      >
-                       {destination.tourCount > 0 ? `${destination.tourCount}+ tours available` : 'Coming soon'}
-                      </ListItem>
-                    ))}
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger>About</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] lg:w-[600px] lg:grid-cols-1">
-                    {aboutLinks.map((link) => (
-                      <ListItem
-                        key={link.title}
-                        title={link.title}
-                        href={link.href}
-                      >
-                        {link.description}
-                      </ListItem>
-                    ))}
-                  </ul>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-                <NavigationMenuItem>
-                    <Link href="/blog" legacyBehavior passHref>
-                        <NavigationMenuLink
-                        className={cn(
-                            navigationMenuTriggerStyle(),
-                            pathname === "/blog" ? "bg-accent text-accent-foreground" : ""
-                        )}
-                        >
-                        Blog
-                        </NavigationMenuLink>
-                    </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                    <Link href="/contact" legacyBehavior passHref>
-                        <NavigationMenuLink
-                        className={cn(
-                            navigationMenuTriggerStyle(),
-                            pathname === "/contact" ? "bg-accent text-accent-foreground" : ""
-                        )}
-                        >
-                        Contact
-                        </NavigationMenuLink>
-                    </Link>
-                </NavigationMenuItem>
+                {renderNavLinks(navLinks)}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
@@ -158,28 +202,7 @@ export function Header() {
               <span className="font-bold">Happy Mountain</span>
             </Link>
             <div className="flex flex-col space-y-3">
-              {mainNavLinks.map((item) => (
-                <MobileLink
-                  key={item.href}
-                  href={item.href}
-                  pathname={pathname}
-                  setOpen={setIsMobileMenuOpen}
-                >
-                  {item.label}
-                </MobileLink>
-              ))}
-                <div className="pl-5">
-                    <h3 className="font-semibold text-muted-foreground my-2">Destinations</h3>
-                    {destinations.map(item => (
-                        <MobileLink key={item.name} href={`/tours?region=${item.name}`} pathname={pathname} setOpen={setIsMobileMenuOpen}>{item.name}</MobileLink>
-                    ))}
-                </div>
-                 <div className="pl-5">
-                    <h3 className="font-semibold text-muted-foreground my-2">About</h3>
-                    {aboutLinks.map(item => (
-                        <MobileLink key={item.href} href={item.href} pathname={pathname} setOpen={setIsMobileMenuOpen}>{item.title}</MobileLink>
-                    ))}
-                </div>
+                {renderMobileNavLinks(navLinks)}
             </div>
           </SheetContent>
         </Sheet>
