@@ -1,13 +1,14 @@
-import { tours } from '@/lib/data';
+import { getTours } from '@/lib/db';
 import { TourCard } from './TourCard';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 
-export function PopularPackages() {
+export async function PopularPackages() {
+  const toursData = await getTours();
   // For now, we'll feature the same tours as the featured section.
   // This can be changed later to a different selection logic.
-  const popularTours = tours.slice(0, 3);
+  const popularTours = toursData.slice(0, 3);
 
   return (
     <section className="py-16 lg:py-24 bg-background">

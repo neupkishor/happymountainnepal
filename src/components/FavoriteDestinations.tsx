@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { destinations } from '@/lib/data';
+import { getDestinations } from '@/lib/db';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 
-export function FavoriteDestinations() {
+export async function FavoriteDestinations() {
+  const destinations = await getDestinations();
+
   return (
     <section className="py-16 lg:py-24 relative overflow-hidden">
       <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />

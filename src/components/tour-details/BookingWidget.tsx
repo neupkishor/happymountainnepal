@@ -11,19 +11,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Heart } from 'lucide-react';
 import { useWishlist } from '@/context/WishlistContext';
 import { cn } from '@/lib/utils';
+import { Timestamp } from 'firebase/firestore';
 
 interface BookingWidgetProps {
   tour: Tour;
 }
 
 export function BookingWidget({ tour }: BookingWidgetProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date(tour.departureDates[0].date));
+  const departureDays = tour.departureDates.map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
+  const guaranteedDays = tour.departureDates.filter(d => d.guaranteed).map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
+  
+  const [date, setDate] = useState<Date | undefined>(departureDays.length > 0 ? departureDays[0] : new Date());
   const { toast } = useToast();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const isWishlisted = isInWishlist(tour.id);
-
-  const departureDays = tour.departureDates.map(d => new Date(d.date));
-  const guaranteedDays = tour.departureDates.filter(d => d.guaranteed).map(d => new Date(d.date));
 
   const handleBooking = () => {
     toast({

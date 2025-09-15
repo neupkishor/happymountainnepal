@@ -2,32 +2,45 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { tours } from '@/lib/data';
+import { getTours } from '@/lib/db';
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
-import { Mountain } from 'lucide-react';
+import { Mountain, Search as SearchIcon, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
+  
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [submittedTerm, setSubmittedTerm] = useState(initialQuery);
+  const [allTours, setAllTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getTours()
+      .then(tours => {
+        setAllTours(tours);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch tours:", err);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     setSearchTerm(initialQuery);
     setSubmittedTerm(initialQuery);
   }, [initialQuery]);
-  
 
   const filteredTours = useMemo(() => {
-    if (!submittedTerm) return [];
-    return tours.filter((tour: Tour) => {
+    if (!submittedTerm || loading) return [];
+    return allTours.filter((tour: Tour) => {
       return tour.name.toLowerCase().includes(submittedTerm.toLowerCase());
     });
-  }, [submittedTerm]);
+  }, [submittedTerm, allTours, loading]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,14 +59,23 @@ export default function SearchPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-background text-foreground placeholder:text-muted-foreground"
             />
-            <Button type="submit" size="lg">
-              <Search className="h-5 w-5 mr-2" />
+            <Button type="submit" size="lg" disabled={loading}>
+              {loading ? (
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              ) : (
+                <SearchIcon className="h-5 w-5 mr-2" />
+              )}
               Search
             </Button>
         </form>
       </div>
       
-      {submittedTerm && (
+      {loading ? (
+        <div className="text-center py-16">
+          <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin" />
+          <p className="mt-4 text-muted-foreground">Loading tours...</p>
+        </div>
+      ) : submittedTerm && (
         <div>
             <h2 className="text-2xl font-bold !font-headline mb-8">
                 Results for &quot;{submittedTerm}&quot; ({filteredTours.length})

@@ -15,7 +15,7 @@ export interface Tour {
   itinerary: { day: number; title: string; description:string }[];
   inclusions: string[];
   exclusions: string[];
-  departureDates: { date: string; price: number; guaranteed: boolean }[];
+  departureDates: { date: string | Timestamp; price: number; guaranteed: boolean }[];
   mapImage: string;
   reviews: Review[];
 }
@@ -25,7 +25,7 @@ export interface Review {
   rating: number;
   author: string;
   comment: string;
-  date: string;
+  date: string | Timestamp;
 }
 
 export interface BlogPost {
@@ -35,7 +35,7 @@ export interface BlogPost {
   excerpt: string;
   content: string;
   author: string;
-  date: string;
+  date: string | Timestamp;
   image: string;
 }
 

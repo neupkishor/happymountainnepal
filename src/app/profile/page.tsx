@@ -1,17 +1,31 @@
 "use client";
 
 import { useWishlist } from '@/context/WishlistContext';
-import { tours } from '@/lib/data';
 import { TourCard } from '@/components/TourCard';
 import { Heart } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect, useState } from 'react';
+import type { Tour } from '@/lib/types';
 
 export default function ProfilePage() {
   const { wishlist } = useWishlist();
-  const wishlistedTours = tours.filter(tour => wishlist.includes(tour.id));
+  const [wishlistedTours, setWishlistedTours] = useState<Tour[]>([]);
+  const [allTours, setAllTours] = useState<Tour[]>([]);
   const userName = "Alex Doe"; // Placeholder name
+
+  useEffect(() => {
+    // In a real app, you would fetch tours from your DB
+    // For now, we simulate this by dynamically importing
+    import('@/lib/db').then(db => {
+      db.getTours().then(tours => {
+        setAllTours(tours);
+        setWishlistedTours(tours.filter(tour => wishlist.includes(tour.id)));
+      });
+    });
+  }, [wishlist]);
+
 
   return (
     <div className="container mx-auto py-12">

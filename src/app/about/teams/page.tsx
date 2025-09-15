@@ -1,8 +1,9 @@
-import { teamMembers } from '@/lib/data';
+import { getTeamMembers } from '@/lib/db';
 import { TeamMemberCard } from '@/components/TeamMemberCard';
 import Link from 'next/link';
 
-export default function TeamsPage() {
+export default async function TeamsPage() {
+  const teamMembers = await getTeamMembers();
   return (
     <div className="bg-background">
       <div className="container mx-auto py-16">

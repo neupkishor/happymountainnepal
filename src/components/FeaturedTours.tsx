@@ -1,11 +1,13 @@
-import { tours } from '@/lib/data';
+import { getFeaturedTours } from '@/lib/db';
 import { TourCard } from './TourCard';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 
-export function FeaturedTours() {
-  const featuredTours = tours.slice(0, 3);
+export async function FeaturedTours() {
+  const featuredToursData = await getFeaturedTours();
+  // In a real app, you might query for specific "featured" tours. Here we take the first 3.
+  const featuredTours = featuredToursData.slice(0, 3);
 
   return (
     <section className="py-16 lg:py-24 bg-background">

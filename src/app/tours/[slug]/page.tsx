@@ -1,5 +1,4 @@
-import { tours } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { getTours, getTourBySlug } from '@/lib/db';
 import { ImageGallery } from '@/components/tour-details/ImageGallery';
 import { KeyFacts } from '@/components/tour-details/KeyFacts';
 import { Itinerary } from '@/components/tour-details/Itinerary';
@@ -16,18 +15,15 @@ type TourDetailPageProps = {
 };
 
 export async function generateStaticParams() {
+  const tours = await getTours();
   return tours.map(tour => ({
     slug: tour.slug,
   }));
 }
 
-export default function TourDetailPage({ params }: TourDetailPageProps) {
+export default async function TourDetailPage({ params }: TourDetailPageProps) {
   const { slug } = params;
-  const tour = tours.find((t) => t.slug === slug);
-
-  if (!tour) {
-    notFound();
-  }
+  const tour = await getTourBySlug(slug);
 
   return (
     <div className="bg-background">

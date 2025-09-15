@@ -1,14 +1,15 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { tours } from '@/lib/data';
+import { getTours } from '@/lib/db';
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { TourFilters } from '@/components/TourFilters';
-import { Mountain } from 'lucide-react';
+import { Mountain, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const allRegions = [...new Set(tours.map(t => t.region))];
 const allDifficulties = ['Easy', 'Moderate', 'Strenuous', 'Challenging'];
 
 export default function ToursPage() {
@@ -16,11 +17,26 @@ export default function ToursPage() {
   const initialRegion = searchParams.get('region') || '';
   const initialSearch = searchParams.get('search') || '';
 
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [filters, setFilters] = useState({
     search: initialSearch,
     region: initialRegion,
     difficulty: '',
   });
+
+  useEffect(() => {
+    getTours()
+      .then(fetchedTours => {
+        setTours(fetchedTours);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to load tours:", err);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     setFilters({
@@ -30,6 +46,7 @@ export default function ToursPage() {
     });
   }, [initialRegion, initialSearch]);
   
+  const allRegions = useMemo(() => [...new Set(tours.map(t => t.region))], [tours]);
 
   const filteredTours = useMemo(() => {
     return tours.filter((tour: Tour) => {
@@ -39,7 +56,7 @@ export default function ToursPage() {
         (filters.difficulty === '' || tour.difficulty === filters.difficulty)
       );
     });
-  }, [filters]);
+  }, [filters, tours]);
 
   return (
     <div className="container mx-auto py-12">
@@ -57,7 +74,21 @@ export default function ToursPage() {
         difficulties={allDifficulties} 
       />
       
-      {filteredTours.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="space-y-4">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-6 w-1/4" />
+              <Skeleton className="h-8 w-3/4" />
+              <div className="flex justify-between">
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-10 w-1/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredTours.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredTours.map((tour) => (
             <TourCard key={tour.id} tour={tour} />

@@ -1,15 +1,41 @@
 "use client";
 
 import { useWishlist } from '@/context/WishlistContext';
-import { tours } from '@/lib/data';
 import { TourCard } from '@/components/TourCard';
 import { Heart } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import type { Tour } from '@/lib/types';
+import { getTours } from '@/lib/db';
 
 export default function WishlistPage() {
   const { wishlist } = useWishlist();
-  const wishlistedTours = tours.filter(tour => wishlist.includes(tour.id));
+  const [wishlistedTours, setWishlistedTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    getTours().then(allTours => {
+      setWishlistedTours(allTours.filter(tour => wishlist.includes(tour.id)));
+      setLoading(false);
+    })
+  }, [wishlist]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold !font-headline">Your Wishlist</h1>
+          <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
+            Your saved adventures for future planning.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[...Array(3)].map((_, i) => <div key={i} className="h-96 bg-muted rounded-lg animate-pulse" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-12">

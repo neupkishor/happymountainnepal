@@ -1,5 +1,4 @@
-import { teamMembers } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { getTeamMembers, getTeamMemberBySlug } from '@/lib/db';
 import Image from 'next/image';
 
 type TeamMemberPageProps = {
@@ -9,18 +8,15 @@ type TeamMemberPageProps = {
 };
 
 export async function generateStaticParams() {
+  const teamMembers = await getTeamMembers();
   return teamMembers.map(member => ({
     slug: member.slug,
   }));
 }
 
-export default function TeamMemberPage({ params }: TeamMemberPageProps) {
+export default async function TeamMemberPage({ params }: TeamMemberPageProps) {
   const { slug } = params;
-  const member = teamMembers.find((m) => m.slug === slug);
-
-  if (!member) {
-    notFound();
-  }
+  const member = await getTeamMemberBySlug(slug);
 
   return (
     <div className="container mx-auto py-16">

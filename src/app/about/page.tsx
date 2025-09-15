@@ -1,8 +1,9 @@
-import { teamMembers } from '@/lib/data';
+import { getTeamMembers } from '@/lib/db';
 import { TeamMemberCard } from '@/components/TeamMemberCard';
 import Image from 'next/image';
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const teamMembers = await getTeamMembers();
   const founder = teamMembers.find(m => m.role.includes('Founder'));
   const otherMembers = teamMembers.filter(m => !m.role.includes('Founder'));
 

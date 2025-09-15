@@ -1,12 +1,11 @@
-import { tours } from '@/lib/data';
+import { getAllReviews } from '@/lib/db';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReviewStars } from '@/components/ReviewStars';
+import type { Timestamp } from 'firebase/firestore';
 
-export default function TestimonialsPage() {
-  const allReviews = tours.flatMap(tour => 
-    tour.reviews.map(review => ({ ...review, tourName: tour.name }))
-  );
+export default async function TestimonialsPage() {
+  const allReviews = await getAllReviews();
 
   return (
     <div className="container mx-auto py-12">

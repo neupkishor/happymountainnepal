@@ -1,4 +1,4 @@
-import { tours } from '@/lib/data';
+import { getAllReviews } from '@/lib/db';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReviewStars } from '@/components/ReviewStars';
@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 
-export function Testimonials() {
+export async function Testimonials() {
   // Get first 3 reviews from all tours
-  const allReviews = tours.flatMap(tour => tour.reviews).slice(0, 3);
+  const allReviews = (await getAllReviews()).slice(0, 3);
 
   return (
     <section className="py-16 lg:py-24 bg-secondary">

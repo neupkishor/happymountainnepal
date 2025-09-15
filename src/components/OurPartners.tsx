@@ -1,8 +1,9 @@
 import Image from 'next/image';
-import { partners } from '@/lib/data';
+import { getPartners } from '@/lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-export function OurPartners() {
+export async function OurPartners() {
+  const partners = await getPartners();
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto">

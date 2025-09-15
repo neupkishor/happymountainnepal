@@ -1,8 +1,8 @@
-import { blogPosts } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { getBlogPosts, getBlogPostBySlug } from '@/lib/db';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import type { Timestamp } from 'firebase/firestore';
 
 type BlogDetailPageProps = {
   params: {
@@ -11,18 +11,17 @@ type BlogDetailPageProps = {
 };
 
 export async function generateStaticParams() {
-  return blogPosts.map(post => ({
+  const posts = await getBlogPosts();
+  return posts.map(post => ({
     slug: post.slug,
   }));
 }
 
-export default function BlogDetailPage({ params }: BlogDetailPageProps) {
+export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const { slug } = params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = await getBlogPostBySlug(slug);
 
-  if (!post) {
-    notFound();
-  }
+  const displayDate = post.date instanceof Timestamp ? post.date.toDate().toLocaleDateString() : post.date;
 
   return (
     <article>
@@ -47,7 +46,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
               <span>{post.author}</span>
             </div>
             <span>&bull;</span>
-            <time dateTime={post.date}>{post.date}</time>
+            <time dateTime={new Date(displayDate).toISOString()}>{displayDate}</time>
           </div>
         </div>
       </header>

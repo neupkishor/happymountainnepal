@@ -3,8 +3,9 @@
 
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import { firestore } from './firebase'; // Your initialized Firebase app
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc } from 'firebase/firestore';
-import type { Account, Activity } from './types';
+import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit } from 'firebase/firestore';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review } from './types';
+import { notFound } from "next/navigation";
 
 export interface Inquiry {
   id: string;
@@ -169,3 +170,107 @@ export async function getActivitiesByAccountId(accountId: string): Promise<Activ
         throw new Error("Could not fetch activities from the database.");
     }
 }
+
+
+async function getCollection<T>(name: string): Promise<T[]> {
+  if (!firestore) {
+    console.error("Firestore is not initialized.");
+    return [];
+  }
+  try {
+    const col = collection(firestore, name);
+    const snapshot = await getDocs(col);
+    if (snapshot.empty) {
+      return [];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+  } catch (error) {
+    console.error(`Error fetching ${name}:`, error);
+    throw new Error(`Could not fetch ${name} from the database.`);
+  }
+}
+
+async function getDocBySlug<T>(collectionName: string, slug: string): Promise<T | null> {
+  if (!firestore) {
+    console.error("Firestore is not initialized.");
+    return null;
+  }
+  try {
+    const q = query(collection(firestore, collectionName), where("slug", "==", slug), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return null;
+    }
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as T;
+  } catch (error) {
+    console.error(`Error fetching doc from ${collectionName} with slug ${slug}:`, error);
+    throw new Error(`Could not fetch from ${collectionName}.`);
+  }
+}
+
+// Tour Functions
+export async function getTours(): Promise<Tour[]> {
+    return getCollection<Tour>('tours');
+}
+export async function getTourBySlug(slug: string) {
+    const tour = await getDocBySlug<Tour>('tours', slug);
+    if (!tour) notFound();
+    return tour;
+}
+export async function getFeaturedTours(): Promise<Tour[]> {
+    return getCollection<Tour>('tours'); // In a real app, this would be a query for featured tours.
+}
+
+// Blog Post Functions
+export async function getBlogPosts(): Promise<BlogPost[]> {
+    return getCollection<BlogPost>('blogPosts');
+}
+export async function getBlogPostBySlug(slug: string) {
+    const post = await getDocBySlug<BlogPost>('blogPosts', slug);
+    if (!post) notFound();
+    return post;
+};
+export async function getRecentBlogPosts(): Promise<BlogPost[]> {
+    return getCollection<BlogPost>('blogPosts');
+}
+
+// Team Member Functions
+export async function getTeamMembers(): Promise<TeamMember[]> {
+    return getCollection<TeamMember>('teamMembers');
+}
+export async function getTeamMemberBySlug(slug: string) {
+    const member = await getDocBySlug<TeamMember>('teamMembers', slug);
+if (!member) notFound();
+    return member;
+}
+
+// Destination Functions
+export async function getDestinations(): Promise<Destination[]> {
+    return getCollection<Destination>('destinations');
+}
+
+// Partner Functions
+export async function getPartners(): Promise<Partner[]> {
+    return getCollection<Partner>('partners');
+}
+
+// Review Functions
+export async function getAllReviews(): Promise<(Review & { tourName: string })[]> {
+  if (!firestore) return [];
+  const reviewsGroup = collectionGroup(firestore, 'reviews');
+  const snapshot = await getDocs(reviewsGroup);
+  const reviews = [];
+  for (const doc of snapshot.docs) {
+    const reviewData = doc.data() as Review;
+    const tourRef = doc.ref.parent.parent;
+    if (tourRef) {
+      const tourSnap = await getDoc(tourRef);
+      if (tourSnap.exists()) {
+        reviews.push({ ...reviewData, tourName: tourSnap.data().name });
+      }
+    }
+  }
+  return reviews;
+}
+

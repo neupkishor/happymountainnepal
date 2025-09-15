@@ -1,11 +1,12 @@
-import { blogPosts } from "@/lib/data";
+import { getRecentBlogPosts } from "@/lib/db";
 import { BlogCard } from "./BlogCard";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
 
-export function RecentBlogs() {
-  const recentPosts = blogPosts.slice(0, 3);
+export async function RecentBlogs() {
+  const allPosts = await getRecentBlogPosts();
+  const recentPosts = allPosts.slice(0, 3);
 
   return (
     <section className="py-16 lg:py-24 bg-background">

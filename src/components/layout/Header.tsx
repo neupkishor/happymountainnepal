@@ -18,7 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Mountain, Search, User } from "lucide-react";
-import { destinations } from "@/lib/data";
+import { getDestinations } from "@/lib/db";
+import type { Destination } from "@/lib/types";
 
 interface NavLink {
   title: string;
@@ -27,16 +28,8 @@ interface NavLink {
   items?: NavLink[];
 }
 
-const navLinks: NavLink[] = [
+const staticNavLinks: NavLink[] = [
     { href: "/tours", title: "Tours" },
-      {
-    title: "Destinations",
-    items: destinations.map(d => ({
-        title: d.name,
-        href: `/tours?region=${d.name}`,
-        description: d.tourCount > 0 ? `${d.tourCount}+ tours available` : 'Coming soon'
-    }))
-  },
   {
     title: "About",
     items: [
@@ -98,6 +91,21 @@ const getGridCols = (items?: NavLink[]): string => {
 export function Header() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [navLinks, setNavLinks] = React.useState<NavLink[]>(staticNavLinks);
+
+  React.useEffect(() => {
+    getDestinations().then(destinations => {
+      const destinationLink: NavLink = {
+        title: "Destinations",
+        items: destinations.map((d: Destination) => ({
+            title: d.name,
+            href: `/tours?region=${d.name}`,
+            description: d.tourCount > 0 ? `${d.tourCount}+ tours available` : 'Coming soon'
+        }))
+      };
+      setNavLinks([staticNavLinks[0], destinationLink, ...staticNavLinks.slice(1)]);
+    });
+  }, []);
 
   const renderNavLinks = (links: NavLink[], isSubmenu = false) => {
     return links.map(link => {
