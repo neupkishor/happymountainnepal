@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -56,16 +57,16 @@ export function TourNav() {
         <div className="container mx-auto overflow-x-auto">
           <nav className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 py-2">
             {navItems.map(item => (
-              <Link key={item.href} href={item.href} legacyBehavior>
-                <a className={cn(
+              <Link key={item.href} href={item.href}>
+                <span className={cn(
                   "block whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md",
-                  "transition-colors duration-200",
+                  "transition-colors duration-200 cursor-pointer",
                   activeSection === item.href.substring(1) 
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'
                 )}>
                   {item.label}
-                </a>
+                </span>
               </Link>
             ))}
           </nav>
