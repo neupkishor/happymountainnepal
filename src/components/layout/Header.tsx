@@ -79,7 +79,7 @@ function NavLinks() {
          <NavigationMenuItem>
             <NavigationMenuTrigger className={cn((pathname.startsWith('/about') || pathname === '/testimonials') ? 'bg-accent/50' : '')}>About</NavigationMenuTrigger>
             <NavigationMenuContent>
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-[.75fr_1fr] lg:w-[600px] ">
+              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] lg:grid-cols-[.75fr_1fr]">
                 <ListItem href="/about" title="About Us">
                   Learn about our story and mission.
                 </ListItem>
