@@ -23,7 +23,11 @@ export default function ToursPage() {
   });
 
   useEffect(() => {
-    setFilters(f => ({ ...f, region: initialRegion, search: initialSearch, difficulty: '' }));
+    setFilters({
+      search: initialSearch,
+      region: initialRegion,
+      difficulty: '',
+    });
   }, [initialRegion, initialSearch]);
   
 
