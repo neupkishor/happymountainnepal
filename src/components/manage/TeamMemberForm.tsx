@@ -60,10 +60,11 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
           toast({ title: 'Success', description: 'Team member created.' });
         }
       } catch (error) {
+        console.error("Failed to save team member:", error);
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Something went wrong.',
+          description: 'Could not save team member. Please try again.',
         });
       }
     });
