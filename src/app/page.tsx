@@ -5,6 +5,7 @@ import { blogPosts } from "@/lib/data";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { FavoriteDestinations } from "@/components/FavoriteDestinations";
 
 function BlogHighlight() {
   const latestPost = blogPosts[0];
@@ -49,6 +50,7 @@ export default function Home() {
     <>
       <HeroSection />
       <FeaturedTours />
+      <FavoriteDestinations />
       <BlogHighlight />
     </>
   );

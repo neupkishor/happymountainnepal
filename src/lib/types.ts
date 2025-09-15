@@ -44,3 +44,9 @@ export interface TeamMember {
   bio: string;
   image: string;
 }
+
+export interface Destination {
+  name: string;
+  image: string;
+  tourCount: number;
+}

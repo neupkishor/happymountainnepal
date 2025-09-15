@@ -1,4 +1,4 @@
-import type { Tour, BlogPost, TeamMember } from './types';
+import type { Tour, BlogPost, TeamMember, Destination } from './types';
 
 export const tours: Tour[] = [
   {
@@ -185,3 +185,31 @@ export const teamMembers: TeamMember[] = [
         image: 'https://picsum.photos/seed/team-3/400/400',
     },
 ];
+
+export const destinations: Destination[] = [
+  {
+    name: 'Everest',
+    image: 'https://picsum.photos/seed/dest-everest/600/800',
+    tourCount: 1,
+  },
+  {
+    name: 'Annapurna',
+    image: 'https://picsum.photos/seed/dest-annapurna/600/800',
+    tourCount: 2,
+  },
+  {
+    name: 'Manaslu',
+    image: 'https://picsum.photos/seed/dest-manaslu/600/800',
+    tourCount: 0,
+  },
+  {
+    name: 'Langtang',
+    image: 'https://picsum.photos/seed/dest-langtang/600/800',
+    tourCount: 1,
+  },
+  {
+    name: 'Mustang',
+    image: 'https://picsum.photos/seed/dest-mustang/600/800',
+    tourCount: 0,
+  },
+]
