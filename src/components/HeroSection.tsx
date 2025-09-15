@@ -13,14 +13,33 @@ export function HeroSection() {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isSearchActive) {
       const timer = setTimeout(() => {
         searchInputRef.current?.focus();
-      }, 500);
+      }, 100); // Short delay to allow focus
       return () => clearTimeout(timer);
     }
+  }, [isSearchActive]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchActive(false);
+      }
+    }
+
+    if (isSearchActive) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isSearchActive]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -55,34 +74,36 @@ export function HeroSection() {
           Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.
         </p>
 
-        {isSearchActive ? (
-          <form onSubmit={handleSearch} className="flex max-w-lg mx-auto gap-2 animate-fade-in-up">
-            <Input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search for tours, e.g., 'Everest'"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-white/90 text-foreground placeholder:text-muted-foreground flex-grow"
-            />
-            <Button type="submit" size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Search className="h-5 w-5 mr-2" />
-              Search
-            </Button>
-          </form>
-        ) : (
-          <div className="flex gap-4 justify-center animate-fade-in-up">
-            <Link href="/tours">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                Explore Tours
-              </Button>
-            </Link>
-            <Button size="lg" variant="secondary" onClick={handleSearchClick}>
+        <div ref={searchContainerRef}>
+          {isSearchActive ? (
+            <form onSubmit={handleSearch} className="flex max-w-lg mx-auto gap-2 animate-fade-in-up">
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search for tours, e.g., 'Everest'"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-white/90 text-foreground placeholder:text-muted-foreground flex-grow"
+              />
+              <Button type="submit" size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Search className="h-5 w-5 mr-2" />
-                Search for Experience
-            </Button>
-          </div>
-        )}
+                Search
+              </Button>
+            </form>
+          ) : (
+            <div className="flex gap-4 justify-center animate-fade-in-up">
+              <Link href="/tours">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  Explore Tours
+                </Button>
+              </Link>
+              <Button size="lg" variant="secondary" onClick={handleSearchClick}>
+                  <Search className="h-5 w-5 mr-2" />
+                  Search for Experience
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
