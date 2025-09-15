@@ -132,7 +132,7 @@ export function Header() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-lg">
       <div className="container flex h-16 items-center">
         {/* Mobile Header */}
         <div className="flex w-full items-center justify-between md:hidden">
