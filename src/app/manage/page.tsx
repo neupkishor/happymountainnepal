@@ -1,7 +1,7 @@
 
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarHeader, SidebarTrigger, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, User, Bell, Search } from "lucide-react";
+import { LayoutGrid, Mail, User, Bell, Search, Mountain } from "lucide-react";
 import InquiriesList from "./InquiriesList";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
