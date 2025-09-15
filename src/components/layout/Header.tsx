@@ -46,32 +46,34 @@ function NavLinks() {
         <NavigationMenuItem>
             <NavigationMenuTrigger>Destinations</NavigationMenuTrigger>
             <NavigationMenuContent>
-               <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-[.75fr_1fr]">
-                <li className="row-span-3">
-                  <NavigationMenuLink asChild>
-                    <a
-                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                      href="/"
-                    >
-                      <Mountain className="h-6 w-6" />
-                      <div className="mb-2 mt-4 text-lg font-medium">
-                        Happy Mountain Nepal
-                      </div>
-                      <p className="text-sm leading-tight text-muted-foreground">
-                        Your gateway to unforgettable Himalayan adventures.
-                      </p>
-                    </a>
-                  </NavigationMenuLink>
+               <ul className="grid w-[600px] gap-3 p-4 md:grid-cols-3">
+                <li className="space-y-3">
+                  <h4 className="font-medium leading-none text-primary">Nepal</h4>
+                  <ListItem href="/tours?region=Nepal" title="All Nepal Treks">
+                    Explore the heart of the Himalayas.
+                  </ListItem>
+                  <ListItem href="/tours/kathmandu" title="Kathmandu">
+                    The vibrant capital city.
+                  </ListItem>
+                   <ListItem href="/tours/pashupati" title="Pashupatinath">
+                    Sacred Hindu temple complex.
+                  </ListItem>
+                  <ListItem href="/tours/swyambhunath" title="Swayambhunath">
+                    The iconic Monkey Temple.
+                  </ListItem>
                 </li>
-                <ListItem href="/tours?region=Nepal" title="Nepal">
-                  Explore the heart of the Himalayas.
-                </ListItem>
-                <ListItem href="/tours?region=Bhutan" title="Bhutan">
-                  Discover the Land of the Thunder Dragon.
-                </ListItem>
-                <ListItem href="/tours?region=Tibet" title="Tibet">
-                  Journey to the roof of the world.
-                </ListItem>
+                <li className="space-y-3">
+                  <h4 className="font-medium leading-none text-primary">Bhutan</h4>
+                   <ListItem href="/tours?region=Bhutan" title="Whole Country Trip">
+                    Discover the Land of the Thunder Dragon.
+                  </ListItem>
+                </li>
+                 <li className="space-y-3">
+                  <h4 className="font-medium leading-none text-primary">Tibet</h4>
+                   <ListItem href="/tours?region=Tibet" title="Tibet Tours">
+                    Journey to the roof of the world.
+                  </ListItem>
+                </li>
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
@@ -79,7 +81,7 @@ function NavLinks() {
          <NavigationMenuItem>
             <NavigationMenuTrigger className={cn((pathname.startsWith('/about') || pathname === '/testimonials') ? 'bg-accent/50' : '')}>About</NavigationMenuTrigger>
             <NavigationMenuContent>
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] lg:grid-cols-[.75fr_1fr]">
+              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] grid-cols-1">
                 <ListItem href="/about" title="About Us">
                   Learn about our story and mission.
                 </ListItem>
