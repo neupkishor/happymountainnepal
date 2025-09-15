@@ -42,7 +42,7 @@ export function FavoriteDestinations() {
                     src={dest.image}
                     alt={dest.name}
                     width={600}
-                    height={index === 0 ? 800: 400}
+                    height={index === 0 ? 600: 300}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     data-ai-hint={`${dest.name} landscape`}
                   />
