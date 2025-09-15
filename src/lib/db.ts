@@ -3,7 +3,7 @@
 
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import { firestore } from './firebase'; // Your initialized Firebase app
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review } from './types';
 import { notFound, redirect } from "next/navigation";
 import { slugify } from "./utils";
@@ -299,6 +299,19 @@ export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 
         throw new Error("Could not update team member.");
     }
     redirect(`/manage/team`);
+}
+
+export async function deleteTeamMember(id: string) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'teamMembers', id);
+        await deleteDoc(docRef);
+        revalidatePath('/manage/team');
+        revalidatePath('/about/teams');
+    } catch (error) {
+        console.error("Error deleting team member: ", error);
+        throw new Error("Could not delete team member.");
+    }
 }
 
 // Destination Functions

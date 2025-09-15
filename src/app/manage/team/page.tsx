@@ -17,14 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { DeleteTeamMemberDialog } from '@/components/manage/DeleteTeamMemberDialog';
 
 export default async function TeamListPage() {
   const teamMembers = await getTeamMembers();
@@ -84,6 +86,13 @@ export default async function TeamListPage() {
                         <DropdownMenuItem asChild>
                           <Link href={`/manage/team/${member.id}/edit`}>Edit</Link>
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DeleteTeamMemberDialog member={member}>
+                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                             <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DeleteTeamMemberDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
