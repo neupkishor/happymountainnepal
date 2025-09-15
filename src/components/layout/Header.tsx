@@ -133,6 +133,11 @@ function MobileNav() {
       document.body.style.overflow = 'auto';
     };
   }, [isOpen]);
+  
+  // Close menu on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   const allLinks = [
     { title: "Home", href: "/" },
@@ -143,15 +148,16 @@ function MobileNav() {
 
   return (
     <>
-      <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="z-50">
+      <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="z-50 md:hidden">
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         <span className="sr-only">Toggle Menu</span>
       </Button>
 
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-background transition-all duration-500 ease-in-out",
-          isOpen ? "top-0" : "-top-[100vh]"
+          "fixed inset-0 z-40 bg-background/95 backdrop-blur-sm md:hidden",
+          "transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-y-0" : "-translate-y-full"
         )}
       >
         <div className="container h-full pt-20">
@@ -163,10 +169,10 @@ function MobileNav() {
                 onClick={() => setIsOpen(false)}
                 className={cn(
                   "text-3xl font-headline text-muted-foreground transition-all duration-300 hover:text-primary",
-                  isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
+                   isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
                   pathname === link.href ? "text-primary" : ""
                 )}
-                style={{ transitionDelay: `${isOpen ? index * 100 : 0}ms` }}
+                style={{ transitionDelay: `${isOpen ? index * 75 + 100 : 0}ms` }}
               >
                 {link.label ?? link.title}
               </Link>
@@ -186,48 +192,41 @@ export function Header() {
     setIsMounted(true);
   }, []);
 
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* Mobile Header */}
-        <div className="flex w-full items-center justify-between md:hidden">
+        
+        {/* Left side: Logo */}
+        <div className="flex items-center">
           <Link href="/" className="flex items-center gap-2">
             <Mountain className="h-6 w-6 text-primary" />
-            <span className="font-bold font-headline">Happy Mountain</span>
+            <span className="font-bold font-headline hidden sm:inline-block">Happy Mountain Nepal</span>
+             <span className="font-bold font-headline sm:hidden">HMN</span>
           </Link>
-          {isMounted && <MobileNav />}
         </div>
 
-        {/* Desktop Header */}
-        <div className="hidden w-full md:flex md:items-center">
-          <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center gap-2">
-                <Mountain className="h-6 w-6 text-primary" />
-                <span className="font-bold font-headline">Happy Mountain Nepal</span>
+        {/* Center: Desktop Navigation */}
+        <div className="hidden flex-1 justify-center md:flex">
+          <NavLinks />
+        </div>
+
+        {/* Right side: Icons & Mobile Nav */}
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {isMounted && (
+            <>
+              <Link href="/search" passHref>
+                <Button asChild variant="ghost" size="icon" aria-label="Search">
+                    <Search className="h-5 w-5" />
+                </Button>
               </Link>
-          </div>
-
-          <div className="flex-1 flex justify-center">
-            <NavLinks />
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isMounted && (
-              <>
-                <Link href="/search" passHref>
-                  <Button asChild variant="ghost" size="icon" aria-label="Search">
-                      <Search className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/profile" passHref>
-                  <Button asChild variant="ghost" size="icon" aria-label="Profile">
-                      <User className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
+              <Link href="/profile" passHref>
+                <Button asChild variant="ghost" size="icon" aria-label="Profile">
+                    <User className="h-5 w-5" />
+                </Button>
+              </Link>
+              <MobileNav />
+            </>
+          )}
         </div>
       </div>
     </header>
