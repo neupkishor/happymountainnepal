@@ -24,22 +24,29 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   let accountId = request.cookies.get(COOKIE_NAME)?.value;
   const ip = request.ip ?? '127.0.0.1';
+  let isNewAccount = false;
 
-  // If no cookie, create a new account
+  // If no cookie, generate a new accountId
   if (!accountId) {
     accountId = uuidv4();
-    response.cookies.set(COOKIE_NAME, accountId, {
-      httpOnly: true,
-      path: '/',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-    });
-
-    // Fire-and-forget: don't block the request for this
-    createAccountIfNotExists(accountId, ip).catch(console.error);
+    isNewAccount = true;
   }
 
-  // Log page view activity
-  // Fire-and-forget
+  // Ensure account exists in the database.
+  // This is fire-and-forget; we don't block the request for this.
+  createAccountIfNotExists(accountId, ip).catch(console.error);
+
+  // If it was a new account, set the cookie in the response.
+  if (isNewAccount) {
+    response.cookies.set(COOKIE_NAME, accountId, {
+        httpOnly: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365, // 1 year
+    });
+  }
+
+  // Log page view activity for the given accountId.
+  // This is also fire-and-forget.
   logActivity({
     accountId,
     activityName: 'page_view',
