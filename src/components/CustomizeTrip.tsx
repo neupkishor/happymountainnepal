@@ -6,7 +6,7 @@ import Image from 'next/image';
 export function CustomizeTrip() {
   return (
     <section className="bg-secondary">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 py-16 lg:py-24">
           <div className="text-center md:text-left">
             <h2 className="text-3xl md:text-4xl font-bold !font-headline">

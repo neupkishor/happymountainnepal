@@ -9,7 +9,7 @@ export function FavoriteDestinations() {
   return (
     <section className="py-16 lg:py-24 relative overflow-hidden">
       <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      <div className="container mx-auto px-4 relative">
+      <div className="container mx-auto relative">
         <div className="flex flex-col lg:flex-row gap-12 items-center">
           <div className="lg:w-1/3 text-center lg:text-left">
             <h2 className="text-3xl md:text-4xl font-bold !font-headline">

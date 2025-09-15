@@ -5,7 +5,7 @@ import Link from 'next/link';
 export default function TeamsPage() {
   return (
     <div className="bg-background">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold !font-headline">Our Team</h1>
           <p className="mt-4 max-w-3xl mx-auto text-lg text-muted-foreground">

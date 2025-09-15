@@ -36,7 +36,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
           data-ai-hint="travel landscape"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
-        <div className="container mx-auto px-4 h-full flex flex-col justify-end pb-12 relative z-10">
+        <div className="container mx-auto h-full flex flex-col justify-end pb-12 relative z-10">
           <h1 className="text-4xl md:text-6xl font-bold !font-headline text-white">{post.title}</h1>
           <div className="mt-4 flex items-center gap-4 text-white/90">
             <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto py-12">
         <div className="max-w-3xl mx-auto">
           <div 
             className="prose prose-lg max-w-none text-foreground prose-headings:text-foreground prose-h3:font-headline prose-h3:text-2xl prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-ul:list-disc prose-ul:ml-6"

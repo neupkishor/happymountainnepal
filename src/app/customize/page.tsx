@@ -156,7 +156,7 @@ export default function CustomizePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto py-16">
       <div className="max-w-2xl w-full">
         <div className="text-left mb-8">
           <Wand2 className="h-12 w-12 text-primary" />

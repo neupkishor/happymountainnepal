@@ -53,7 +53,7 @@ export function TourNav() {
       isSticky ? 'sticky top-16 shadow-md' : 'relative'
     )}>
       <div className="bg-secondary/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 overflow-x-auto">
+        <div className="container mx-auto overflow-x-auto">
           <nav className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 py-2">
             {navItems.map(item => (
               <Link key={item.href} href={item.href} legacyBehavior>

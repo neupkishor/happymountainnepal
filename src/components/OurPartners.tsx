@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export function OurPartners() {
   return (
     <section className="py-16 lg:py-24 bg-background">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Partners & Affiliations</h2>
           <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">

@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const userName = "Alex Doe"; // Placeholder name
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto py-12">
       <div className="mb-12">
         <div className="flex flex-col items-center text-center gap-4">
             <Avatar className="h-24 w-24">
