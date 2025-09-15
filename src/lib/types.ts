@@ -39,6 +39,7 @@ export interface BlogPost {
 
 export interface TeamMember {
   id: string;
+  slug: string;
   name: string;
   role: string;
   bio: string;

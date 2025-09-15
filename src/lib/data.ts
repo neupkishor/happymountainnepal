@@ -1,4 +1,5 @@
 import type { Tour, BlogPost, TeamMember, Destination } from './types';
+import { slugify } from './utils';
 
 export const tours: Tour[] = [
   {
@@ -165,6 +166,7 @@ export const blogPosts: BlogPost[] = [
 export const teamMembers: TeamMember[] = [
     {
         id: '1',
+        slug: slugify('Resham Rijal (Ray)'),
         name: 'Resham Rijal (Ray)',
         role: 'Founder, Leader, Planner & Host',
         bio: "Resham's (Ray) journey through the rugged trails and majestic peaks of the Nepali mountains is a testament to his enduring passion for adventure.",
@@ -172,6 +174,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '2',
+        slug: slugify('Sanjaya Nepal'),
         name: 'Sanjaya Nepal',
         role: 'Co-founder',
         bio: 'Sanjaya Nepal, co-founder of Happy Mountain Nepal, brings a wealth of experience from diverse fields including trekking, tourism, and photography.',
@@ -179,6 +182,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '3',
+        slug: slugify('Laxmi Nepal'),
         name: 'Laxmi Nepal',
         role: 'General Manager',
         bio: 'General Manager of Happy Mountain Nepal Pvt Ltd, epitomizes hard work, dedication, and a wealth of experience in managing tourism institutions.',
@@ -186,6 +190,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '4',
+        slug: slugify('Sarala Pokharel'),
         name: 'Sarala Pokharel',
         role: 'Accountant',
         bio: 'Sarala Pokharel, hailing from the lap of Gaurishankar Mountain near Mt. Everest, brings a unique perspective to her role as an Accountant.',
@@ -193,6 +198,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '5',
+        slug: slugify('Pravin Baniya (Prav)'),
         name: 'Pravin Baniya (Prav)',
         role: 'Tour Leader',
         bio: 'Pravin is an exceptionally experienced tour (City) guide renowned for his profound understanding of Nepali culture, history, art, and architecture.',
@@ -200,6 +206,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '6',
+        slug: slugify('Santosh Rijal'),
         name: 'Santosh Rijal',
         role: 'Chinese/English Guide',
         bio: 'Santosh Rijal distinguishes himself as a seasoned trekking guide fluent in both English and Chinese, boasting over eight years of mountain experience.',
@@ -207,6 +214,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '7',
+        slug: slugify('Ashok Ghale'),
         name: 'Ashok Ghale',
         role: 'Trekking Leader',
         bio: "Ashok, a native of Dhading, embodies youthful energy and enthusiasm deeply rooted in his upbringing amidst Nepal's mountains.",
@@ -214,6 +222,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '8',
+        slug: slugify('Hari Adhikari'),
         name: 'Hari Adhikari',
         role: 'Trekking Leader',
         bio: 'Mr. Hari is a seasoned trekking guide with over two decades of experience navigating the mighty Himalayas, earning accolades for his exceptional service.',
@@ -221,6 +230,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '9',
+        slug: slugify('Muktinath Nepal'),
         name: 'Muktinath Nepal',
         role: 'Trekking Leader',
         bio: 'Muktinath Nepal brings a wealth of knowledge about the mountains, culture and people of Nepal to his role as a Trekking Guide.',
@@ -228,6 +238,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '10',
+        slug: slugify('Gokarna Thapa'),
         name: 'Gokarna Thapa',
         role: 'Trekking Leader',
         bio: 'Since 2012, Mr. Gokarna Thapa has built a trusted reputation as a government-licensed trekking guide, fluent in English and Nepali.',
@@ -235,6 +246,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '11',
+        slug: slugify('Danielle Cameron & Tony Gerasimou'),
         name: 'Danielle Cameron & Tony Gerasimou',
         role: 'Australia Representative',
         bio: 'Yogi, Yoga Instructor, and our official representatives for Australia, bringing a holistic approach to travel and wellness.',
@@ -242,6 +254,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '12',
+        slug: slugify('David John Keegan'),
         name: 'David John Keegan',
         role: 'UK Representative',
         bio: 'Our valued representative in the United Kingdom, helping adventurers from the UK plan their perfect Himalayan journey.',
@@ -249,6 +262,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '13',
+        slug: slugify('Puja Rijal'),
         name: 'Puja Rijal',
         role: 'USA Representative',
         bio: 'Puja is a passionate travel enthusiast known for her extensive journeys through the majestic Himalayas of Nepal.',
@@ -256,6 +270,7 @@ export const teamMembers: TeamMember[] = [
     },
     {
         id: '14',
+        slug: slugify('Tika Ram Rijal'),
         name: 'Tika Ram Rijal',
         role: 'Canada Representative',
         bio: 'Tika Ram is a passionate travel enthusiast who has explored various parts of the world. He currently serves as the Canada Representative.',
