@@ -1,9 +1,11 @@
+
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft, Mountain } from "lucide-react"
+import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -130,27 +132,25 @@ const SidebarProvider = React.forwardRef<
     )
 
     return (
-      <SidebarContext.Provider value={contextValue}>
-        <TooltipProvider delayDuration={0}>
-          <div
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH,
-                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-                ...style,
-              } as React.CSSProperties
-            }
-            className={cn(
-              "group/sidebar-wrapper",
-              className
-            )}
-            ref={ref}
-            {...props}
-          >
-            {children}
-          </div>
-        </TooltipProvider>
-      </SidebarContext.Provider>
+      <TooltipProvider delayDuration={0}>
+        <div
+          style={
+            {
+              "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+              ...style,
+            } as React.CSSProperties
+          }
+          className={cn(
+            "group/sidebar-wrapper",
+            className
+          )}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </div>
+      </TooltipProvider>
     )
   }
 )
@@ -215,7 +215,7 @@ const Sidebar = React.forwardRef<
     return (
       <aside
         ref={ref}
-        className={cn("group peer hidden md:block text-card-foreground", className)}
+        className={cn("group peer text-card-foreground", className)}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
@@ -509,6 +509,7 @@ const SidebarMenuButton = React.forwardRef<
     asChild?: boolean
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    href?: string;
   } & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
@@ -519,14 +520,15 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
+      href,
       ...props
     },
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
-
-    const button = (
+    
+    const buttonContent = (
       <Comp
         ref={ref}
         data-sidebar="menu-button"
@@ -535,7 +537,9 @@ const SidebarMenuButton = React.forwardRef<
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       />
-    )
+    );
+
+    const button = href ? <Link href={href} passHref legacyBehavior>{buttonContent}</Link> : buttonContent;
 
     if (!tooltip) {
       return button
