@@ -17,10 +17,10 @@ const ConversationPartSchema = z.object({
   text: z.string(),
 });
 
-export const CustomizeTripInputSchema = z.array(ConversationPartSchema);
+const CustomizeTripInputSchema = z.array(ConversationPartSchema);
 export type CustomizeTripInput = z.infer<typeof CustomizeTripInputSchema>;
 
-export const CustomizeTripOutputSchema = z.object({
+const CustomizeTripOutputSchema = z.object({
   nextQuestion: z.string().describe('The next question for the user.'),
   isFinished: z
     .boolean()
