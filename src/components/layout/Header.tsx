@@ -15,7 +15,6 @@ const navLinks = [
   { href: '/blog', label: 'Blog' },
   { href: '/about', label: 'About Us' },
   { href: '/contact', label: 'Contact' },
-  { href: '/tools/image-optimizer', label: 'AI Tools', icon: Wrench },
 ];
 
 function NavLinks() {
@@ -93,21 +92,23 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <div className="mr-auto flex items-center gap-4">
+        <div className="flex items-center gap-4">
           <div className="md:hidden">
             {isMounted && <MobileNav />}
           </div>
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="items-center gap-2 hidden md:flex">
             <Mountain className="h-6 w-6 text-primary" />
             <span className="hidden font-bold sm:inline-block font-headline">Happy Mountain Nepal</span>
           </Link>
         </div>
 
-        <div className="hidden md:flex">
-          <NavLinks />
+        <div className="flex-1 flex justify-center">
+           <div className="hidden md:flex">
+             <NavLinks />
+           </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {isMounted && (
             <Link href="/wishlist" passHref>
               <Button variant="ghost" size="icon" aria-label="Wishlist" className="relative">
