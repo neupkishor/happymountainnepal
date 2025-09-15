@@ -20,9 +20,8 @@ import {
   customizeTrip,
   CustomizeTripInput,
 } from '@/ai/flows/customize-trip-flow';
-import { Loader2, ArrowRight, Wand2, Mail, Check, Phone, User } from 'lucide-react';
+import { Loader2, ArrowRight, Wand2, Check, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const formSchema = z.object({
   conversation: z.array(
@@ -157,10 +156,10 @@ export default function CustomizePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[80vh]">
+    <div className="container mx-auto px-4 py-16">
       <div className="max-w-2xl w-full">
-        <div className="text-center mb-8">
-          <Wand2 className="mx-auto h-12 w-12 text-primary" />
+        <div className="text-left mb-8">
+          <Wand2 className="h-12 w-12 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold !font-headline mt-4">
             Create Your Dream Trip
           </h1>
@@ -169,11 +168,10 @@ export default function CustomizePage() {
           </p>
         </div>
 
-        <Card className="overflow-hidden">
         <FormProvider {...form}>
          <form 
             onSubmit={form.handleSubmit(isInitialStep ? handleInitialSubmit : (isFinished ? handleFinalSubmit : handleAiSubmit))} 
-            className="p-6 md:p-8"
+            className="space-y-6"
         >
             {isInitialStep ? (
                 <div className="space-y-6">
@@ -220,7 +218,7 @@ export default function CustomizePage() {
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" size="lg" disabled={isLoading} className="w-full">
+                    <Button type="submit" size="lg" disabled={isLoading} className="w-full sm:w-auto">
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Start Customization'}
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -231,7 +229,7 @@ export default function CustomizePage() {
                      <h2 className="text-2xl font-bold !font-headline">All Set!</h2>
                     <p className="text-muted-foreground">{currentQuestion.text}</p>
                     <p className="text-sm text-muted-foreground">Our team will review your responses and get back to you shortly with a personalized plan.</p>
-                    <Button type="submit" className="w-full" onClick={() => handleFinalSubmit(form.getValues())}>
+                    <Button type="submit" className="w-full sm:w-auto" onClick={() => handleFinalSubmit(form.getValues())}>
                         Finish
                     </Button>
                  </div>
@@ -264,7 +262,7 @@ export default function CustomizePage() {
                     )}
                     />
                     <div className='flex items-center gap-4'>
-                        <Button type="submit" size="lg" disabled={isLoading}>
+                        <Button type="submit" size="lg" disabled={isLoading} className="w-full sm:w-auto">
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Proceed'}
                             <Check className="ml-2 h-4 w-4" />
                         </Button>
@@ -281,7 +279,6 @@ export default function CustomizePage() {
             )}
             </form>
         </FormProvider>
-        </Card>
       </div>
     </div>
   );
