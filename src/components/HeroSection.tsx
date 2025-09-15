@@ -3,15 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { useSearch } from '@/context/SearchContext';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 
 export function HeroSection() {
-  const { isSearchActive, setIsSearchActive } = useSearch();
   const router = useRouter();
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,6 +29,11 @@ export function HeroSection() {
       router.push(`/tours?search=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchActive(false); // Reset search state after search
     }
+  };
+
+  const handleSearchClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsSearchActive(true);
   };
 
   return (
@@ -73,11 +77,10 @@ export function HeroSection() {
                 Explore Tours
               </Button>
             </Link>
-            <Link href="/contact">
-              <Button size="lg" variant="secondary">
-                Plan a Custom Trip
-              </Button>
-            </Link>
+            <Button size="lg" variant="secondary" onClick={handleSearchClick}>
+                <Search className="h-5 w-5 mr-2" />
+                Search for Experience
+            </Button>
           </div>
         )}
       </div>
