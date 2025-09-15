@@ -15,6 +15,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  ListItem
+} from "@/components/ui/navigation-menu";
 
 
 const mainNavLinks = [
@@ -24,60 +33,97 @@ const mainNavLinks = [
   { href: '/contact', label: 'Contact' },
 ];
 
-const aboutSubLinks = [
-    { href: '/about/teams', label: 'Our Team' },
-    { href: '/testimonials', label: 'Testimonials' },
-]
-
 function NavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-4 md:gap-6">
-       <Link
-          href="/tours"
-          className={cn(
-            'text-sm font-medium transition-colors hover:text-primary',
-            pathname === "/tours" ? 'text-primary' : 'text-foreground/80'
-          )}
-        >
-          Tours
-        </Link>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-            <button className={cn(
-            'text-sm font-medium transition-colors hover:text-primary flex items-center gap-1',
-            (pathname.startsWith('/about') || pathname === '/testimonials') ? 'text-primary' : 'text-foreground/80'
-          )}>
-                About
-            </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem asChild><Link href="/about">About Us</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/about/teams">Our Team</Link></DropdownMenuItem>
-          <DropdownMenuItem asChild><Link href="/testimonials">Testimonials</Link></DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <NavigationMenu>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <Link href="/tours" legacyBehavior passHref>
+            <NavigationMenuLink className={cn(
+              'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
+              pathname === "/tours" ? 'bg-accent/50' : ''
+            )}>
+              Tours
+            </NavigationMenuLink>
+          </Link>
+        </NavigationMenuItem>
+        
+        <NavigationMenuItem>
+            <NavigationMenuTrigger>Destinations</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                <li className="row-span-3">
+                  <NavigationMenuLink asChild>
+                    <a
+                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                      href="/"
+                    >
+                      <Mountain className="h-6 w-6" />
+                      <div className="mb-2 mt-4 text-lg font-medium">
+                        Happy Mountain Nepal
+                      </div>
+                      <p className="text-sm leading-tight text-muted-foreground">
+                        Your gateway to Himalayan adventures.
+                      </p>
+                    </a>
+                  </NavigationMenuLink>
+                </li>
+                <ListItem href="/tours?region=Nepal" title="Nepal">
+                  Explore the heart of the Himalayas.
+                </ListItem>
+                 <ListItem href="/tours?region=Bhutan" title="Bhutan">
+                  Discover the Land of the Thunder Dragon.
+                </ListItem>
+                 <ListItem href="/tours?region=Tibet" title="Tibet">
+                  Journey to the roof of the world.
+                </ListItem>
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
 
-      <Link
-          href="/blog"
-          className={cn(
-            'text-sm font-medium transition-colors hover:text-primary',
-            pathname.startsWith('/blog') ? 'text-primary' : 'text-foreground/80'
-          )}
-        >
-          Blog
-      </Link>
-      <Link
-          href="/contact"
-          className={cn(
-            'text-sm font-medium transition-colors hover:text-primary',
-            pathname === "/contact" ? 'text-primary' : 'text-foreground/80'
-          )}
-        >
-          Contact
-      </Link>
-    </nav>
+         <NavigationMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button className={cn(
+                'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
+                (pathname.startsWith('/about') || pathname === '/testimonials') ? 'bg-accent/50' : ''
+              )}>
+                    About
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild><Link href="/about">About Us</Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/about/teams">Our Team</Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/testimonials">Testimonials</Link></DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+           <Link href="/blog" legacyBehavior passHref>
+             <NavigationMenuLink className={cn(
+              'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
+              pathname.startsWith('/blog') ? 'bg-accent/50' : ''
+            )}>
+              Blog
+            </NavigationMenuLink>
+          </Link>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <Link href="/contact" legacyBehavior passHref>
+            <NavigationMenuLink className={cn(
+              'group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50',
+              pathname === "/contact" ? 'bg-accent/50' : ''
+            )}>
+              Contact
+            </NavigationMenuLink>
+          </Link>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 }
 
@@ -132,7 +178,7 @@ export function Header() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-card shadow-lg">
+    <header className="sticky top-0 z-50 w-full border-b bg-background shadow-lg">
       <div className="container flex h-16 items-center">
         {/* Mobile Header */}
         <div className="flex w-full items-center justify-between md:hidden">
