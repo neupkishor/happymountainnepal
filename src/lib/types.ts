@@ -1,3 +1,5 @@
+import type { Timestamp } from "firebase/firestore";
+
 export interface Tour {
   id: string;
   slug: string;
@@ -57,4 +59,20 @@ export interface Partner {
   name: string;
   logo: string;
   description: string;
+}
+
+export interface Account {
+  id: string;
+  ipAddress: string;
+  createdAt: Timestamp;
+}
+
+export interface Activity {
+  id: string;
+  accountId: string;
+  activityName: string;
+  activityInfo: Record<string, any>;
+  fromIp: string;
+  fromLocation?: string; // This would typically require an external service
+  activityTime: Timestamp;
 }

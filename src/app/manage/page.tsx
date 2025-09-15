@@ -1,7 +1,7 @@
 
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarHeader, SidebarTrigger, SidebarGroupLabel } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, User, Bell, Search, Mountain } from "lucide-react";
+import { LayoutGrid, Mail, User, Bell, Search, Mountain, Users } from "lucide-react";
 import InquiriesList from "./InquiriesList";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,15 +37,21 @@ export default function ManagePage() {
                             <SidebarGroupLabel>Management</SidebarGroupLabel>
                             <SidebarMenu>
                                 <SidebarMenuItem>
-                                    <SidebarMenuButton href="#" isActive tooltip="Dashboard">
+                                    <SidebarMenuButton href="/manage" isActive tooltip="Dashboard">
                                         <LayoutGrid />
                                         <span>Dashboard</span>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                                 <SidebarMenuItem>
-                                    <SidebarMenuButton href="#" tooltip="Inquiries">
+                                    <SidebarMenuButton href="/manage/inquiries" tooltip="Inquiries">
                                         <Mail />
                                         <span>Inquiries</span>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                                 <SidebarMenuItem>
+                                    <SidebarMenuButton href="/manage/accounts" tooltip="Users">
+                                        <Users />
+                                        <span>Users</span>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             </SidebarMenu>
