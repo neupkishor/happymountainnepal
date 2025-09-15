@@ -1,10 +1,10 @@
+
 "use client";
 
 import Link from 'next/link';
-import { Mountain, Menu, User, Search } from 'lucide-react';
+import { Mountain, Menu, User, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
@@ -21,8 +21,8 @@ import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 
 const mainNavLinks = [
   { href: '/tours', label: 'Tours' },
-  { href: '/blog', label: 'Blog' },
   { href: '/about', label: 'About Us' },
+  { href: '/blog', label: 'Blog' },
   { href: '/contact', label: 'Contact' },
 ];
 
@@ -123,40 +123,58 @@ function MobileNav() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
+  const allLinks = [
+    { title: "Home", href: "/" },
+    ...mainNavLinks,
+    { title: "Profile", href: "/profile" },
+    { title: "Search", href: "/search" },
+  ];
+
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Menu className="h-6 w-6" />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left">
-        <nav className="grid gap-6 text-lg font-medium">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-lg font-semibold"
-            onClick={() => setIsOpen(false)}
-          >
-            <Mountain className="h-6 w-6 text-primary" />
-            <span className="font-headline">Happy Mountain</span>
-          </Link>
-          {mainNavLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setIsOpen(false)}
-              className={cn(
-                "flex items-center gap-4 transition-colors hover:text-primary",
-                pathname.startsWith(link.href) ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </SheetContent>
-    </Sheet>
+    <>
+      <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="z-50">
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        <span className="sr-only">Toggle Menu</span>
+      </Button>
+
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-background transition-all duration-500 ease-in-out",
+          isOpen ? "top-0" : "-top-[100vh]"
+        )}
+      >
+        <div className="container h-full pt-20">
+          <nav className="flex flex-col h-full items-center justify-center gap-6">
+            {allLinks.map((link, index) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className={cn(
+                  "text-3xl font-headline text-muted-foreground transition-all duration-300 hover:text-primary",
+                  isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
+                  pathname === link.href ? "text-primary" : ""
+                )}
+                style={{ transitionDelay: `${isOpen ? index * 100 : 0}ms` }}
+              >
+                {link.label ?? link.title}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -215,5 +233,3 @@ export function Header() {
     </header>
   );
 }
-
-    
