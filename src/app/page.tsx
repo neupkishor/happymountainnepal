@@ -5,12 +5,14 @@ import { WhyUs } from "@/components/WhyUs";
 import { Testimonials } from "@/components/Testimonials";
 import { RecentBlogs } from "@/components/RecentBlogs";
 import { CustomizeTrip } from "@/components/CustomizeTrip";
+import { FavoriteDestinations } from "@/components/FavoriteDestinations";
 
 export default function Home() {
   return (
     <>
       <HeroSection />
       <FeaturedTours />
+      <FavoriteDestinations />
       <PopularPackages />
       <WhyUs />
       <Testimonials />
