@@ -91,6 +91,16 @@ export default function CustomizePage() {
         setIsLoading(false);
     }
   }
+  
+  const onSubmit = async (values: FormValues) => {
+    if (isInitialStep) {
+        await handleInitialSubmit(values);
+    } else if (isFinished) {
+        await handleFinalSubmit(values);
+    } else {
+        await handleAiSubmit();
+    }
+  }
 
   const handleAiSubmit = async () => {
     // Manually trigger validation for currentUserInput
@@ -170,7 +180,7 @@ export default function CustomizePage() {
 
         <FormProvider {...form}>
          <form 
-            onSubmit={form.handleSubmit(isInitialStep ? handleInitialSubmit : (isFinished ? handleFinalSubmit : handleAiSubmit))} 
+            onSubmit={form.handleSubmit(onSubmit)} 
             className="space-y-6"
         >
             {isInitialStep ? (
@@ -230,7 +240,7 @@ export default function CustomizePage() {
                      <h2 className="text-2xl font-bold !font-headline">All Set!</h2>
                     <p className="text-muted-foreground">{currentQuestion.text}</p>
                     <p className="text-sm text-muted-foreground">Our team will review your responses and get back to you with a personalized plan.</p>
-                    <Button type="submit" className="w-full sm:w-auto" onClick={() => handleFinalSubmit(form.getValues())}>
+                    <Button type="submit" className="w-full sm:w-auto">
                         Finish
                     </Button>
                  </div>
