@@ -34,7 +34,7 @@ function NavLinks() {
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <Link href="/tours" passHref asChild>
+          <Link href="/tours" legacyBehavior passHref>
             <NavigationMenuLink className={cn(
               navigationMenuTriggerStyle(),
               pathname === "/tours" ? 'bg-accent/50' : ''
@@ -97,7 +97,7 @@ function NavLinks() {
           </NavigationMenuItem>
 
         <NavigationMenuItem>
-           <Link href="/blog" passHref asChild>
+           <Link href="/blog" legacyBehavior passHref>
              <NavigationMenuLink className={cn(
               navigationMenuTriggerStyle(),
               pathname.startsWith('/blog') ? 'bg-accent/50' : ''
@@ -108,7 +108,7 @@ function NavLinks() {
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link href="/contact" passHref asChild>
+          <Link href="/contact" legacyBehavior passHref>
             <NavigationMenuLink className={cn(
               navigationMenuTriggerStyle(),
               pathname === "/contact" ? 'bg-accent/50' : ''
