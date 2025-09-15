@@ -76,20 +76,24 @@ export function HeroSection() {
 
         <div ref={searchContainerRef}>
           {isSearchActive ? (
-            <form onSubmit={handleSearch} className="flex max-w-lg mx-auto gap-2 animate-fade-in-up">
-              <Input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search for tours, e.g., 'Everest'"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-white/90 text-foreground placeholder:text-muted-foreground flex-grow"
-              />
-              <Button type="submit" size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Search className="h-5 w-5 mr-2" />
-                Search
-              </Button>
-            </form>
+            <form onSubmit={handleSearch} className="max-w-lg mx-auto animate-fade-in-up relative">
+            <Input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search for tours, e.g., 'Everest'"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white/90 text-foreground placeholder:text-muted-foreground w-full rounded-full py-6 pl-6 pr-16 border-2 border-primary/50 focus:border-primary focus:ring-primary/20 focus:ring-4 transition-all"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Search className="h-5 w-5" />
+              <span className="sr-only">Search</span>
+            </Button>
+          </form>
           ) : (
             <div className="flex gap-4 justify-center animate-fade-in-up">
               <Link href="/tours">
