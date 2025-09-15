@@ -46,26 +46,15 @@ function NavLinks() {
         <NavigationMenuItem>
             <NavigationMenuTrigger>Destinations</NavigationMenuTrigger>
             <NavigationMenuContent>
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                <li className="row-span-3">
-                  <NavigationMenuLink asChild>
-                    <a
-                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                      href="/"
-                    >
-                      <Mountain className="h-6 w-6" />
-                      <div className="mb-2 mt-4 text-lg font-medium">
-                        Happy Mountain Nepal
-                      </div>
-                      <p className="text-sm leading-tight text-muted-foreground">
-                        Your gateway to Himalayan adventures.
-                      </p>
-                    </a>
-                  </NavigationMenuLink>
-                </li>
-                <ListItem href="/tours?region=Nepal" title="Nepal">
-                  Explore the heart of the Himalayas.
-                </ListItem>
+               <ul className="grid grid-cols-3 gap-3 p-4 md:w-[600px] lg:w-[700px]">
+                <div className='flex flex-col'>
+                    <ListItem href="/tours?region=Nepal" title="Nepal">
+                        Explore the heart of the Himalayas.
+                    </ListItem>
+                    <Link href="/tours?region=Nepal&subregion=kathmandu" className='text-sm p-3 hover:bg-accent rounded-md'>Kathmandu</Link>
+                    <Link href="/tours?region=Nepal&subregion=pashupati" className='text-sm p-3 hover:bg-accent rounded-md'>Pashupati</Link>
+                    <Link href="/tours?region=Nepal&subregion=swyambhunath" className='text-sm p-3 hover:bg-accent rounded-md'>Swyambhunath</Link>
+                </div>
                  <ListItem href="/tours?region=Bhutan" title="Bhutan">
                   Discover the Land of the Thunder Dragon.
                 </ListItem>
