@@ -2,7 +2,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
@@ -36,7 +36,7 @@ export default function ManageLayout({
           </header>
           <div className="flex">
               <Sidebar className="w-64 border-r hidden md:block">
-                  <SidebarContent className="p-4">
+                  <SidebarContent className="p-4 flex flex-col justify-between h-full">
                       <SidebarGroup>
                           <SidebarGroupLabel>Management</SidebarGroupLabel>
                           <SidebarMenu>
@@ -58,6 +58,16 @@ export default function ManageLayout({
                                       <span>Users</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
+                          </SidebarMenu>
+                      </SidebarGroup>
+                      <SidebarGroup>
+                          <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton href="/" variant="ghost">
+                                    <ArrowLeft />
+                                    <span>Back to Site</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
                           </SidebarMenu>
                       </SidebarGroup>
                   </SidebarContent>
