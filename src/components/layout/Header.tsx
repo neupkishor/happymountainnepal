@@ -34,7 +34,7 @@ function NavLinks() {
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <Link href="/tours" passHref asChild>
+          <Link href="/tours" passHref legacyBehavior>
             <NavigationMenuLink className={cn(
               navigationMenuTriggerStyle(),
               pathname === "/tours" ? 'bg-accent/50' : ''
@@ -50,30 +50,40 @@ function NavLinks() {
                <ul className="grid w-[600px] gap-3 p-4 md:grid-cols-3">
                 <li className="space-y-3">
                   <h4 className="font-medium leading-none text-primary">Nepal</h4>
-                  <ListItem href="/tours?region=Nepal" title="All Nepal Treks">
-                    Explore the heart of the Himalayas.
+                  <ListItem href="/tours?region=Everest" title="Everest Region">
+                    Home to the world's highest peak.
                   </ListItem>
-                  <ListItem href="/tours/kathmandu" title="Kathmandu">
-                    The vibrant capital city.
+                  <ListItem href="/tours?region=Annapurna" title="Annapurna Region">
+                    Classic treks with diverse landscapes.
                   </ListItem>
-                   <ListItem href="/tours/pashupati" title="Pashupatinath">
-                    Sacred Hindu temple complex.
-                  </ListItem>
-                  <ListItem href="/tours/swyambhunath" title="Swayambhunath">
-                    The iconic Monkey Temple.
+                  <ListItem href="/tours?region=Langtang" title="Langtang Valley">
+                    The valley of glaciers, close to Kathmandu.
                   </ListItem>
                 </li>
                 <li className="space-y-3">
-                  <h4 className="font-medium leading-none text-primary">Bhutan</h4>
-                   <ListItem href="/tours?region=Bhutan" title="Whole Country Trip">
+                  <h4 className="font-medium leading-none text-primary">Cross-Border</h4>
+                   <ListItem href="/tours?region=Bhutan" title="Bhutan Tours">
                     Discover the Land of the Thunder Dragon.
                   </ListItem>
-                </li>
-                 <li className="space-y-3">
-                  <h4 className="font-medium leading-none text-primary">Tibet</h4>
                    <ListItem href="/tours?region=Tibet" title="Tibet Tours">
                     Journey to the roof of the world.
                   </ListItem>
+                </li>
+                 <li className="row-span-3">
+                  <NavigationMenuLink asChild>
+                    <Link
+                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                      href="/tours"
+                    >
+                      <Mountain className="h-6 w-6" />
+                      <div className="mb-2 mt-4 text-lg font-medium">
+                        All Treks & Tours
+                      </div>
+                      <p className="text-sm leading-tight text-muted-foreground">
+                        Browse our complete collection of Himalayan adventures.
+                      </p>
+                    </Link>
+                  </NavigationMenuLink>
                 </li>
               </ul>
             </NavigationMenuContent>
@@ -97,7 +107,7 @@ function NavLinks() {
           </NavigationMenuItem>
 
         <NavigationMenuItem>
-           <Link href="/blog" passHref asChild>
+           <Link href="/blog" passHref legacyBehavior>
              <NavigationMenuLink className={cn(
               navigationMenuTriggerStyle(),
               pathname.startsWith('/blog') ? 'bg-accent/50' : ''
@@ -108,7 +118,7 @@ function NavLinks() {
         </NavigationMenuItem>
 
         <NavigationMenuItem>
-          <Link href="/contact" passHref asChild>
+          <Link href="/contact" passHref legacyBehavior>
             <NavigationMenuLink className={cn(
               navigationMenuTriggerStyle(),
               pathname === "/contact" ? 'bg-accent/50' : ''
@@ -196,7 +206,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         
         {/* Left side: Logo */}
