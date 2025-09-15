@@ -7,9 +7,9 @@ export function OurPartners() {
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Valued Partners</h2>
+          <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Partners & Affiliations</h2>
           <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-            We are proud to be associated with leading organizations and publications in the travel and adventure industry.
+            We are proud to be associated with leading organizations in the tourism industry and government bodies, ensuring the highest standards of service and credibility.
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">

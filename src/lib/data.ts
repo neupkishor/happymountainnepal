@@ -309,9 +309,9 @@ export const destinations: Destination[] = [
 export const partners: Partner[] = [
   {
     id: '1',
-    name: 'Adventure Weekly',
-    logo: 'https://picsum.photos/seed/partner-1/200/100',
-    description: 'Featured as a top adventure travel destination for 2024.'
+    name: 'Nepal Tourism Board',
+    logo: 'https://picsum.photos/seed/partner-ntb/200/100',
+    description: 'Recognized by the official tourism body of Nepal.'
   },
   {
     id: '2',
@@ -327,8 +327,8 @@ export const partners: Partner[] = [
   },
   {
     id: '4',
-    name: 'Travelers Choice',
-    logo: 'https://picsum.photos/seed/partner-4/200/100',
-    description: 'Winner of the 2023 Excellence in Service award.'
+    name: 'TAAN',
+    logo: 'https://picsum.photos/seed/partner-taan/200/100',
+    description: "Member of Trekking Agencies' Association of Nepal."
   }
 ];
