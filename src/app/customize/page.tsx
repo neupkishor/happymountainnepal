@@ -210,14 +210,16 @@ export default function CustomizePage() {
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Proceed'}
                             <Check className="ml-2 h-4 w-4" />
                         </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={handleSkip}
-                            disabled={isLoading}
-                        >
-                            Skip
-                        </Button>
+                        {questionNumber > 1 && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={handleSkip}
+                                disabled={isLoading}
+                            >
+                                Skip
+                            </Button>
+                        )}
                     </div>
                 </div>
             )}
