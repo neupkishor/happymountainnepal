@@ -14,9 +14,7 @@ export default function ManagePage() {
                      <h2 className="text-xl font-bold !font-headline group-data-[collapsible=icon]:hidden">
                         Admin Panel
                     </h2>
-                    <SidebarTrigger asChild>
-                        <Button variant="ghost" size="icon" />
-                    </SidebarTrigger>
+                    <SidebarTrigger variant="ghost" size="icon" />
                 </div>
             </SidebarHeader>
             <SidebarContent>
