@@ -1,4 +1,4 @@
-import type { Tour, BlogPost, TeamMember, Destination } from './types';
+import type { Tour, BlogPost, TeamMember, Destination, Partner } from './types';
 import { slugify } from './utils';
 
 export const tours: Tour[] = [
@@ -304,4 +304,31 @@ export const destinations: Destination[] = [
     image: 'https://picsum.photos/seed/dest-mustang/600/800',
     tourCount: 0,
   },
-]
+];
+
+export const partners: Partner[] = [
+  {
+    id: '1',
+    name: 'Adventure Weekly',
+    logo: 'https://picsum.photos/seed/partner-1/200/100',
+    description: 'Featured as a top adventure travel destination for 2024.'
+  },
+  {
+    id: '2',
+    name: 'Trek Magazine',
+    logo: 'https://picsum.photos/seed/partner-2/200/100',
+    description: 'Recognized for our commitment to sustainable tourism.'
+  },
+  {
+    id: '3',
+    name: 'Himalayan Trust',
+    logo: 'https://picsum.photos/seed/partner-3/200/100',
+    description: 'In partnership to support local communities and conservation.'
+  },
+  {
+    id: '4',
+    name: 'Travelers Choice',
+    logo: 'https://picsum.photos/seed/partner-4/200/100',
+    description: 'Winner of the 2023 Excellence in Service award.'
+  }
+];

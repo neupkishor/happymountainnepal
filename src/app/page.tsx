@@ -6,6 +6,7 @@ import { Testimonials } from "@/components/Testimonials";
 import { RecentBlogs } from "@/components/RecentBlogs";
 import { CustomizeTrip } from "@/components/CustomizeTrip";
 import { FavoriteDestinations } from "@/components/FavoriteDestinations";
+import { OurPartners } from "@/components/OurPartners";
 
 export default function Home() {
   return (
@@ -15,13 +16,16 @@ export default function Home() {
         <FavoriteDestinations />
       </div>
       <FeaturedTours />
-      <PopularPackages />
       <div className="bg-secondary">
-        <WhyUs />
+        <PopularPackages />
       </div>
-      <Testimonials />
+      <WhyUs />
       <div className="bg-secondary">
-        <RecentBlogs />
+        <Testimonials />
+      </div>
+      <RecentBlogs />
+      <div className="bg-secondary">
+        <OurPartners />
       </div>
       <CustomizeTrip />
     </>

@@ -51,3 +51,10 @@ export interface Destination {
   image: string;
   tourCount: number;
 }
+
+export interface Partner {
+  id: string;
+  name: string;
+  logo: string;
+  description: string;
+}
