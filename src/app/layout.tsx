@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -5,6 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressProvider } from '@/providers/ProgressProvider';
 import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
+import { Header } from '@/components/layout/Header';
 
 export const metadata: Metadata = {
   title: 'Happy Mountain Nepal',
@@ -28,6 +30,7 @@ export default function RootLayout({
         <ProgressProvider>
           <WishlistProvider>
             <div className="flex flex-col min-h-screen">
+              <Header />
               <main className="flex-grow">{children}</main>
               <Footer />
             </div>
@@ -38,3 +41,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
