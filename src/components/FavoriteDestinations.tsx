@@ -7,7 +7,7 @@ import { Button } from './ui/button';
 
 export function FavoriteDestinations() {
   return (
-    <section className="py-16 lg:py-24 bg-background">
+    <section className="py-16 lg:py-24 bg-secondary">
       <div className="container mx-auto px-4">
         <div className="flex flex-col lg:flex-row gap-12 items-center">
           <div className="lg:w-1/3 text-center lg:text-left">
