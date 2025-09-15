@@ -45,7 +45,7 @@ export function HeroSection() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      router.push(`/tours?search=${encodeURIComponent(searchTerm.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
       setIsSearchActive(false); // Reset search state after search
     }
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Mountain, Menu, User } from 'lucide-react';
+import { Mountain, Menu, User, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -158,11 +158,18 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             {isMounted && (
-              <Link href="/profile" passHref>
-                <Button asChild variant="ghost" size="icon" aria-label="Profile">
-                    <User className="h-5 w-5" />
-                </Button>
-              </Link>
+              <>
+                <Link href="/search" passHref>
+                  <Button asChild variant="ghost" size="icon" aria-label="Search">
+                      <Search className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/profile" passHref>
+                  <Button asChild variant="ghost" size="icon" aria-label="Profile">
+                      <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>
