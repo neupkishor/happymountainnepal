@@ -44,6 +44,11 @@ export default function TourDetailPage({ params }: TourDetailPageProps) {
               <h1 className="text-4xl md:text-5xl font-bold !font-headline text-primary">{tour.name}</h1>
               <p className="mt-4 text-lg text-muted-foreground">{tour.description}</p>
             </header>
+
+            {/* Booking Widget for mobile */}
+            <div className="lg:hidden my-8">
+              <BookingWidget tour={tour} />
+            </div>
             
             <section id="key-facts" className="scroll-m-20">
                 <KeyFacts tour={tour} />
@@ -67,8 +72,8 @@ export default function TourDetailPage({ params }: TourDetailPageProps) {
             </section>
           </div>
 
-          {/* Sidebar */}
-          <aside className="lg:col-span-1 mt-12 lg:mt-0">
+          {/* Sidebar for Desktop */}
+          <aside className="lg:col-span-1 mt-12 lg:mt-0 hidden lg:block">
             <BookingWidget tour={tour} />
           </aside>
         </div>
