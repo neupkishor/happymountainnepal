@@ -1,13 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import { Mountain, Heart, Menu, Wrench } from 'lucide-react';
+import { Mountain, Heart, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWishlist } from '@/context/WishlistContext';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -30,7 +29,6 @@ function NavLinks() {
             pathname === link.href ? 'text-primary' : 'text-foreground/80'
           )}
         >
-          {link.icon && <link.icon className="h-4 w-4" />}
           {link.label}
         </Link>
       ))}
@@ -44,7 +42,7 @@ function MobileNav() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
+        <Button variant="ghost" size="icon">
           <Menu className="h-6 w-6" />
           <span className="sr-only">Toggle Menu</span>
         </Button>
@@ -69,7 +67,6 @@ function MobileNav() {
                 pathname === link.href ? "text-primary" : "text-muted-foreground"
               )}
             >
-              {link.icon && <link.icon className="h-5 w-5" />}
               {link.label}
             </Link>
           ))}
@@ -92,38 +89,45 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <div className="flex items-center gap-4">
-          <div className="md:hidden">
-            {isMounted && <MobileNav />}
-          </div>
-          <Link href="/" className="items-center gap-2 hidden md:flex">
+        {/* Mobile Header */}
+        <div className="flex w-full items-center justify-between md:hidden">
+          <Link href="/" className="flex items-center gap-2">
             <Mountain className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block font-headline">Happy Mountain Nepal</span>
+            <span className="font-bold font-headline">Happy Mountain Nepal</span>
           </Link>
+          {isMounted && <MobileNav />}
         </div>
 
-        <div className="flex-1 flex justify-center">
-           <div className="hidden md:flex">
-             <NavLinks />
-           </div>
-        </div>
+        {/* Desktop Header */}
+        <div className="hidden w-full md:flex md:items-center">
+          <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center gap-2">
+                <Mountain className="h-6 w-6 text-primary" />
+                <span className="font-bold font-headline">Happy Mountain Nepal</span>
+              </Link>
+          </div>
 
-        <div className="flex items-center gap-2">
-          {isMounted && (
-            <Link href="/wishlist" passHref>
-              <Button variant="ghost" size="icon" aria-label="Wishlist" className="relative">
-                <Heart className="h-5 w-5" />
-                {wishlist.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground">
-                    {wishlist.length}
-                  </span>
-                )}
-              </Button>
+          <div className="flex-1 flex justify-center">
+            <NavLinks />
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isMounted && (
+              <Link href="/wishlist" passHref>
+                <Button variant="ghost" size="icon" aria-label="Wishlist" className="relative">
+                  <Heart className="h-5 w-5" />
+                  {wishlist.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground">
+                      {wishlist.length}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
+            <Link href="/contact" passHref>
+              <Button className="hidden sm:inline-flex bg-accent hover:bg-accent/90 text-accent-foreground">Custom Trip</Button>
             </Link>
-          )}
-          <Link href="/contact" passHref>
-            <Button className="hidden sm:inline-flex bg-accent hover:bg-accent/90 text-accent-foreground">Custom Trip</Button>
-          </Link>
+          </div>
         </div>
       </div>
     </header>
