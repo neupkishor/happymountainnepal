@@ -64,7 +64,6 @@ export function ImageUpload({ name }: ImageUploadProps) {
     formData.append('contentid', `${name}-${Date.now()}`);
 
     try {
-      // IMPORTANT: Replace with your actual upload endpoint URL
       const response = await fetch('https://neupgroup.com/usercontent/bridge/api/upload.php', {
         method: 'POST',
         body: formData,
