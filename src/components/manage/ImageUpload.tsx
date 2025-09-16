@@ -56,7 +56,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
     const formData = new FormData();
     formData.append('file', compressedFile);
     // These are placeholder values. In a real app, you'd get these from user session or context.
-    formData.append('platform', 'happymountain');
+    formData.append('platform', 'p3.happymountainnepal');
     formData.append('userid', 'admin-user');
     formData.append('contentid', `${name}-${Date.now()}`);
 
