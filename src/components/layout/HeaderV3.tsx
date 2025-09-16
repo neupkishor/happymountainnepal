@@ -7,6 +7,7 @@ import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight } from 'luci
 import { Button } from '@/components/ui/button';
 import { HeaderV3Nav, type NavLink } from './HeaderV3Nav';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 
 // This data would likely come from a CMS or a shared data file in a real app
 const navLinks: NavLink[] = [
@@ -163,9 +164,13 @@ function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
     );
 }
 
+const hasChildren = (item: NavLink): item is Required<Pick<NavLink, 'children'>> & NavLink => {
+    return Array.isArray(item.children) && item.children.length > 0;
+}
 
 export function HeaderV3() {
   const [isMenuOpen, setMenuOpen] = React.useState(false);
+  const [activeSubMenu, setActiveSubMenu] = React.useState<NavLink | null>(null);
 
   React.useEffect(() => {
     if (isMenuOpen) {
@@ -178,9 +183,24 @@ export function HeaderV3() {
     };
   }, [isMenuOpen]);
   
+  const handleMouseEnter = (item: NavLink) => {
+    if (hasChildren(item)) {
+        setActiveSubMenu(item);
+    } else {
+        setActiveSubMenu(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setActiveSubMenu(null);
+  };
+  
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur-sm">
+      <header 
+        className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur-sm"
+        onMouseLeave={handleMouseLeave}
+      >
         <div className="container flex h-16 items-center">
             {/* Mobile Menu Trigger */}
             <div className="md:hidden">
@@ -200,7 +220,7 @@ export function HeaderV3() {
 
             {/* Centered Desktop Navigation */}
             <div className="hidden md:flex flex-1 justify-center">
-                <HeaderV3Nav links={navLinks} />
+                <HeaderV3Nav links={navLinks} onLinkHover={handleMouseEnter} />
             </div>
 
             {/* Right aligned icons */}
@@ -219,6 +239,51 @@ export function HeaderV3() {
                 </Button>
             </div>
         </div>
+         <AnimatePresence>
+            {activeSubMenu && (
+                <motion.div
+                    className="fixed top-16 w-screen bg-background/80 backdrop-blur-lg shadow-lg border-t left-0"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                     <div className="container mx-auto py-8">
+                        <motion.div
+                            className="grid grid-cols-4 gap-8"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1, duration: 0.3 }}
+                        >
+                            {activeSubMenu.children?.map(child => (
+                                <div key={child.title}>
+                                    {hasChildren(child) ? (
+                                        <>
+                                            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">{child.title}</h3>
+                                            <ul className="space-y-2">
+                                                {child.children?.map(subItem => (
+                                                    <li key={subItem.title}>
+                                                        <Link href={subItem.href || '#'} className="group flex items-center gap-2 text-foreground/80 hover:text-primary transition-colors">
+                                                            <span>{subItem.title}</span>
+                                                            <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </>
+                                    ) : (
+                                         <Link href={child.href || '#'} className="group block">
+                                            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{child.title}</h3>
+                                            {child.description && <p className="text-sm text-muted-foreground mt-1">{child.description}</p>}
+                                        </Link>
+                                    )}
+                                </div>
+                            ))}
+                        </motion.div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
       </header>
 
       {/* Mobile Navigation Panel */}
