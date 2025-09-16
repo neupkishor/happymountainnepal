@@ -38,7 +38,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
     try {
         console.log(`Original file size: ${file.size / 1024 / 1024} MB`);
         const options = {
-            maxSizeMB: 0.1, // Target size 100KB
+            maxSizeMB: 0.2, // Target size 200KB
             maxWidthOrHeight: 1920,
             useWebWorker: true,
         }
