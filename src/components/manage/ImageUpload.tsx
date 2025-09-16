@@ -67,6 +67,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
       const response = await fetch('https://neupgroup.com/usercontent/bridge/api/upload.php', {
         method: 'POST',
         body: formData,
+        mode: 'no-cors'
       });
 
       if (!response.ok) {
@@ -166,5 +167,3 @@ export function ImageUpload({ name }: ImageUploadProps) {
     </div>
   );
 }
-
-    
