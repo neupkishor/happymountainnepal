@@ -74,7 +74,7 @@ export function PricingForm({ tour }: PricingFormProps) {
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Pricing updated.' });
       } catch (error: any) {
-        logError({ message: `Failed to update pricing for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to update pricing for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
         toast({
           variant: 'destructive',
           title: 'Error',

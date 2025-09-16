@@ -84,4 +84,5 @@ export interface SiteError {
     componentStack?: string;
     pathname: string;
     createdAt: Timestamp;
+    context?: Record<string, any>;
 }

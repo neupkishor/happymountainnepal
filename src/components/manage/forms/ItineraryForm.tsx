@@ -65,7 +65,7 @@ export function ItineraryForm({ tour }: ItineraryFormProps) {
         await updateTour(tour.id, { itinerary: sortedItinerary });
         toast({ title: 'Success', description: 'Itinerary updated.' });
       } catch (error: any) {
-        logError({ message: `Failed to update itinerary for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to update itinerary for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
         toast({
           variant: 'destructive',
           title: 'Error',

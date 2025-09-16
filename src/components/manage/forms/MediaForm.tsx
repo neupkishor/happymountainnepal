@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,10 @@ export function MediaForm({ tour }: MediaFormProps) {
     },
   });
 
-  const { fields, append, remove } = form.control.register('images') as any;
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'images'
+  });
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
@@ -51,7 +54,7 @@ export function MediaForm({ tour }: MediaFormProps) {
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Media updated.' });
       } catch (error: any) {
-        logError({ message: `Failed to update media for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to update media for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -74,7 +77,7 @@ export function MediaForm({ tour }: MediaFormProps) {
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Additional Images</h3>
-                {fields.map((field: { id: string }, index: number) => (
+                {fields.map((field, index) => (
                    <div key={field.id} className="flex items-center gap-2">
                      <div className="w-full">
                         <ImageUpload name={`images.${index}`} />

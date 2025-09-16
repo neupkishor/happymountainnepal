@@ -46,7 +46,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
         console.log(`Compressed file size: ${compressedFile.size / 1024 / 1024} MB`);
     } catch (compressionError: any) {
         console.error('Image compression error:', compressionError);
-        logError({ message: `Image compression failed: ${compressionError.message}`, stack: compressionError.stack, pathname });
+        logError({ message: `Image compression failed: ${compressionError.message}`, stack: compressionError.stack, pathname, context: { fileName: file.name, fileType: file.type, fileSize: file.size } });
         toast({
             variant: 'destructive',
             title: 'Compression Failed',
@@ -87,7 +87,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
         throw new Error(result.message || 'Unknown error occurred during upload.');
       }
     } catch (error: any) {
-      logError({ message: `Image upload failed: ${error.message}`, stack: error.stack, pathname });
+      logError({ message: `Image upload failed`, stack: error.stack, pathname, context: { endpoint: '/api/upload.php', fileName: compressedFile.name } });
       setUploadError(error.message || 'An unexpected error occurred.');
       toast({
         variant: 'destructive',

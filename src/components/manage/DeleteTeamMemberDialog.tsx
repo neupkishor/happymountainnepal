@@ -39,7 +39,7 @@ export function DeleteTeamMemberDialog({ member, children }: DeleteTeamMemberDia
         });
       } catch (error: any) {
         console.error("Failed to delete team member:", error);
-        logError({ message: `Failed to delete team member ${member.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to delete team member ${member.id}`, stack: error.stack, pathname, context: { memberId: member.id, memberName: member.name } });
         toast({
           variant: "destructive",
           title: "Error",

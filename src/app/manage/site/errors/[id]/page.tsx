@@ -69,6 +69,15 @@ export default async function ErrorDetailPage({ params }: ErrorDetailPageProps) 
                         </pre>
                     </div>
                 )}
+
+                {error.context && (
+                    <div>
+                        <h3 className="font-semibold mb-2">Context</h3>
+                        <pre className="text-sm bg-secondary p-4 rounded-md overflow-x-auto">
+                            <code>{JSON.stringify(error.context, null, 2)}</code>
+                        </pre>
+                    </div>
+                )}
             </CardContent>
         </Card>
     </div>

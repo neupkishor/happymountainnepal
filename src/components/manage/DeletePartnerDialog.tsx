@@ -39,7 +39,7 @@ export function DeletePartnerDialog({ partner, children }: DeletePartnerDialogPr
         });
       } catch (error: any) {
         console.error("Failed to delete partner:", error);
-        logError({ message: `Failed to delete partner ${partner.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to delete partner ${partner.id}`, stack: error.stack, pathname, context: { partnerId: partner.id, partnerName: partner.name } });
         toast({
           variant: "destructive",
           title: "Error",

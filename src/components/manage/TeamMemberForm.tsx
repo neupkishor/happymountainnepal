@@ -64,7 +64,11 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
         }
       } catch (error: any) {
         console.error("Failed to save team member:", error);
-        logError({ message: `Failed to save team member: ${error.message}`, stack: error.stack, pathname });
+        const context = {
+            memberId: member?.id,
+            values: values,
+        };
+        logError({ message: `Failed to save team member: ${error.message}`, stack: error.stack, pathname, context });
         toast({
           variant: 'destructive',
           title: 'Error',

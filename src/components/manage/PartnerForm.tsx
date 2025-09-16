@@ -62,7 +62,11 @@ export function PartnerForm({ partner }: PartnerFormProps) {
         }
       } catch (error: any) {
         console.error("Failed to save partner:", error);
-        logError({ message: `Failed to save partner: ${error.message}`, stack: error.stack, pathname });
+        const context = {
+            partnerId: partner?.id,
+            values: values
+        };
+        logError({ message: `Failed to save partner: ${error.message}`, stack: error.stack, pathname, context });
         toast({
           variant: 'destructive',
           title: 'Error',

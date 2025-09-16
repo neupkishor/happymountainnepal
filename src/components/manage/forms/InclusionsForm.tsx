@@ -62,7 +62,7 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Inclusions and exclusions updated.' });
       } catch (error: any) {
-        logError({ message: `Failed to update inclusions for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to update inclusions for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
         toast({
           variant: 'destructive',
           title: 'Error',

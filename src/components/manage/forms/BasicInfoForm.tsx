@@ -63,7 +63,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
         toast({ title: 'Success', description: 'Basic info updated.' });
       } catch (error: any) {
         console.error("Failed to save package:", error);
-        logError({ message: `Failed to update basic info for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to update basic info for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
         toast({
           variant: 'destructive',
           title: 'Error',

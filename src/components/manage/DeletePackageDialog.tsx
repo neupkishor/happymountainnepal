@@ -39,7 +39,7 @@ export function DeletePackageDialog({ tour, children }: DeletePackageDialogProps
         });
       } catch (error: any) {
         console.error("Failed to delete package:", error);
-        logError({ message: `Failed to delete package ${tour.id}: ${error.message}`, stack: error.stack, pathname });
+        logError({ message: `Failed to delete package ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, tourName: tour.name } });
         toast({
           variant: "destructive",
           title: "Error",
