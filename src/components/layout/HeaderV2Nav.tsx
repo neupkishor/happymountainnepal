@@ -106,7 +106,8 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
 
   return (
     <NavigationMenuPrimitive.Root 
-        delayDuration={500}
+        delayDuration={0}
+        skipDelayDuration={500}
         onPointerLeave={() => setActivePath([])} // Close all menus when leaving the entire nav area
         className="relative flex max-w-max flex-1 items-center justify-center"
     >
@@ -165,7 +166,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
         ))}
       </NavigationMenuPrimitive.List>
 
-       <div className="absolute left-0 top-full flex w-full justify-center">
+       <div className="absolute top-full flex w-full justify-center">
             <NavigationMenuPrimitive.Viewport />
         </div>
     </NavigationMenuPrimitive.Root>
