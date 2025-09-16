@@ -9,18 +9,19 @@ import { Loader2, Upload, XCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Label } from '../ui/label';
+import imageCompression from 'browser-image-compression';
 
 interface ImageUploadProps {
   name: string;
-  currentImageUrl?: string;
 }
 
-export function ImageUpload({ name, currentImageUrl }: ImageUploadProps) {
+export function ImageUpload({ name }: ImageUploadProps) {
   const { control, setValue, getValues } = useFormContext();
   const { field } = useController({ name, control });
+  
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(field.value || currentImageUrl || null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(field.value || null);
   const { toast } = useToast();
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,20 +31,30 @@ export function ImageUpload({ name, currentImageUrl }: ImageUploadProps) {
     setIsUploading(true);
     setUploadError(null);
 
-    // --- Client-side validation ---
-    if (file.size > 100 * 1024) { // 100KB
-      setUploadError('File size must be under 100KB.');
-      setIsUploading(false);
-      toast({
-        variant: 'destructive',
-        title: 'Upload Error',
-        description: 'File size exceeds the 100KB limit.',
-      });
-      return;
+    let compressedFile = file;
+    try {
+        console.log(`Original file size: ${file.size / 1024 / 1024} MB`);
+        const options = {
+            maxSizeMB: 0.1, // Target size 100KB
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+        }
+        compressedFile = await imageCompression(file, options);
+        console.log(`Compressed file size: ${compressedFile.size / 1024 / 1024} MB`);
+    } catch (compressionError) {
+        console.error('Image compression error:', compressionError);
+        toast({
+            variant: 'destructive',
+            title: 'Compression Failed',
+            description: 'Could not compress the image. Please try a different file.',
+        });
+        setIsUploading(false);
+        return;
     }
 
+
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', compressedFile);
     // These are placeholder values. In a real app, you'd get these from user session or context.
     formData.append('platform', 'happymountain');
     formData.append('userid', 'admin-user');
@@ -134,7 +145,7 @@ export function ImageUpload({ name, currentImageUrl }: ImageUploadProps) {
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    Choose Image (Max 100KB)
+                    Choose Image
                   </>
                 )}
               </Button>
