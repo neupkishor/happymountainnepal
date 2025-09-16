@@ -72,7 +72,7 @@ export const HeaderV3Nav = ({ links }: HeaderV3NavProps) => {
             <AnimatePresence>
                 {activeSubMenu && (
                     <motion.div
-                        className="absolute top-full left-0 w-full bg-background/80 backdrop-blur-lg shadow-lg border-t"
+                        className="absolute top-full left-[calc(50%-50vw)] w-screen bg-background/80 backdrop-blur-lg shadow-lg border-t"
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
