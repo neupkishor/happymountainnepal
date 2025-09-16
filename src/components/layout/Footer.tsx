@@ -45,6 +45,9 @@ export function Footer() {
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} Happy Mountain Nepal Private Limited. All rights reserved.</p>
+          <p className="mt-2">
+            Developed by <a href="https://neupgroup.com/marketing" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">Neup.Marketing</a>
+          </p>
         </div>
       </div>
     </footer>
