@@ -1,4 +1,5 @@
 
+'use client';
 
 import { TeamMemberForm } from '@/components/manage/TeamMemberForm';
 
@@ -15,5 +16,3 @@ export default function CreateTeamMemberPage() {
     </div>
   );
 }
-
-    

@@ -76,6 +76,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
         } catch (e) {
             console.error("Could not parse error response text:", e);
         }
+        // Throw an error that includes the status and the response text
         throw new Error(`Upload failed with status: ${response.status}. Response: ${errorResponseText}`);
       }
 
@@ -89,9 +90,11 @@ export function ImageUpload({ name }: ImageUploadProps) {
           description: 'Your image has been uploaded.',
         });
       } else {
+        // If the server responds with 200 OK but success:false
         throw new Error(result.message || 'Unknown error occurred during upload.');
       }
     } catch (error: any) {
+      // The error.message will now contain the status and response from the server
       logError({
          message: `Image upload failed: ${error.message}`, 
          stack: error.stack, 
@@ -101,6 +104,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
             fileName: compressedFile.name,
             fileSize: compressedFile.size,
             fileType: compressedFile.type,
+            // The full error message including status and response text is now in the main message
             errorMessage: error.message
          } 
       });

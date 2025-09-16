@@ -1,4 +1,6 @@
 
+'use client';
+
 import { PartnerForm } from '@/components/manage/PartnerForm';
 
 export default function CreatePartnerPage() {
@@ -14,5 +16,3 @@ export default function CreatePartnerPage() {
     </div>
   );
 }
-
-    
