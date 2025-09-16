@@ -17,7 +17,7 @@ const navLinks: NavLink[] = [
       {
         title: 'Everest',
         href: '/tours?region=Everest',
-        description: 'Home to the world\'s highest peak.',
+        description: "Home to the world's highest peak.",
       },
       {
         title: 'Annapurna',
@@ -73,7 +73,7 @@ const navLinks: NavLink[] = [
             {
                 title: 'Documents',
                 href: '/legal/documents',
-                description: 'View our company\'s legal licenses.'
+                description: "View our company's legal licenses."
             },
             {
                 title: 'Terms & Conditions',
@@ -125,15 +125,7 @@ export function HeaderV2() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Mountain className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block">Happy Mountain</span>
-          </Link>
-          <HeaderV2Nav links={navLinks} />
-        </div>
-
-        {/* Mobile Menu */}
+        {/* Mobile Menu Trigger */}
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button
@@ -159,15 +151,20 @@ export function HeaderV2() {
           </SheetContent>
         </Sheet>
         
-        {/* Mobile Logo */}
-        <div className="flex-1 md:hidden">
-             <Link href="/" className="flex items-center space-x-2">
-                <Mountain className="h-6 w-6 text-primary" />
-                <span className="font-bold">Happy Mountain</span>
-            </Link>
+        {/* Left Aligned Logo */}
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center space-x-2">
+            <Mountain className="h-6 w-6 text-primary" />
+            <span className="hidden font-bold sm:inline-block">Happy Mountain</span>
+          </Link>
         </div>
 
-
+        {/* Centered Navigation for Desktop */}
+        <div className="hidden md:flex flex-1 justify-center">
+            <HeaderV2Nav links={navLinks} />
+        </div>
+        
+        {/* Right Aligned Icons */}
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/search">
