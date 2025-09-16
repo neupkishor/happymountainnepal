@@ -126,7 +126,6 @@ export function HeaderV2() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* Mobile Menu Trigger & Logo */}
         <div className="flex items-center md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -154,21 +153,18 @@ export function HeaderV2() {
             </Sheet>
         </div>
         
-        {/* Left Aligned Logo for Desktop */}
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex">
           <Link href="/" className="flex items-center space-x-2">
             <Mountain className="h-6 w-6 text-primary" />
             <span className="font-bold">Happy Mountain</span>
           </Link>
         </div>
         
-        {/* Centered Navigation for Desktop */}
-        <div className="hidden md:flex flex-1 justify-center">
+        <div className="flex flex-1 justify-center">
             <HeaderV2Nav links={navLinks} />
         </div>
         
-        {/* Right Aligned Icons */}
-        <div className="flex items-center justify-end md:w-auto w-full">
+        <div className="flex items-center justify-end">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/profile">
               <User className="h-5 w-5" />

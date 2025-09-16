@@ -3,7 +3,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -54,161 +53,28 @@ const ListItem = React.forwardRef<
 ListItem.displayName = 'ListItem';
 
 
-const renderNavLinks = (links: NavLink[]): React.ReactNode[] => {
-    return links.map((link) => {
-        if (!hasChildren(link)) {
-            return (
-                <NavigationMenuPrimitive.Item key={link.href}>
-                    <Link href={link.href!} legacyBehavior passHref>
-                        <NavigationMenuPrimitive.Link className={navigationMenuTriggerStyle()}>
-                            {link.title}
-                        </NavigationMenuPrimitive.Link>
-                    </Link>
-                </NavigationMenuPrimitive.Item>
-            );
-        }
-
-        const isMegaMenu = link.children.some(child => hasChildren(child));
-
-        if (isMegaMenu) {
-             return (
-                <NavigationMenuPrimitive.Item key={link.title}>
-                    <NavigationMenuPrimitive.Trigger className="group">
-                        {link.title}
-                        <ChevronDown
-                            className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
-                            aria-hidden="true"
-                        />
-                    </NavigationMenuPrimitive.Trigger>
-                    <NavigationMenuPrimitive.Content>
-                         <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                            {link.children.map((component) => {
-                                 if (!hasChildren(component)) {
-                                     return (
-                                        <ListItem
-                                            key={component.title}
-                                            title={component.title}
-                                            href={component.href}
-                                        >
-                                            {component.description}
-                                        </ListItem>
-                                     )
-                                 }
-                                return (
-                                    <li key={component.title} className="row-span-3">
-                                        <NavigationMenuPrimitive.Link asChild>
-                                            <div className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md">
-                                                <div className="mb-2 mt-4 text-lg font-medium">
-                                                    {component.title}
-                                                </div>
-                                                <p className="text-sm leading-tight text-muted-foreground">
-                                                    {component.description}
-                                                </p>
-                                            </div>
-                                        </NavigationMenuPrimitive.Link>
-                                    </li>
-                                )
-                            })}
-                        </ul>
-                    </NavigationMenuPrimitive.Content>
-                </NavigationMenuPrimitive.Item>
-             )
-        }
-        
-        return (
-            <NavigationMenuPrimitive.Item key={link.title}>
-                <NavigationMenuPrimitive.Trigger className="group">
-                    {link.title}
-                    <ChevronDown
-                        className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
-                        aria-hidden="true"
-                    />
-                </NavigationMenuPrimitive.Trigger>
-                <NavigationMenuPrimitive.Content>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] lg:w-[600px] ">
-                        {renderNavLinks(link.children)}
-                    </ul>
-                </NavigationMenuPrimitive.Content>
-            </NavigationMenuPrimitive.Item>
-        )
-    });
-};
-
-
 export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
 
-  const renderLinksRecursive = (links: NavLink[]): React.ReactNode => {
-    return links.map(link => {
-      if (!link.children?.length) {
+  const renderLinksRecursive = (items: NavLink[]): React.ReactNode => {
+    return items.map((item) => {
+      if (!hasChildren(item)) {
         return (
-          <NavigationMenuPrimitive.Item key={link.title}>
-            <Link href={link.href!} legacyBehavior passHref>
-              <NavigationMenuPrimitive.Link className={navigationMenuTriggerStyle()}>
-                {link.title}
-              </NavigationMenuPrimitive.Link>
-            </Link>
-          </NavigationMenuPrimitive.Item>
+          <ListItem key={item.title} title={item.title} href={item.href}>
+            {item.description}
+          </ListItem>
         );
       }
-      
-      const isMegaMenu = link.children.some(child => !!child.children?.length);
 
       return (
-        <NavigationMenuPrimitive.Item key={link.title}>
-          <NavigationMenuPrimitive.Trigger className="group">
-            {link.title}
-            <ChevronDown
-              className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
-              aria-hidden="true"
-            />
-          </NavigationMenuPrimitive.Trigger>
-          <NavigationMenuPrimitive.Content>
-            <ul className={cn(
-                "grid gap-3 p-4",
-                isMegaMenu ? "w-[600px] grid-cols-[.75fr_1fr]" : "w-[400px] md:w-[500px] md:grid-cols-2"
-            )}>
-              {isMegaMenu ? (
-                  <>
-                    <li className="row-span-3">
-                       <NavigationMenuPrimitive.Link asChild>
-                         <div
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                         >
-                           <div className="mb-2 mt-4 text-lg font-medium">
-                            {link.title}
-                           </div>
-                           <p className="text-sm leading-tight text-muted-foreground">
-                            {link.description || `Explore all things related to ${link.title}.`}
-                           </p>
-                         </div>
-                       </NavigationMenuPrimitive.Link>
-                    </li>
-                    <div className='flex flex-col'>
-                      {renderLinksRecursive(link.children)}
-                    </div>
-                  </>
-              ) : (
-                renderLinksRecursive(link.children)
-              )}
+        <React.Fragment key={item.title}>
+            <div className="mb-2 font-medium text-foreground">{item.title}</div>
+            <ul className="grid gap-3">
+              {renderLinksRecursive(item.children)}
             </ul>
-            {!isMegaMenu && (
-                 <ul className="grid gap-3 p-4 w-[400px] md:w-[500px] md:grid-cols-2">
-                    {link.children.map((component) => (
-                      <ListItem
-                        key={component.title}
-                        title={component.title}
-                        href={component.href}
-                      >
-                        {component.description}
-                      </ListItem>
-                    ))}
-                  </ul>
-            )}
-          </NavigationMenuPrimitive.Content>
-        </NavigationMenuPrimitive.Item>
+        </React.Fragment>
       );
     });
-  };
+  }
 
   return (
     <NavigationMenuPrimitive.Root 
@@ -234,10 +100,10 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
             
             return (
                  <NavigationMenuPrimitive.Item key={link.title}>
-                    <NavigationMenuPrimitive.Trigger className="group">
+                    <NavigationMenuPrimitive.Trigger className="group relative">
                         {link.title}
                         <ChevronDown
-                            className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
+                            className="absolute top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180 right-[-16px]"
                             aria-hidden="true"
                         />
                     </NavigationMenuPrimitive.Trigger>
@@ -251,7 +117,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
                                      <ListItem
                                         key={col.title}
                                         title={col.title}
-                                        className="bg-muted/50"
+                                        className="bg-muted/50 font-bold"
                                      >
                                         {col.description}
                                     </ListItem>
