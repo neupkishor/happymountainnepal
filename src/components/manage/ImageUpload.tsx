@@ -58,8 +58,11 @@ export function ImageUpload({ name }: ImageUploadProps) {
 
 
     const formData = new FormData();
-    // Pass the original filename as the third argument
-    formData.append('file', compressedFile, file.name);
+    const originalNameWithoutExtension = file.name.split('.').slice(0, -1).join('.') || file.name;
+    const newExtension = compressedFile.type.split('/')[1];
+    const newFileName = `${originalNameWithoutExtension}.${newExtension}`;
+
+    formData.append('file', compressedFile, newFileName);
     formData.append('platform', 'p3.happymountainnepal');
     formData.append('userid', 'admin-user');
     formData.append('contentid', `${name}-${Date.now()}`);
@@ -70,18 +73,23 @@ export function ImageUpload({ name }: ImageUploadProps) {
         body: formData,
       });
 
-      if (!response.ok) {
-        let errorResponseText = 'Could not read error response from server.';
-        try {
-            errorResponseText = await response.text();
-        } catch (e) {
-            console.error("Could not parse error response text:", e);
-        }
-        // Throw an error that includes the status and the response text
-        throw new Error(`Upload failed with status: ${response.status}. Response: ${errorResponseText}`);
+      let responseBodyText = '';
+      try {
+        responseBodyText = await response.text();
+      } catch (e) {
+        console.error("Could not read response body text", e);
       }
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status}. Response: ${responseBodyText}`);
+      }
+
+      let result;
+      try {
+        result = JSON.parse(responseBodyText);
+      } catch (e) {
+        throw new Error(`Failed to parse JSON response. Response: ${responseBodyText}`);
+      }
 
       if (result.success && result.url) {
         setValue(name, result.url, { shouldValidate: true, shouldDirty: true });
@@ -91,21 +99,18 @@ export function ImageUpload({ name }: ImageUploadProps) {
           description: 'Your image has been uploaded.',
         });
       } else {
-        // If the server responds with 200 OK but success:false
         throw new Error(result.message || 'Unknown error occurred during upload.');
       }
     } catch (error: any) {
-      // The error.message will now contain the status and response from the server
       logError({
          message: `Image upload failed: ${error.message}`, 
          stack: error.stack, 
          pathname, 
          context: { 
             endpoint: 'https://neupgroup.com/usercontent/bridge/api/upload.php', 
-            fileName: compressedFile.name,
+            fileName: newFileName,
             fileSize: compressedFile.size,
             fileType: compressedFile.type,
-            // The full error message including status and response text is now in the main message
             errorMessage: error.message
          } 
       });
