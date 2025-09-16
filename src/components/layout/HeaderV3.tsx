@@ -219,7 +219,7 @@ export function HeaderV3() {
             </div>
 
             {/* Centered Desktop Navigation */}
-            <div className="hidden md:flex flex-1 justify-center">
+            <div className="hidden md:flex flex-1 justify-center" onMouseEnter={() => activeSubMenu && setActiveSubMenu(activeSubMenu)}>
                 <HeaderV3Nav links={navLinks} onLinkHover={handleMouseEnter} />
             </div>
 
@@ -243,43 +243,48 @@ export function HeaderV3() {
             {activeSubMenu && (
                 <motion.div
                     className="fixed top-16 w-screen bg-background/80 backdrop-blur-lg shadow-lg border-t left-0"
+                    onMouseEnter={() => handleMouseEnter(activeSubMenu)}
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: 'easeInOut' }}
                 >
                      <div className="container mx-auto py-8">
-                        <motion.div
-                            className="grid grid-cols-4 gap-8"
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1, duration: 0.3 }}
-                        >
-                            {activeSubMenu.children?.map(child => (
-                                <div key={child.title}>
-                                    {hasChildren(child) ? (
-                                        <>
-                                            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">{child.title}</h3>
-                                            <ul className="space-y-2">
-                                                {child.children?.map(subItem => (
-                                                    <li key={subItem.title}>
-                                                        <Link href={subItem.href || '#'} className="group flex items-center gap-2 text-foreground/80 hover:text-primary transition-colors">
-                                                            <span>{subItem.title}</span>
-                                                            <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                        </Link>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </>
-                                    ) : (
-                                         <Link href={child.href || '#'} className="group block">
-                                            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{child.title}</h3>
-                                            {child.description && <p className="text-sm text-muted-foreground mt-1">{child.description}</p>}
-                                        </Link>
-                                    )}
-                                </div>
-                            ))}
-                        </motion.div>
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeSubMenu.title}
+                                className="grid grid-cols-4 gap-8"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {activeSubMenu.children?.map(child => (
+                                    <div key={child.title}>
+                                        {hasChildren(child) ? (
+                                            <>
+                                                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">{child.title}</h3>
+                                                <ul className="space-y-2">
+                                                    {child.children?.map(subItem => (
+                                                        <li key={subItem.title}>
+                                                            <Link href={subItem.href || '#'} className="group flex items-center gap-2 text-foreground/80 hover:text-primary transition-colors">
+                                                                <span>{subItem.title}</span>
+                                                                <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                            </Link>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <Link href={child.href || '#'} className="group block">
+                                                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{child.title}</h3>
+                                                {child.description && <p className="text-sm text-muted-foreground mt-1">{child.description}</p>}
+                                            </Link>
+                                        )}
+                                    </div>
+                                ))}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
                 </motion.div>
             )}
