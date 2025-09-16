@@ -65,7 +65,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
 
     try {
       // IMPORTANT: Replace with your actual upload endpoint URL
-      const response = await fetch('/api/upload.php', {
+      const response = await fetch('https://neupgroup.com/usercontent/bridge/api/upload.php', {
         method: 'POST',
         body: formData,
       });
@@ -87,7 +87,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
         throw new Error(result.message || 'Unknown error occurred during upload.');
       }
     } catch (error: any) {
-      logError({ message: `Image upload failed`, stack: error.stack, pathname, context: { endpoint: '/api/upload.php', fileName: compressedFile.name } });
+      logError({ message: `Image upload failed`, stack: error.stack, pathname, context: { endpoint: 'https://neupgroup.com/usercontent/bridge/api/upload.php', fileName: compressedFile.name } });
       setUploadError(error.message || 'An unexpected error occurred.');
       toast({
         variant: 'destructive',
