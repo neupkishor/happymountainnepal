@@ -5,7 +5,7 @@
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import { firestore } from './firebase'; // Your initialized Firebase app
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, MediaUpload } from './types';
 import { notFound, redirect } from "next/navigation";
 import { slugify } from "./utils";
 import { revalidatePath } from "next/cache";
@@ -536,4 +536,35 @@ export async function getErrors(): Promise<SiteError[]> {
 
 export async function getErrorById(id: string): Promise<SiteError | null> {
     return getDocById<SiteError>('errors', id);
+}
+
+
+// Media Upload Logging
+export async function logMediaUpload(data: Omit<MediaUpload, 'id' | 'uploadedAt'>): Promise<void> {
+  if (!firestore) {
+    console.error("Firestore is not initialized. Cannot log media upload.");
+    return;
+  }
+  try {
+    await addDoc(collection(firestore, 'media'), {
+      ...data,
+      uploadedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Failed to log media upload to Firestore:', error);
+    // Don't throw, as the primary goal (upload) was successful.
+  }
+}
+
+export async function getMediaUploads(): Promise<MediaUpload[]> {
+  if (!firestore) return [];
+  try {
+    const mediaRef = collection(firestore, 'media');
+    const q = query(mediaRef, orderBy('uploadedAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MediaUpload));
+  } catch (error) {
+    console.error("Error fetching media uploads:", error);
+    throw new Error("Could not fetch media uploads from the database.");
+  }
 }

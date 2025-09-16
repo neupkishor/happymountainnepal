@@ -86,3 +86,11 @@ export interface SiteError {
     createdAt: Timestamp;
     context?: Record<string, any>;
 }
+
+export interface MediaUpload {
+  id: string;
+  fileName: string;
+  url: string;
+  userId: string;
+  uploadedAt: Timestamp;
+}

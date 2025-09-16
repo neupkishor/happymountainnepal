@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Label } from '../ui/label';
 import imageCompression from 'browser-image-compression';
-import { logError } from '@/lib/db';
+import { logError, logMediaUpload } from '@/lib/db';
 import { usePathname } from 'next/navigation';
 
 interface ImageUploadProps {
@@ -61,10 +61,11 @@ export function ImageUpload({ name }: ImageUploadProps) {
     const originalNameWithoutExtension = file.name.split('.').slice(0, -1).join('.') || file.name;
     const newExtension = compressedFile.type.split('/')[1];
     const newFileName = `${originalNameWithoutExtension}.${newExtension}`;
+    const userId = 'admin-user'; // This would be dynamic in a real app
 
     formData.append('file', compressedFile, newFileName);
     formData.append('platform', 'p3.happymountainnepal');
-    formData.append('userid', 'admin-user');
+    formData.append('userid', userId);
     formData.append('contentid', `${name}-${Date.now()}`);
 
     try {
@@ -98,6 +99,13 @@ export function ImageUpload({ name }: ImageUploadProps) {
           title: 'Upload Successful',
           description: 'Your image has been uploaded.',
         });
+        // Log the successful upload to our own DB
+        await logMediaUpload({
+          fileName: newFileName,
+          url: result.url,
+          userId: userId,
+        });
+
       } else {
         throw new Error(result.message || 'Unknown error occurred during upload.');
       }
@@ -111,7 +119,8 @@ export function ImageUpload({ name }: ImageUploadProps) {
             fileName: newFileName,
             fileSize: compressedFile.size,
             fileType: compressedFile.type,
-            errorMessage: error.message
+            errorMessage: error.message,
+            responseBody: error.message.includes('Response:') ? error.message.split('Response:')[1].trim() : 'N/A'
          } 
       });
       setUploadError(error.message || 'An unexpected error occurred.');
