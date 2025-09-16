@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
@@ -21,15 +21,19 @@ function NProgressDone() {
 function NavigationEvents() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const isInitialRender = useRef(true);
 
     useEffect(() => {
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
+            return;
+        }
+
         // The `nprogress.done()` will be called by the `NProgressDone` component.
         // We only need to call `nprogress.start()` here.
-        // We use a `setTimeout` to avoid a flicker when navigating to a page that is already cached.
-        const timer = setTimeout(() => NProgress.start(), 250);
+        NProgress.start();
 
         return () => {
-            clearTimeout(timer);
             // In case the component unmounts before navigation completes.
             if (NProgress.isStarted()) {
                 NProgress.done();
