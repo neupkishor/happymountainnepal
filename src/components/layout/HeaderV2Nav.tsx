@@ -130,7 +130,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
                 </NavigationMenuPrimitive.Trigger>
                 <NavigationMenuPrimitive.Content 
                   onPointerLeave={() => handlePointerEnter([link.title], false)}
-                  className="absolute top-0 left-0 w-auto pt-10"
+                  className="absolute top-0 left-0 w-auto"
                 >
                    <div 
                      className="md:w-auto bg-popover text-popover-foreground rounded-lg border shadow-lg"
@@ -159,6 +159,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
                     navigationMenuTriggerStyle(),
                     pathname === link.href && 'bg-accent/50'
                   )}
+                  onPointerEnter={() => setActivePath([])}
                 >
                   {link.title}
                 </NavigationMenuPrimitive.Link>
