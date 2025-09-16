@@ -219,7 +219,7 @@ export function HeaderV3() {
             </div>
 
             {/* Centered Desktop Navigation */}
-            <div className="hidden md:flex flex-1 justify-center" onMouseEnter={() => activeSubMenu && setActiveSubMenu(activeSubMenu)}>
+            <div className="hidden md:flex flex-1 justify-center">
                 <HeaderV3Nav links={navLinks} onLinkHover={handleMouseEnter} />
             </div>
 
@@ -243,7 +243,6 @@ export function HeaderV3() {
             {activeSubMenu && (
                 <motion.div
                     className="fixed top-16 w-screen bg-background/80 backdrop-blur-lg shadow-lg border-t left-0"
-                    onMouseEnter={() => handleMouseEnter(activeSubMenu)}
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -253,6 +252,7 @@ export function HeaderV3() {
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={activeSubMenu.title}
+                                layout
                                 className="grid grid-cols-4 gap-8"
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
