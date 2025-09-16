@@ -106,7 +106,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
 
   return (
     <NavigationMenuPrimitive.Root 
-        delayDuration={0}
+        delayDuration={300}
         onPointerLeave={() => setActivePath([])} // Close all menus when leaving the entire nav area
         className="relative flex max-w-max flex-1 items-center justify-center"
     >
