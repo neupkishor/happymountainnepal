@@ -30,8 +30,9 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
     setActivePath(path);
   };
   
-  const handlePointerLeave = (path: string[]) => {
-    setActivePath(prev => prev.slice(0, path.length - 1));
+  const handlePointerLeave = () => {
+    // This is intentionally left empty. We will only close the menu
+    // when the cursor leaves the entire navigation root.
   };
 
 
@@ -57,7 +58,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
                 isActive && 'bg-accent/50'
               )}
               onPointerEnter={() => handlePointerEnter(newPath)}
-              onPointerLeave={() => handlePointerLeave(newPath)}
+              onPointerLeave={handlePointerLeave} // Keep menu open when moving between items
             >
               <Link href={link.href || '#'} className="w-full h-full">
                 <div className="flex justify-between items-center">
@@ -106,7 +107,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
   return (
     <NavigationMenuPrimitive.Root 
         delayDuration={0}
-        onMouseLeave={() => setActivePath([])}
+        onPointerLeave={() => setActivePath([])} // Close all menus when leaving the entire nav area
         className="relative flex max-w-max flex-1 items-center justify-center"
     >
       <NavigationMenuPrimitive.List className="group flex flex-1 list-none items-center justify-center space-x-1">
@@ -116,7 +117,6 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
               <>
                 <NavigationMenuPrimitive.Trigger
                   onPointerEnter={() => handlePointerEnter([link.title])}
-                  onPointerLeave={() => handlePointerLeave([link.title])}
                   className={cn(navigationMenuTriggerStyle(), 'data-[state=open]:bg-accent/50')}
                 >
                   {link.title}
@@ -129,19 +129,16 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
                      className="md:w-auto bg-popover text-popover-foreground rounded-lg border shadow-lg"
                    >
                      <div className="flex">
-                        {/* The first column is the first item in subMenus */}
                         {subMenus[0] && (
                            <div className="w-64">
                              {renderNavLinks(subMenus[0].links, 1, subMenus[0].path)}
                            </div>
                         )}
-                        {/* The second column is the second item */}
                         {subMenus[1] && (
                            <div className="w-64 border-l">
                              {renderNavLinks(subMenus[1].links, 2, subMenus[1].path)}
                            </div>
                         )}
-                         {/* The third column is the third item */}
                         {subMenus[2] && (
                            <div className="w-64 border-l">
                              {renderNavLinks(subMenus[2].links, 3, subMenus[2].path)}
