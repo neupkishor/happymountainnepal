@@ -239,8 +239,81 @@ export async function getTourBySlug(slug: string) {
     if (!tour) notFound();
     return tour;
 }
+export async function getTourById(id: string): Promise<Tour | null> {
+    return getDocById<Tour>('tours', id);
+}
+
 export async function getFeaturedTours(): Promise<Tour[]> {
     return getCollection<Tour>('tours'); // In a real app, this would be a query for featured tours.
+}
+
+export async function createTour(): Promise<string | null> {
+    if (!firestore) {
+        console.error("Firestore is not initialized.");
+        return null;
+    }
+    try {
+        const newTourData = {
+            name: 'New Untitled Package',
+            slug: `new-untitled-package-${Date.now()}`,
+            description: '',
+            region: '',
+            type: 'Trek',
+            difficulty: 'Moderate',
+            duration: 0,
+            price: 0,
+            mainImage: 'https://picsum.photos/seed/placeholder/1200/800',
+            images: [],
+            itinerary: [],
+            inclusions: [],
+            exclusions: [],
+            departureDates: [],
+            mapImage: 'https://picsum.photos/seed/map-placeholder/800/600',
+            reviews: [],
+        };
+        const docRef = await addDoc(collection(firestore, 'tours'), newTourData);
+        revalidatePath('/manage/packages');
+        return docRef.id;
+    } catch (error) {
+        console.error("Error creating new tour: ", error);
+        return null;
+    }
+}
+
+export async function updateTour(id: string, data: Partial<Omit<Tour, 'id' | 'slug'>>) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'tours', id);
+        
+        let finalData: Partial<Omit<Tour, 'id'>> = {...data};
+
+        // If name is being updated, regenerate slug
+        if (data.name) {
+            finalData.slug = slugify(data.name);
+        }
+
+        await updateDoc(docRef, finalData);
+        revalidatePath('/manage/packages');
+        revalidatePath(`/manage/packages/${id}/edit`);
+        revalidatePath(`/tours/${finalData.slug || ''}`);
+        revalidatePath('/tours');
+
+    } catch (error) {
+        console.error("Error updating tour: ", error);
+        throw new Error("Could not update tour.");
+    }
+}
+
+export async function deleteTour(id: string) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await deleteDoc(doc(firestore, 'tours', id));
+        revalidatePath('/manage/packages');
+        revalidatePath('/tours');
+    } catch (error) {
+        console.error("Error deleting tour: ", error);
+        throw new Error("Could not delete tour.");
+    }
 }
 
 // Blog Post Functions
@@ -316,8 +389,45 @@ export async function deleteTeamMember(id: string) {
 
 // Destination Functions
 export async function getDestinations(): Promise<Destination[]> {
-    return getCollection<Destination>('destinations');
+    const tours = await getTours();
+    if (!tours.length) {
+        return [
+            { name: 'Everest', image: 'https://picsum.photos/seed/dest-everest/600/600', tourCount: 0},
+            { name: 'Annapurna', image: 'https://picsum.photos/seed/dest-annapurna/600/300', tourCount: 0},
+            { name: 'Langtang', image: 'https://picsum.photos/seed/dest-langtang/600/300', tourCount: 0},
+        ];
+    }
+    const regionCounts = tours.reduce((acc, tour) => {
+        if(tour.region) {
+            acc[tour.region] = (acc[tour.region] || 0) + 1;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+
+    const sortedRegions = Object.entries(regionCounts)
+        .sort(([,a],[,b]) => b - a)
+        .slice(0, 3)
+        .map(([name, count]) => ({
+            name,
+            tourCount: count,
+            image: `https://picsum.photos/seed/dest-${slugify(name)}/${name === 'Everest' ? '600/600' : '600/300'}`
+        }));
+    
+    // Ensure we always have at least a few default destinations if there aren't enough tours.
+    const defaultDests = ['Everest', 'Annapurna', 'Langtang'];
+    for(const destName of defaultDests) {
+        if(!sortedRegions.some(r => r.name === destName) && sortedRegions.length < 3) {
+            sortedRegions.push({
+                 name: destName,
+                 tourCount: 0,
+                 image: `https://picsum.photos/seed/dest-${slugify(destName)}/600/300`
+            })
+        }
+    }
+
+    return sortedRegions;
 }
+
 
 // Partner Functions
 export async function getPartners(): Promise<Partner[]> {

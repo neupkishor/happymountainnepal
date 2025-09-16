@@ -1,0 +1,62 @@
+
+'use client';
+
+import Link from 'next/link';
+import type { Tour } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import {
+  TableCell,
+  TableRow,
+} from '@/components/ui/table';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { DeletePackageDialog } from '@/components/manage/DeletePackageDialog';
+
+interface PackageTableRowProps {
+  tour: Tour;
+}
+
+export function PackageTableRow({ tour }: PackageTableRowProps) {
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="font-medium">{tour.name}</div>
+        <div className="text-xs text-muted-foreground">{tour.id}</div>
+      </TableCell>
+      <TableCell>{tour.region}</TableCell>
+      <TableCell>{tour.duration} days</TableCell>
+      <TableCell>${tour.price}</TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href={`/tours/${tour.slug}`} target="_blank">View Public Page</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>Edit</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DeletePackageDialog tour={tour}>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DeletePackageDialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+}
