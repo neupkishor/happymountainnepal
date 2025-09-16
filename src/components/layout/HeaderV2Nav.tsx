@@ -128,9 +128,11 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
                 >
                   {link.title}
                 </NavigationMenuPrimitive.Trigger>
-                <NavigationMenuPrimitive.Content className="absolute top-0 left-0 w-full pt-10">
+                <NavigationMenuPrimitive.Content 
+                  onPointerLeave={() => handlePointerEnter([link.title], false)}
+                  className="absolute top-0 left-0 w-auto pt-10"
+                >
                    <div 
-                     onPointerLeave={() => handlePointerEnter([link.title], false)}
                      className="md:w-auto bg-popover text-popover-foreground rounded-lg border shadow-lg"
                    >
                      <div className="flex">
