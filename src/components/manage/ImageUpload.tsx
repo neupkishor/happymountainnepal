@@ -93,8 +93,9 @@ export function ImageUpload({ name }: ImageUploadProps) {
       }
 
       if (result.success && result.url) {
-        setValue(name, result.url, { shouldValidate: true, shouldDirty: true });
-        setPreviewUrl(result.url);
+        const fullUrl = `https://neupgroup.com${result.url}`;
+        setValue(name, fullUrl, { shouldValidate: true, shouldDirty: true });
+        setPreviewUrl(fullUrl);
         toast({
           title: 'Upload Successful',
           description: 'Your image has been uploaded.',
@@ -102,7 +103,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
         // Log the successful upload to our own DB
         await logMediaUpload({
           fileName: newFileName,
-          url: result.url,
+          url: fullUrl,
           userId: userId,
         });
 
