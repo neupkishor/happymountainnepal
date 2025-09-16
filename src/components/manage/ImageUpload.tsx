@@ -58,7 +58,8 @@ export function ImageUpload({ name }: ImageUploadProps) {
 
 
     const formData = new FormData();
-    formData.append('file', compressedFile);
+    // Pass the original filename as the third argument
+    formData.append('file', compressedFile, file.name);
     formData.append('platform', 'p3.happymountainnepal');
     formData.append('userid', 'admin-user');
     formData.append('contentid', `${name}-${Date.now()}`);
