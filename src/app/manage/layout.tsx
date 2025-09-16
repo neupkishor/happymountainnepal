@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
@@ -70,6 +71,12 @@ export default function ManageLayout({
                                       <span>Packages</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
+                              <SidebarMenuItem>
+                                  <SidebarMenuButton href="/manage/partners" isActive={pathname.startsWith('/manage/partners')} tooltip="Partners">
+                                      <Handshake />
+                                      <span>Partners</span>
+                                  </SidebarMenuButton>
+                              </SidebarMenuItem>
                                <SidebarMenuItem>
                                   <SidebarMenuButton href="/" tooltip="Back to Site">
                                       <ArrowLeft />
@@ -88,3 +95,5 @@ export default function ManageLayout({
     </SidebarProvider>
   );
 }
+
+    

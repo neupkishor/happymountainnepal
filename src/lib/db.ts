@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
@@ -434,11 +435,56 @@ export async function getPartners(): Promise<Partner[]> {
     return getCollection<Partner>('partners');
 }
 
+export async function getPartnerById(id: string): Promise<Partner | null> {
+    return getDocById<Partner>('partners', id);
+}
+
+export async function addPartner(data: Omit<Partner, 'id'>) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await addDoc(collection(firestore, 'partners'), data);
+        revalidatePath('/manage/partners');
+        revalidatePath('/#partners');
+    } catch (error) {
+        console.error("Error adding partner: ", error);
+        throw new Error("Could not add partner.");
+    }
+    redirect(`/manage/partners`);
+}
+
+export async function updatePartner(id: string, data: Omit<Partner, 'id'>) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'partners', id);
+        await updateDoc(docRef, data);
+        revalidatePath('/manage/partners');
+        revalidatePath(`/manage/partners/${id}/edit`);
+        revalidatePath('/#partners');
+    } catch (error) {
+        console.error("Error updating partner: ", error);
+        throw new Error("Could not update partner.");
+    }
+    redirect(`/manage/partners`);
+}
+
+export async function deletePartner(id: string) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await deleteDoc(doc(firestore, 'partners', id));
+        revalidatePath('/manage/partners');
+        revalidatePath('/#partners');
+    } catch (error) {
+        console.error("Error deleting partner: ", error);
+        throw new Error("Could not delete partner.");
+    }
+}
+
+
 // Review Functions
 export async function getAllReviews(): Promise<(Review & { tourName: string })[]> {
   if (!firestore) return [];
-  const reviewsGroup = collectionGroup(firestore, 'reviews');
-  const snapshot = await getDocs(reviewsGroup);
+  const q = query(collectionGroup(firestore, 'reviews'));
+  const snapshot = await getDocs(q);
   const reviews = [];
   for (const doc of snapshot.docs) {
     const reviewData = doc.data() as Review;
@@ -446,9 +492,17 @@ export async function getAllReviews(): Promise<(Review & { tourName: string })[]
     if (tourRef) {
       const tourSnap = await getDoc(tourRef);
       if (tourSnap.exists()) {
-        reviews.push({ ...reviewData, tourName: tourSnap.data().name });
+        reviews.push({ ...reviewData, id: doc.id, tourName: tourSnap.data().name });
       }
     }
   }
-  return reviews;
+  
+  // Sort in application code
+  return reviews.sort((a, b) => {
+    const dateA = a.date instanceof Timestamp ? a.date.toMillis() : new Date(a.date).getTime();
+    const dateB = b.date instanceof Timestamp ? b.date.toMillis() : new Date(b.date).getTime();
+    return dateB - dateA;
+  });
 }
+
+    
