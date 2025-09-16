@@ -17,11 +17,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Partner } from '@/lib/types';
-import { addPartner, updatePartner } from '@/lib/db';
+import { addPartner, updatePartner, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
+import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -38,6 +39,7 @@ interface PartnerFormProps {
 export function PartnerForm({ partner }: PartnerFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,8 +60,9 @@ export function PartnerForm({ partner }: PartnerFormProps) {
           await addPartner(values);
           toast({ title: 'Success', description: 'Partner created.' });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to save partner:", error);
+        logError({ message: `Failed to save partner: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -120,3 +123,5 @@ export function PartnerForm({ partner }: PartnerFormProps) {
     </FormProvider>
   );
 }
+
+    

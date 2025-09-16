@@ -16,10 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour } from '@/lib/db';
+import { updateTour, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   inclusions: z.array(z.string().min(1, "Inclusion cannot be empty.")),
@@ -35,6 +36,7 @@ interface InclusionsFormProps {
 export function InclusionsForm({ tour }: InclusionsFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -59,7 +61,8 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
       try {
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Inclusions and exclusions updated.' });
-      } catch (error) {
+      } catch (error: any) {
+        logError({ message: `Failed to update inclusions for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -143,3 +146,5 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
     </Card>
   );
 }
+
+    

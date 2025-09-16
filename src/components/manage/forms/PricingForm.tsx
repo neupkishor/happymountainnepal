@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour } from '@/lib/db';
+import { updateTour, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Timestamp } from 'firebase/firestore';
+import { usePathname } from 'next/navigation';
 
 
 const departureDateSchema = z.object({
@@ -49,6 +50,7 @@ interface PricingFormProps {
 export function PricingForm({ tour }: PricingFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -71,7 +73,8 @@ export function PricingForm({ tour }: PricingFormProps) {
       try {
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Pricing updated.' });
-      } catch (error) {
+      } catch (error: any) {
+        logError({ message: `Failed to update pricing for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -209,3 +212,5 @@ export function PricingForm({ tour }: PricingFormProps) {
     </Card>
   );
 }
+
+    

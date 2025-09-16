@@ -12,12 +12,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { deleteTour } from "@/lib/db";
+import { deleteTour, logError } from "@/lib/db";
 import type { Tour } from "@/lib/types";
 import { useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface DeletePackageDialogProps {
   tour: Tour;
@@ -27,6 +27,7 @@ interface DeletePackageDialogProps {
 export function DeletePackageDialog({ tour, children }: DeletePackageDialogProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -36,8 +37,9 @@ export function DeletePackageDialog({ tour, children }: DeletePackageDialogProps
           title: "Success",
           description: `Package "${tour.name}" has been deleted.`,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to delete package:", error);
+        logError({ message: `Failed to delete package ${tour.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: "destructive",
           title: "Error",
@@ -69,3 +71,5 @@ export function DeletePackageDialog({ tour, children }: DeletePackageDialogProps
     </AlertDialog>
   );
 }
+
+    

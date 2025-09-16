@@ -5,19 +5,22 @@ import { useState } from 'react';
 import { useFormContext, useController } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Upload, XCircle, CheckCircle } from 'lucide-react';
+import { Loader2, Upload, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Label } from '../ui/label';
 import imageCompression from 'browser-image-compression';
+import { logError } from '@/lib/db';
+import { usePathname } from 'next/navigation';
 
 interface ImageUploadProps {
   name: string;
 }
 
 export function ImageUpload({ name }: ImageUploadProps) {
-  const { control, setValue, getValues } = useFormContext();
+  const { control, setValue } = useFormContext();
   const { field } = useController({ name, control });
+  const pathname = usePathname();
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -41,8 +44,9 @@ export function ImageUpload({ name }: ImageUploadProps) {
         }
         compressedFile = await imageCompression(file, options);
         console.log(`Compressed file size: ${compressedFile.size / 1024 / 1024} MB`);
-    } catch (compressionError) {
+    } catch (compressionError: any) {
         console.error('Image compression error:', compressionError);
+        logError({ message: `Image compression failed: ${compressionError.message}`, stack: compressionError.stack, pathname });
         toast({
             variant: 'destructive',
             title: 'Compression Failed',
@@ -55,7 +59,6 @@ export function ImageUpload({ name }: ImageUploadProps) {
 
     const formData = new FormData();
     formData.append('file', compressedFile);
-    // These are placeholder values. In a real app, you'd get these from user session or context.
     formData.append('platform', 'p3.happymountainnepal');
     formData.append('userid', 'admin-user');
     formData.append('contentid', `${name}-${Date.now()}`);
@@ -84,6 +87,7 @@ export function ImageUpload({ name }: ImageUploadProps) {
         throw new Error(result.message || 'Unknown error occurred during upload.');
       }
     } catch (error: any) {
+      logError({ message: `Image upload failed: ${error.message}`, stack: error.stack, pathname });
       setUploadError(error.message || 'An unexpected error occurred.');
       toast({
         variant: 'destructive',
@@ -157,3 +161,5 @@ export function ImageUpload({ name }: ImageUploadProps) {
     </div>
   );
 }
+
+    

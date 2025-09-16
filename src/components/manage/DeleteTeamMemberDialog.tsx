@@ -12,12 +12,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { deleteTeamMember } from "@/lib/db";
+import { deleteTeamMember, logError } from "@/lib/db";
 import type { TeamMember } from "@/lib/types";
 import { useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface DeleteTeamMemberDialogProps {
   member: TeamMember;
@@ -27,6 +27,7 @@ interface DeleteTeamMemberDialogProps {
 export function DeleteTeamMemberDialog({ member, children }: DeleteTeamMemberDialogProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -36,8 +37,9 @@ export function DeleteTeamMemberDialog({ member, children }: DeleteTeamMemberDia
           title: "Success",
           description: `Team member "${member.name}" has been deleted.`,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to delete team member:", error);
+        logError({ message: `Failed to delete team member ${member.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: "destructive",
           title: "Error",
@@ -69,3 +71,5 @@ export function DeleteTeamMemberDialog({ member, children }: DeleteTeamMemberDia
     </AlertDialog>
   );
 }
+
+    

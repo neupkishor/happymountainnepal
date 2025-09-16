@@ -12,11 +12,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deletePartner } from "@/lib/db";
+import { deletePartner, logError } from "@/lib/db";
 import type { Partner } from "@/lib/types";
 import { useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface DeletePartnerDialogProps {
   partner: Partner;
@@ -26,6 +27,7 @@ interface DeletePartnerDialogProps {
 export function DeletePartnerDialog({ partner, children }: DeletePartnerDialogProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -35,8 +37,9 @@ export function DeletePartnerDialog({ partner, children }: DeletePartnerDialogPr
           title: "Success",
           description: `Partner "${partner.name}" has been deleted.`,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to delete partner:", error);
+        logError({ message: `Failed to delete partner ${partner.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: "destructive",
           title: "Error",

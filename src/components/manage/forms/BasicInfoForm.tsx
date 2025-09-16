@@ -12,17 +12,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour } from '@/lib/db';
+import { updateTour, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   name: z.string().min(5, { message: "Name must be at least 5 characters." }),
@@ -42,6 +42,7 @@ interface BasicInfoFormProps {
 export function BasicInfoForm({ tour }: BasicInfoFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,8 +61,9 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
       try {
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Basic info updated.' });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to save package:", error);
+        logError({ message: `Failed to update basic info for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -192,3 +194,5 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
     </Card>
   );
 }
+
+    

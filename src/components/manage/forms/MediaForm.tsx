@@ -1,25 +1,21 @@
 
 'use client';
 
-import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour } from '@/lib/db';
+import { updateTour, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '../ImageUpload';
+import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   mainImage: z.string().url({ message: "Please upload a main image." }).min(1, "Main image is required."),
@@ -36,6 +32,7 @@ interface MediaFormProps {
 export function MediaForm({ tour }: MediaFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -46,17 +43,15 @@ export function MediaForm({ tour }: MediaFormProps) {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "images",
-  });
+  const { fields, append, remove } = form.control.register('images') as any;
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Media updated.' });
-      } catch (error) {
+      } catch (error: any) {
+        logError({ message: `Failed to update media for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -74,14 +69,12 @@ export function MediaForm({ tour }: MediaFormProps) {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               
               <ImageUpload name="mainImage" />
-              <FormMessage>{form.formState.errors.mainImage?.message}</FormMessage>
-
+              
               <ImageUpload name="mapImage" />
-              <FormMessage>{form.formState.errors.mapImage?.message}</FormMessage>
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Additional Images</h3>
-                {fields.map((field, index) => (
+                {fields.map((field: { id: string }, index: number) => (
                    <div key={field.id} className="flex items-center gap-2">
                      <div className="w-full">
                         <ImageUpload name={`images.${index}`} />
@@ -108,3 +101,5 @@ export function MediaForm({ tour }: MediaFormProps) {
     </FormProvider>
   );
 }
+
+    

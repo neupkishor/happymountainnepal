@@ -17,11 +17,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type TeamMember } from '@/lib/types';
-import { addTeamMember, updateTeamMember } from '@/lib/db';
+import { addTeamMember, updateTeamMember, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
+import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -39,6 +40,7 @@ interface TeamMemberFormProps {
 export function TeamMemberForm({ member }: TeamMemberFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,8 +62,9 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
           await addTeamMember(values);
           toast({ title: 'Success', description: 'Team member created.' });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to save team member:", error);
+        logError({ message: `Failed to save team member: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -135,3 +138,5 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
     </FormProvider>
   );
 }
+
+    

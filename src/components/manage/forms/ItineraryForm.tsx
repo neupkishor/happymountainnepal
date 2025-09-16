@@ -17,10 +17,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour } from '@/lib/db';
+import { updateTour, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePathname } from 'next/navigation';
 
 const itineraryItemSchema = z.object({
   day: z.coerce.number().int().min(1),
@@ -41,6 +42,7 @@ interface ItineraryFormProps {
 export function ItineraryForm({ tour }: ItineraryFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,7 +64,8 @@ export function ItineraryForm({ tour }: ItineraryFormProps) {
       try {
         await updateTour(tour.id, { itinerary: sortedItinerary });
         toast({ title: 'Success', description: 'Itinerary updated.' });
-      } catch (error) {
+      } catch (error: any) {
+        logError({ message: `Failed to update itinerary for tour ${tour.id}: ${error.message}`, stack: error.stack, pathname });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -156,3 +159,5 @@ export function ItineraryForm({ tour }: ItineraryFormProps) {
     </Card>
   );
 }
+
+    

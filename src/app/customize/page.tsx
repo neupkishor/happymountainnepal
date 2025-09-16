@@ -22,7 +22,8 @@ import {
 } from '@/ai/flows/customize-trip-flow';
 import { Loader2, ArrowRight, Wand2, Check, User, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { saveInquiry } from '@/lib/db';
+import { saveInquiry, logError } from '@/lib/db';
+import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   conversation: z.array(
@@ -43,6 +44,7 @@ export default function CustomizePage() {
   const [isFinished, setIsFinished] = useState(false);
   const [isInitialStep, setIsInitialStep] = useState(true);
   const { toast } = useToast();
+  const pathname = usePathname();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -91,8 +93,9 @@ export default function CustomizePage() {
                 setIsFinished(true);
             }
             setIsInitialStep(false);
-        } catch (error) {
+        } catch (error: any) {
            console.error('AI Error:', error);
+           logError({ message: error.message, stack: error.stack, pathname });
            toast({
              variant: 'destructive',
              title: 'Error',
@@ -128,8 +131,9 @@ export default function CustomizePage() {
           if (result.isFinished) {
             setIsFinished(true);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('AI Error:', error);
+          logError({ message: error.message, stack: error.stack, pathname });
           toast({
             variant: 'destructive',
             title: 'Error',
@@ -154,7 +158,9 @@ export default function CustomizePage() {
         form.reset();
         setIsFinished(false);
         setIsInitialStep(true);
-    } catch(e) {
+    } catch(error: any) {
+        console.error('Database Error:', error);
+        logError({ message: error.message, stack: error.stack, pathname });
         toast({
             variant: 'destructive',
             title: "Database Error",
@@ -167,7 +173,7 @@ export default function CustomizePage() {
 
   return (
     <div className="container mx-auto py-16">
-      <div className="max-w-2xl w-full">
+      <div className="max-w-2xl w-full mx-auto">
         <div className="mb-8">
           <Wand2 className="h-12 w-12 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold !font-headline mt-4">
@@ -296,3 +302,5 @@ export default function CustomizePage() {
     </div>
   );
 }
+
+    
