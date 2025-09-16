@@ -67,17 +67,16 @@ export function ImageUpload({ name }: ImageUploadProps) {
       const response = await fetch('https://neupgroup.com/usercontent/bridge/api/upload.php', {
         method: 'POST',
         body: formData,
-        mode: 'no-cors'
       });
 
       if (!response.ok) {
-        let errorResponse = 'Could not read error response from server.';
+        let errorResponseText = 'Could not read error response from server.';
         try {
-            errorResponse = await response.text();
+            errorResponseText = await response.text();
         } catch (e) {
-            console.error("Could not parse error response:", e);
+            console.error("Could not parse error response text:", e);
         }
-        throw new Error(`Upload failed with status: ${response.statusText}. Response: ${errorResponse}`);
+        throw new Error(`Upload failed with status: ${response.status}. Response: ${errorResponseText}`);
       }
 
       const result = await response.json();
@@ -93,12 +92,23 @@ export function ImageUpload({ name }: ImageUploadProps) {
         throw new Error(result.message || 'Unknown error occurred during upload.');
       }
     } catch (error: any) {
-      logError({ message: `Image upload failed`, stack: error.stack, pathname, context: { endpoint: 'https://neupgroup.com/usercontent/bridge/api/upload.php', fileName: compressedFile.name } });
+      logError({
+         message: `Image upload failed: ${error.message}`, 
+         stack: error.stack, 
+         pathname, 
+         context: { 
+            endpoint: 'https://neupgroup.com/usercontent/bridge/api/upload.php', 
+            fileName: compressedFile.name,
+            fileSize: compressedFile.size,
+            fileType: compressedFile.type,
+            errorMessage: error.message
+         } 
+      });
       setUploadError(error.message || 'An unexpected error occurred.');
       toast({
         variant: 'destructive',
         title: 'Upload Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: error.message || 'An unexpected error occurred. This could be a network issue or a server problem. Check error logs for details.',
       });
     } finally {
       setIsUploading(false);
