@@ -41,31 +41,33 @@ export const HeaderV3Nav = ({ links }: HeaderV3NavProps) => {
     };
 
     return (
-        <nav className="flex items-center" onMouseLeave={handleMouseLeave}>
-            {links.map(link => (
-                <div
-                    key={link.title}
-                    className="relative"
-                    onMouseEnter={() => handleMouseEnter(link.title, link)}
-                >
-                    <Link
-                        href={link.href || '#'}
-                        className={cn(
-                            "relative px-3 py-2 text-sm font-medium transition-colors duration-300",
-                            hoveredItem === link.title ? "text-primary" : "text-foreground/70 hover:text-foreground"
-                        )}
+        <div className="relative" onMouseLeave={handleMouseLeave}>
+            <nav className="flex items-center">
+                {links.map(link => (
+                    <div
+                        key={link.title}
+                        className="relative"
+                        onMouseEnter={() => handleMouseEnter(link.title, link)}
                     >
-                        {link.title}
-                        {hoveredItem === link.title && (
-                             <motion.div
-                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                                layoutId="underline"
-                                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                            />
-                        )}
-                    </Link>
-                </div>
-            ))}
+                        <Link
+                            href={link.href || '#'}
+                            className={cn(
+                                "relative px-3 py-2 text-sm font-medium transition-colors duration-300",
+                                hoveredItem === link.title ? "text-primary" : "text-foreground/70 hover:text-foreground"
+                            )}
+                        >
+                            {link.title}
+                            {hoveredItem === link.title && (
+                                <motion.div
+                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                                    layoutId="underline"
+                                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                                />
+                            )}
+                        </Link>
+                    </div>
+                ))}
+            </nav>
 
             <AnimatePresence>
                 {activeSubMenu && (
@@ -112,6 +114,6 @@ export const HeaderV3Nav = ({ links }: HeaderV3NavProps) => {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </nav>
+        </div>
     );
 };
