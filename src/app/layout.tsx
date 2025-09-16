@@ -8,7 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressProvider } from '@/providers/ProgressProvider';
-import { Header } from '@/components/layout/Header';
+import { HeaderV2 as Header } from '@/components/layout/HeaderV2';
 import { usePathname } from 'next/navigation';
 
 // Using a separate component for metadata to allow usePathname in the layout
