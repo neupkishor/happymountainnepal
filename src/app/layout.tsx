@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type {Metadata} from 'next';
@@ -7,7 +6,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
-import { ProgressProvider } from '@/providers/ProgressProvider';
+import { ProgressBar } from '@/components/layout/ProgressBar';
 import { HeaderV3 as Header } from '@/components/layout/HeaderV3';
 import { usePathname } from 'next/navigation';
 
@@ -36,20 +35,19 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <ProgressProvider>
-          <WishlistProvider>
-            {isManagePage ? (
-              <div className="min-h-screen bg-secondary/30">{children}</div>
-            ) : (
-              <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-grow">{children}</main>
-                <Footer />
-              </div>
-            )}
-            <Toaster />
-          </WishlistProvider>
-        </ProgressProvider>
+        <ProgressBar />
+        <WishlistProvider>
+          {isManagePage ? (
+            <div className="min-h-screen bg-secondary/30">{children}</div>
+          ) : (
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </div>
+          )}
+          <Toaster />
+        </WishlistProvider>
       </body>
     </html>
   );
