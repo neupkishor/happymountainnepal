@@ -5,7 +5,7 @@
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import { firestore } from './firebase'; // Your initialized Firebase app
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError } from './types';
 import { notFound, redirect } from "next/navigation";
 import { slugify } from "./utils";
 import { revalidatePath } from "next/cache";
@@ -505,4 +505,35 @@ export async function getAllReviews(): Promise<(Review & { tourName: string })[]
   });
 }
 
-    
+// Error Logging
+export async function logError(errorData: Omit<SiteError, 'id' | 'createdAt'>): Promise<void> {
+    if (!firestore) {
+        console.error("Firestore is not initialized. Cannot log error.");
+        return;
+    }
+    try {
+        await addDoc(collection(firestore, 'errors'), {
+            ...errorData,
+            createdAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error('Failed to log error to Firestore:', error);
+    }
+}
+
+export async function getErrors(): Promise<SiteError[]> {
+    if (!firestore) return [];
+    try {
+        const errorsRef = collection(firestore, 'errors');
+        const q = query(errorsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SiteError));
+    } catch (error) {
+        console.error("Error fetching errors:", error);
+        throw new Error("Could not fetch errors from the database.");
+    }
+}
+
+export async function getErrorById(id: string): Promise<SiteError | null> {
+    return getDocById<SiteError>('errors', id);
+}

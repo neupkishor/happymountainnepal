@@ -76,3 +76,12 @@ export interface Activity {
   fromLocation?: string; // This would typically require an external service
   activityTime: Timestamp;
 }
+
+export interface SiteError {
+    id: string;
+    message: string;
+    stack?: string;
+    componentStack?: string;
+    pathname: string;
+    createdAt: Timestamp;
+}

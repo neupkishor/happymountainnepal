@@ -3,7 +3,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
@@ -77,6 +77,12 @@ export default function ManageLayout({
                                       <span>Partners</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
+                              <SidebarMenuItem>
+                                <SidebarMenuButton href="/manage/site/errors" isActive={pathname.startsWith('/manage/site/errors')} tooltip="Site Errors">
+                                    <ShieldAlert />
+                                    <span>Site Errors</span>
+                                </SidebarMenuButton>
+                               </SidebarMenuItem>
                                <SidebarMenuItem>
                                   <SidebarMenuButton href="/" tooltip="Back to Site">
                                       <ArrowLeft />
