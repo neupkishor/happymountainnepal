@@ -26,15 +26,14 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
   const [activePath, setActivePath] = React.useState<string[]>([]);
   const pathname = usePathname();
 
-  const handlePointerEnter = (path: string[], disabled: boolean) => {
-    if (disabled) return;
+  const handlePointerEnter = (path: string[]) => {
     setActivePath(path);
   };
-
-  const handlePointerLeave = () => {
-    // Optional: Keep the menu open if you want a "sticky" hover behavior
-    // For now, we'll let it close.
+  
+  const handlePointerLeave = (path: string[]) => {
+    setActivePath(prev => prev.slice(0, path.length - 1));
   };
+
 
   const renderNavLinks = (
     currentLinks: NavLink[],
@@ -57,7 +56,8 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
                 'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
                 isActive && 'bg-accent/50'
               )}
-              onPointerEnter={() => handlePointerEnter(newPath, false)}
+              onPointerEnter={() => handlePointerEnter(newPath)}
+              onPointerLeave={() => handlePointerLeave(newPath)}
             >
               <Link href={link.href || '#'} className="w-full h-full">
                 <div className="flex justify-between items-center">
@@ -79,32 +79,24 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
     );
   };
   
-  const getSubMenu = (path: string[]) => {
-      let currentLevel = links;
-      for (let i = 0; i < path.length; i++) {
-          const nextNode = currentLevel.find(l => l.title === path[i]);
-          if (nextNode?.children) {
-              currentLevel = nextNode.children;
-          } else {
-              return null;
-          }
-      }
-      return currentLevel;
-  }
-
   const subMenus = React.useMemo(() => {
     const menus = [];
-    let currentLinks: NavLink[] | undefined = links;
+    let currentLevelLinks: NavLink[] | undefined = links;
 
     for (let i = 0; i < activePath.length; i++) {
-        const activeLinkTitle = activePath[i];
-        const activeLink = currentLinks?.find(l => l.title === activeLinkTitle);
+        const nodeTitle = activePath[i];
+        const node = currentLevelLinks?.find(l => l.title === nodeTitle);
         
-        if (activeLink?.children) {
-            menus.push({ level: i + 2, links: activeLink.children, path: activePath.slice(0, i + 1) });
-            currentLinks = activeLink.children;
+        if (node?.children) {
+            // Push the children to be rendered in the next column
+            menus.push({
+                level: i + 1,
+                links: node.children,
+                path: activePath.slice(0, i + 1)
+            });
+            currentLevelLinks = node.children;
         } else {
-            break; // No more children, stop generating submenus
+            break; // No more children down this path
         }
     }
     return menus;
@@ -123,31 +115,38 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
             {link.children ? (
               <>
                 <NavigationMenuPrimitive.Trigger
-                  onPointerEnter={() => handlePointerEnter([link.title], false)}
+                  onPointerEnter={() => handlePointerEnter([link.title])}
+                  onPointerLeave={() => handlePointerLeave([link.title])}
                   className={cn(navigationMenuTriggerStyle(), 'data-[state=open]:bg-accent/50')}
                 >
                   {link.title}
                 </NavigationMenuPrimitive.Trigger>
                 <NavigationMenuPrimitive.Content 
-                  onPointerLeave={() => handlePointerEnter([link.title], false)}
-                  className="absolute top-0 left-0 w-auto"
+                  onPointerEnter={() => handlePointerEnter([link.title])}
+                  className="w-auto"
                 >
                    <div 
                      className="md:w-auto bg-popover text-popover-foreground rounded-lg border shadow-lg"
                    >
                      <div className="flex">
-                        <div className="w-64">
-                            {renderNavLinks(link.children, 1, [link.title])}
-                        </div>
-
-                        {subMenus.map((subMenu) => {
-                            if (subMenu.path.length >= 3) return null;
-                            return (
-                                <div key={subMenu.level} className="w-64 border-l">
-                                    {renderNavLinks(subMenu.links, subMenu.level, subMenu.path)}
-                                </div>
-                            )
-                        })}
+                        {/* The first column is the first item in subMenus */}
+                        {subMenus[0] && (
+                           <div className="w-64">
+                             {renderNavLinks(subMenus[0].links, 1, subMenus[0].path)}
+                           </div>
+                        )}
+                        {/* The second column is the second item */}
+                        {subMenus[1] && (
+                           <div className="w-64 border-l">
+                             {renderNavLinks(subMenus[1].links, 2, subMenus[1].path)}
+                           </div>
+                        )}
+                         {/* The third column is the third item */}
+                        {subMenus[2] && (
+                           <div className="w-64 border-l">
+                             {renderNavLinks(subMenus[2].links, 3, subMenus[2].path)}
+                           </div>
+                        )}
                      </div>
                    </div>
                 </NavigationMenuPrimitive.Content>
@@ -169,7 +168,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
         ))}
       </NavigationMenuPrimitive.List>
 
-       <div className="absolute left-0 top-full flex justify-center">
+       <div className="absolute left-0 top-full mt-2 flex w-full justify-center">
             <NavigationMenuPrimitive.Viewport />
         </div>
     </NavigationMenuPrimitive.Root>
