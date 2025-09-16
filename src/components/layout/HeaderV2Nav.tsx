@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
-import { ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   navigationMenuTriggerStyle,
@@ -22,156 +22,101 @@ interface HeaderV2NavProps {
   links: NavLink[];
 }
 
+const hasChildren = (item: NavLink): item is Required<Pick<NavLink, 'children'>> & NavLink => {
+    return Array.isArray(item.children) && item.children.length > 0;
+}
+
 export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
-  const [activePath, setActivePath] = React.useState<string[]>([]);
   const pathname = usePathname();
 
-  const handlePointerEnter = (path: string[]) => {
-    setActivePath(path);
-  };
-  
-  const handlePointerLeave = () => {
-    // This is intentionally left empty. We will only close the menu
-    // when the cursor leaves the entire navigation root.
-  };
-
-
-  const renderNavLinks = (
-    currentLinks: NavLink[],
-    level: number,
-    currentPath: string[]
-  ) => {
-    return (
-      <div className="flex flex-col space-y-1 p-2">
-        {currentLinks.map((link, index) => {
-          const newPath = [...currentPath, link.title];
-          const isActive = activePath[level] === link.title;
-          const hasChildren = link.children && link.children.length > 0;
-
-          return (
-            <NavigationMenuPrimitive.Item 
-              key={index} 
-              value={link.title}
+  const renderLinks = (links: NavLink[]): React.ReactNode => {
+    return links.map((link) => {
+      if (hasChildren(link)) {
+        return (
+          <NavigationMenuPrimitive.Item key={link.title}>
+            <NavigationMenuPrimitive.Trigger className={navigationMenuTriggerStyle()}>
+              {link.title}
+            </NavigationMenuPrimitive.Trigger>
+            <NavigationMenuPrimitive.Content>
+              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                {link.children!.map((component) => (
+                    <ListItem
+                        key={component.title}
+                        title={component.title}
+                        href={component.href}
+                    >
+                        {component.description}
+                    </ListItem>
+                ))}
+              </ul>
+            </NavigationMenuPrimitive.Content>
+          </NavigationMenuPrimitive.Item>
+        );
+      }
+      return (
+        <NavigationMenuPrimitive.Item key={link.href}>
+          <Link href={link.href!} legacyBehavior passHref>
+            <NavigationMenuPrimitive.Link
               className={cn(
-                'block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors w-full text-left',
-                'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
-                isActive && 'bg-accent/50'
+                navigationMenuTriggerStyle(),
+                pathname === link.href && 'bg-accent/50'
               )}
-              onPointerEnter={() => handlePointerEnter(newPath)}
-              onPointerLeave={handlePointerLeave} // Keep menu open when moving between items
             >
-              <Link href={link.href || '#'} className="w-full h-full">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-sm font-medium leading-none">{link.title}</div>
-                    {link.description && (
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                        {link.description}
-                      </p>
-                    )}
-                  </div>
-                  {hasChildren && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                </div>
-              </Link>
-            </NavigationMenuPrimitive.Item>
-          );
-        })}
-      </div>
-    );
+              {link.title}
+            </NavigationMenuPrimitive.Link>
+          </Link>
+        </NavigationMenuPrimitive.Item>
+      );
+    });
   };
-  
-  const subMenus = React.useMemo(() => {
-    const menus = [];
-    let currentLevelLinks: NavLink[] | undefined = links;
-
-    for (let i = 0; i < activePath.length; i++) {
-        const nodeTitle = activePath[i];
-        const node = currentLevelLinks?.find(l => l.title === nodeTitle);
-        
-        if (node?.children) {
-            // Push the children to be rendered in the next column
-            menus.push({
-                level: i + 1,
-                links: node.children,
-                path: activePath.slice(0, i + 1)
-            });
-            currentLevelLinks = node.children;
-        } else {
-            break; // No more children down this path
-        }
-    }
-    return menus;
-  }, [activePath, links]);
-
 
   return (
-    <NavigationMenuPrimitive.Root 
-        delayDuration={0}
-        skipDelayDuration={500}
-        onPointerLeave={() => setActivePath([])} // Close all menus when leaving the entire nav area
-        className="relative flex max-w-max flex-1 items-center justify-center"
+    <NavigationMenuPrimitive.Root
+      delayDuration={0}
+      skipDelayDuration={500}
+      className="relative z-10 flex max-w-max flex-1 items-center justify-center"
     >
       <NavigationMenuPrimitive.List className="group flex flex-1 list-none items-center justify-center space-x-1">
-        {links.map((link) => (
-          <NavigationMenuPrimitive.Item key={link.title}>
-            {link.children ? (
-              <>
-                <NavigationMenuPrimitive.Trigger
-                  onPointerEnter={() => handlePointerEnter([link.title])}
-                  className={cn(navigationMenuTriggerStyle(), 'data-[state=open]:bg-accent/50')}
-                >
-                  {link.title}
-                </NavigationMenuPrimitive.Trigger>
-                <NavigationMenuPrimitive.Content 
-                  onPointerEnter={() => handlePointerEnter([link.title])}
-                  className="w-auto"
-                >
-                   <div 
-                     className="md:w-auto bg-popover text-popover-foreground rounded-lg border shadow-lg"
-                   >
-                     <div className="flex">
-                        {subMenus[0] && (
-                           <div className="w-64">
-                             {renderNavLinks(subMenus[0].links, 1, subMenus[0].path)}
-                           </div>
-                        )}
-                        {subMenus[1] && (
-                           <div className="w-64 border-l">
-                             {renderNavLinks(subMenus[1].links, 2, subMenus[1].path)}
-                           </div>
-                        )}
-                        {subMenus[2] && (
-                           <div className="w-64 border-l">
-                             {renderNavLinks(subMenus[2].links, 3, subMenus[2].path)}
-                           </div>
-                        )}
-                     </div>
-                   </div>
-                </NavigationMenuPrimitive.Content>
-              </>
-            ) : (
-              <Link href={link.href!} legacyBehavior passHref>
-                <NavigationMenuPrimitive.Link
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    pathname === link.href && 'bg-accent/50'
-                  )}
-                  onPointerEnter={() => setActivePath([])}
-                >
-                  {link.title}
-                </NavigationMenuPrimitive.Link>
-              </Link>
-            )}
-          </NavigationMenuPrimitive.Item>
-        ))}
+        {renderLinks(links)}
       </NavigationMenuPrimitive.List>
 
-       <div className="absolute top-full flex w-full justify-center">
-            <NavigationMenuPrimitive.Viewport />
-        </div>
+      <div className="absolute top-full flex justify-center">
+        <NavigationMenuPrimitive.Viewport
+          className={cn(
+            "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]"
+          )}
+        />
+      </div>
     </NavigationMenuPrimitive.Root>
   );
 };
+
+const ListItem = React.forwardRef<
+  React.ElementRef<'a'>,
+  React.ComponentPropsWithoutRef<'a'>
+>(({ className, title, children, href, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuPrimitive.Link asChild>
+        <Link
+          href={href || ''}
+          ref={ref}
+          className={cn(
+            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+            className
+          )}
+          {...props}
+        >
+          <div className="text-sm font-medium leading-none">{title}</div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </Link>
+      </NavigationMenuPrimitive.Link>
+    </li>
+  );
+});
+ListItem.displayName = 'ListItem';
 
 
 interface MobileLinkProps {
