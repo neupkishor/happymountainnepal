@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormMessage,
 } from '@/components/ui/form';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
@@ -20,7 +21,7 @@ import { usePathname } from 'next/navigation';
 const formSchema = z.object({
   mainImage: z.string().url({ message: "Please upload a main image." }).min(1, "Main image is required."),
   mapImage: z.string().url({ message: "Please upload a map image." }).min(1, "Map image is required."),
-  images: z.array(z.string().url({ message: "Please enter a valid URL." })),
+  images: z.array(z.string().url({ message: "Please enter a valid URL." }).min(1, "Image URL cannot be empty.")),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -71,16 +72,25 @@ export function MediaForm({ tour }: MediaFormProps) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               
-              <ImageUpload name="mainImage" />
+              <div>
+                <h3 className="text-lg font-medium mb-2">Main Image</h3>
+                <ImageUpload name="mainImage" />
+                <FormMessage>{form.formState.errors.mainImage?.message}</FormMessage>
+              </div>
               
-              <ImageUpload name="mapImage" />
+              <div>
+                <h3 className="text-lg font-medium mb-2">Map Image</h3>
+                <ImageUpload name="mapImage" />
+                <FormMessage>{form.formState.errors.mapImage?.message}</FormMessage>
+              </div>
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Additional Images</h3>
                 {fields.map((field, index) => (
-                   <div key={field.id} className="flex items-center gap-2">
+                   <div key={field.id} className="flex items-center gap-2 p-4 border rounded-lg">
                      <div className="w-full">
                         <ImageUpload name={`images.${index}`} />
+                        <FormMessage>{form.formState.errors.images?.[index]?.message}</FormMessage>
                      </div>
                      <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPending}>
                        <Trash2 className="h-4 w-4 text-destructive" />
@@ -104,5 +114,3 @@ export function MediaForm({ tour }: MediaFormProps) {
     </FormProvider>
   );
 }
-
-    
