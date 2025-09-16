@@ -126,47 +126,49 @@ export function HeaderV2() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* Mobile Menu Trigger */}
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
-            >
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle Menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="pr-0 w-full sm:max-w-xs">
-            <Link
-              href="/"
-              className="mb-6 flex items-center px-4"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Mountain className="mr-2 h-6 w-6 text-primary" />
-              <span className="font-bold">Happy Mountain</span>
-            </Link>
-            <div className="flex flex-col space-y-1">
-                {renderMobileNavLinks(navLinks, setIsMobileMenuOpen)}
-            </div>
-          </SheetContent>
-        </Sheet>
+        {/* Mobile Menu Trigger & Logo */}
+        <div className="flex items-center md:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+                <Button
+                variant="ghost"
+                className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                >
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle Menu</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="pr-0 w-full sm:max-w-xs">
+                <Link
+                href="/"
+                className="mb-6 flex items-center px-4"
+                onClick={() => setIsMobileMenuOpen(false)}
+                >
+                <Mountain className="mr-2 h-6 w-6 text-primary" />
+                <span className="font-bold">Happy Mountain</span>
+                </Link>
+                <div className="flex flex-col space-y-1">
+                    {renderMobileNavLinks(navLinks, setIsMobileMenuOpen)}
+                </div>
+            </SheetContent>
+            </Sheet>
+        </div>
         
-        {/* Left Aligned Logo */}
-        <div className="flex items-center">
+        {/* Left Aligned Logo for Desktop */}
+        <div className="hidden md:flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <Mountain className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block">Happy Mountain</span>
+            <span className="font-bold">Happy Mountain</span>
           </Link>
         </div>
-
+        
         {/* Centered Navigation for Desktop */}
         <div className="hidden md:flex flex-1 justify-center">
             <HeaderV2Nav links={navLinks} />
         </div>
         
         {/* Right Aligned Icons */}
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex items-center justify-end md:w-auto w-full">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/profile">
               <User className="h-5 w-5" />
