@@ -70,7 +70,13 @@ export function ImageUpload({ name }: ImageUploadProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed with status: ' + response.statusText);
+        let errorResponse = 'Could not read error response from server.';
+        try {
+            errorResponse = await response.text();
+        } catch (e) {
+            console.error("Could not parse error response:", e);
+        }
+        throw new Error(`Upload failed with status: ${response.statusText}. Response: ${errorResponse}`);
       }
 
       const result = await response.json();
