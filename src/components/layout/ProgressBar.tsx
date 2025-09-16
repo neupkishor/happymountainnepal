@@ -54,7 +54,7 @@ export function ProgressBar() {
     style.innerHTML = `
       #nprogress .bar {
         background: hsl(var(--primary)) !important;
-        height: 3px !important;
+        height: 4px !important;
       }
       #nprogress .peg {
         box-shadow: 0 0 10px hsl(var(--primary)), 0 0 5px hsl(var(--primary)) !important;
