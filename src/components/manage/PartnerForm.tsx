@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -21,11 +21,12 @@ import { addPartner, updatePartner } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUpload } from './ImageUpload';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  logo: z.string().url({ message: "Please enter a valid logo URL." }),
+  logo: z.string().url({ message: "Please upload a logo." }).min(1, "Logo is required."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -69,66 +70,53 @@ export function PartnerForm({ partner }: PartnerFormProps) {
   };
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Partner Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Nepal Tourism Board" {...field} disabled={isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="e.g., Official tourism body of Nepal."
-                      {...field}
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="logo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Logo Image URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://example.com/logo.png"
-                      {...field}
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {partner ? 'Update Partner' : 'Create Partner'}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+    <FormProvider {...form}>
+      <Card>
+        <CardContent className="p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Partner Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Nepal Tourism Board" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., Official tourism body of Nepal."
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <ImageUpload name="logo" />
+              <FormMessage>{form.formState.errors.logo?.message}</FormMessage>
+              
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {partner ? 'Update Partner' : 'Create Partner'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </FormProvider>
   );
 }
-
-    
