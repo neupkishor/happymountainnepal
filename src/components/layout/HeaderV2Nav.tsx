@@ -115,7 +115,7 @@ export const HeaderV2Nav = ({ links }: HeaderV2NavProps) => {
     <NavigationMenuPrimitive.Root 
         delayDuration={0}
         onMouseLeave={() => setActivePath([])}
-        className="relative z-10 flex max-w-max flex-1 items-center justify-center"
+        className="relative flex max-w-max flex-1 items-center justify-center"
     >
       <NavigationMenuPrimitive.List className="group flex flex-1 list-none items-center justify-center space-x-1">
         {links.map((link) => (
