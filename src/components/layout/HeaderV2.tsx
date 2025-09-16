@@ -90,6 +90,7 @@ const navLinks: NavLink[] = [
     ],
   },
   { href: '/contact', title: 'Contact' },
+  { href: '/search', title: 'Search' },
 ];
 
 function renderMobileNavLinks(links: NavLink[], setOpen: (open: boolean) => void): React.ReactNode[] {
@@ -166,12 +167,6 @@ export function HeaderV2() {
         
         {/* Right Aligned Icons */}
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/search">
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
-            </Link>
-          </Button>
           <Button variant="ghost" size="icon" asChild>
             <Link href="/profile">
               <User className="h-5 w-5" />
