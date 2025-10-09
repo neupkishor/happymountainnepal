@@ -37,6 +37,8 @@ export interface BlogPost {
   author: string;
   date: string | Timestamp;
   image: string;
+  metaInformation?: string;
+  status: 'draft' | 'published';
 }
 
 export type TeamMember = {

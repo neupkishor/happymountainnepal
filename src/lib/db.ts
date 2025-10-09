@@ -176,14 +176,20 @@ export async function getActivitiesByAccountId(accountId: string): Promise<Activ
 }
 
 
-async function getCollection<T>(name: string): Promise<T[]> {
+async function getCollectionData<T>(name: string, filters: { key: string, op: '==' | '!=' | '<' | '<=' | '>' | '>=', value: any }[] = []): Promise<T[]> {
   if (!firestore) {
     console.error("Firestore is not initialized.");
     return [];
   }
   try {
-    const col = collection(firestore, name);
-    const snapshot = await getDocs(col);
+    let q = query(collection(firestore, name));
+    if (filters.length > 0) {
+        filters.forEach(f => {
+            q = query(q, where(f.key, f.op, f.value));
+        })
+    }
+    
+    const snapshot = await getDocs(q);
     if (snapshot.empty) {
       return [];
     }
@@ -233,7 +239,7 @@ async function getDocById<T>(collectionName: string, id: string): Promise<T | nu
 
 // Tour Functions
 export async function getTours(): Promise<Tour[]> {
-    return getCollection<Tour>('tours');
+    return getCollectionData<Tour>('tours');
 }
 export async function getTourBySlug(slug: string) {
     const tour = await getDocBySlug<Tour>('tours', slug);
@@ -245,7 +251,7 @@ export async function getTourById(id: string): Promise<Tour | null> {
 }
 
 export async function getFeaturedTours(): Promise<Tour[]> {
-    return getCollection<Tour>('tours'); // In a real app, this would be a query for featured tours.
+    return getCollectionData<Tour>('tours'); // In a real app, this would be a query for featured tours.
 }
 
 export async function createTour(): Promise<string | null> {
@@ -319,20 +325,85 @@ export async function deleteTour(id: string) {
 
 // Blog Post Functions
 export async function getBlogPosts(): Promise<BlogPost[]> {
-    return getCollection<BlogPost>('blogPosts');
+    return getCollectionData<BlogPost>('blogPosts', [{ key: 'status', op: '==', value: 'published'}]);
+}
+export async function getAllBlogPosts(): Promise<BlogPost[]> {
+    return getCollectionData<BlogPost>('blogPosts');
 }
 export async function getBlogPostBySlug(slug: string) {
     const post = await getDocBySlug<BlogPost>('blogPosts', slug);
-    if (!post) notFound();
+    if (!post || post.status !== 'published') notFound();
     return post;
 };
-export async function getRecentBlogPosts(): Promise<BlogPost[]> {
-    return getCollection<BlogPost>('blogPosts');
+export async function getBlogPostById(id: string): Promise<BlogPost | null> {
+    return getDocById<BlogPost>('blogPosts', id);
 }
+
+export async function getRecentBlogPosts(): Promise<BlogPost[]> {
+    return getCollectionData<BlogPost>('blogPosts', [{ key: 'status', op: '==', value: 'published'}]);
+}
+
+export async function createBlogPost(): Promise<string | null> {
+    if (!firestore) return null;
+    try {
+        const newPost = {
+            title: 'New Untitled Post',
+            slug: `new-untitled-post-${Date.now()}`,
+            content: '<p>Start writing your amazing blog post here...</p>',
+            excerpt: '',
+            author: 'Admin',
+            date: serverTimestamp(),
+            image: 'https://picsum.photos/seed/blog-placeholder/800/500',
+            status: 'draft',
+            metaInformation: '',
+        };
+        const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
+        revalidatePath('/manage/blog');
+        return docRef.id;
+    } catch (e) {
+        console.error("Error creating blog post", e);
+        return null;
+    }
+}
+
+export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'id' | 'slug'>>) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'blogPosts', id);
+        let finalData: Partial<Omit<BlogPost, 'id'>> = {...data};
+
+        if(data.title) {
+            finalData.slug = slugify(data.title);
+        }
+        
+        await updateDoc(docRef, finalData);
+        revalidatePath('/manage/blog');
+        revalidatePath(`/manage/blog/${id}/edit`);
+        revalidatePath(`/blog/${finalData.slug || ''}`);
+        revalidatePath('/blog');
+
+    } catch (e) {
+        console.error("Error updating blog post", e);
+        throw new Error("Could not update blog post.");
+    }
+}
+
+export async function deleteBlogPost(id: string) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await deleteDoc(doc(firestore, 'blogPosts', id));
+        revalidatePath('/manage/blog');
+        revalidatePath('/blog');
+    } catch (e) {
+        console.error("Error deleting blog post", e);
+        throw new Error("Could not delete blog post.");
+    }
+}
+
 
 // Team Member Functions
 export async function getTeamMembers(): Promise<TeamMember[]> {
-    return getCollection<TeamMember>('teamMembers');
+    return getCollectionData<TeamMember>('teamMembers');
 }
 export async function getTeamMemberBySlug(slug: string) {
     const member = await getDocBySlug<TeamMember>('teamMembers', slug);
@@ -432,7 +503,7 @@ export async function getDestinations(): Promise<Destination[]> {
 
 // Partner Functions
 export async function getPartners(): Promise<Partner[]> {
-    return getCollection<Partner>('partners');
+    return getCollectionData<Partner>('partners');
 }
 
 export async function getPartnerById(id: string): Promise<Partner | null> {
