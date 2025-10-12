@@ -8,7 +8,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Account entity."
+          "description": "Unique identifier for the Account entity, matching the Firebase Auth UID."
         },
         "fullName": {
           "type": "string",
@@ -33,29 +33,15 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/accounts/{accountId}",
-        "definition": {
-          "entityName": "Account",
-          "schema": {
-            "$ref": "#/backend/entities/Account"
-          },
-          "description": "Stores user account information. Uses path-based ownership for security.",
-          "params": [
-            {
-              "name": "accountId",
-              "description": "The unique identifier for the user account, matching the Firebase Auth UID."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The data structure prioritizes security and scalability by adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. The core structure is based around user accounts stored in `/accounts/{accountId}`. This path-based ownership model simplifies security rules. Because this is a profile document for the authenticated user, no denormalization is required.  List operations are inherently secure as they are scoped to the individual user."
+    "/accounts/{accountId}": {
+      "schema": {
+        "$ref": "#/entities/Account"
+      },
+      "description": "Stores user account information, where the document ID matches the Firebase Auth UID."
+    }
   }
 }

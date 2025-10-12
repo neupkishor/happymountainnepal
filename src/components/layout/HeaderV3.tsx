@@ -1,13 +1,15 @@
 
+
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeaderV3Nav, type NavLink } from './HeaderV3Nav';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useUser } from '@/firebase';
 
 // This data would likely come from a CMS or a shared data file in a real app
 const navLinks: NavLink[] = [
@@ -171,6 +173,7 @@ const hasChildren = (item: NavLink): item is Required<Pick<NavLink, 'children'>>
 export function HeaderV3() {
   const [isMenuOpen, setMenuOpen] = React.useState(false);
   const [activeSubMenu, setActiveSubMenu] = React.useState<NavLink | null>(null);
+  const { user, isUserLoading } = useUser();
 
   React.useEffect(() => {
     if (isMenuOpen) {
@@ -225,12 +228,25 @@ export function HeaderV3() {
 
             {/* Right aligned icons */}
             <div className="flex items-center justify-end md:w-auto w-full md:flex-none">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/profile">
-                        <User className="h-5 w-5" />
-                        <span className="sr-only">Profile</span>
-                    </Link>
-                </Button>
+                {isUserLoading ? (
+                    <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
+                ) : user ? (
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/profile">
+                            <User className="h-5 w-5" />
+                            <span className="sr-only">Profile</span>
+                        </Link>
+                    </Button>
+                ) : (
+                    <>
+                        <Button variant="ghost" asChild>
+                            <Link href="/login">Login</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href="/signup">Sign Up</Link>
+                        </Button>
+                    </>
+                )}
                  <Button variant="ghost" size="icon" asChild className="md:hidden">
                     <Link href="/search">
                         <Search className="h-5 w-5" />

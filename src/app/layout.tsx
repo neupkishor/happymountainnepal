@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { HeaderV3 as Header } from '@/components/layout/HeaderV3';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'Happy Mountain Nepal',
@@ -28,14 +29,16 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ProgressBar />
-        <WishlistProvider>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </div>
-          <Toaster />
-        </WishlistProvider>
+        <FirebaseClientProvider>
+          <WishlistProvider>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </div>
+            <Toaster />
+          </WishlistProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
