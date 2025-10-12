@@ -71,51 +71,6 @@ export async function getInquiries(): Promise<Inquiry[]> {
   }
 }
 
-/**
- * Creates a new account document in Firestore if it doesn't already exist.
- * @param accountId The unique ID for the account.
- * @param ipAddress The user's IP address.
- */
-export async function createAccountIfNotExists(accountId: string, ipAddress: string): Promise<void> {
-    if (!firestore) {
-        console.error("Firestore is not initialized. Cannot create account.");
-        return;
-    }
-  try {
-    const accountRef = doc(firestore, 'accounts', accountId);
-    const docSnap = await getDoc(accountRef);
-
-    if (!docSnap.exists()) {
-      await setDoc(accountRef, {
-        id: accountId,
-        ipAddress: ipAddress,
-        createdAt: serverTimestamp(),
-      });
-    }
-  } catch (error) {
-    console.error('Error creating account:', error);
-    // We don't rethrow here to avoid breaking the user's session for a tracking failure
-  }
-}
-
-/**
- * Logs a user activity to the 'activity' collection in Firestore.
- * @param activity The activity data to log.
- */
-export async function logActivity(activity: Omit<Activity, 'id' | 'activityTime'>): Promise<void> {
-    if (!firestore) {
-        console.error("Firestore is not initialized. Cannot log activity.");
-        return;
-    }
-  try {
-    await addDoc(collection(firestore, 'activity'), {
-      ...activity,
-      activityTime: serverTimestamp(),
-    });
-  } catch (error) {
-    console.error('Error logging activity:', error);
-  }
-}
 
 /**
  * Fetches all accounts from the 'accounts' collection in Firestore.
