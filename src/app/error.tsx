@@ -28,20 +28,16 @@ export default function GlobalError({
   }, [error, pathname])
 
   return (
-    <html>
-      <body>
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
-            <div className="text-center p-8">
-                <h1 className="text-4xl font-bold !font-headline mb-4">Something went wrong!</h1>
-                <p className="text-muted-foreground mb-8">
-                    We've been notified about the issue and are working to fix it. Please try again later.
-                </p>
-                <Button onClick={() => reset()}>
-                    Try again
-                </Button>
-            </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+        <div className="text-center p-8">
+            <h1 className="text-4xl font-bold !font-headline mb-4">Something went wrong!</h1>
+            <p className="text-muted-foreground mb-8">
+                We've been notified about the issue and are working to fix it. Please try again later.
+            </p>
+            <Button onClick={() => reset()}>
+                Try again
+            </Button>
         </div>
-      </body>
-    </html>
+    </div>
   )
 }

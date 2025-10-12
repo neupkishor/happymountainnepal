@@ -1,14 +1,17 @@
 
 
-'use server';
+'use client';
 
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
+import { firebaseConfig } from "@/firebase/config";
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import { firestore } from './firebase-server'; // Your initialized Firebase app
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, MediaUpload } from './types';
 import { notFound, redirect } from "next/navigation";
 import { slugify } from "./utils";
-import { revalidatePath } from "next/cache";
+
+const app = initializeApp(firebaseConfig);
+const firestore = getFirestore(app);
 
 
 export interface Inquiry {
@@ -279,7 +282,6 @@ export async function createTour(): Promise<string | null> {
             reviews: [],
         };
         const docRef = await addDoc(collection(firestore, 'tours'), newTourData);
-        revalidatePath('/manage/packages');
         return docRef.id;
     } catch (error) {
         console.error("Error creating new tour: ", error);
@@ -300,11 +302,6 @@ export async function updateTour(id: string, data: Partial<Omit<Tour, 'id' | 'sl
         }
 
         await updateDoc(docRef, finalData);
-        revalidatePath('/manage/packages');
-        revalidatePath(`/manage/packages/${id}/edit`);
-        revalidatePath(`/tours/${finalData.slug || ''}`);
-        revalidatePath('/tours');
-
     } catch (error) {
         console.error("Error updating tour: ", error);
         throw new Error("Could not update tour.");
@@ -315,8 +312,6 @@ export async function deleteTour(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await deleteDoc(doc(firestore, 'tours', id));
-        revalidatePath('/manage/packages');
-        revalidatePath('/tours');
     } catch (error) {
         console.error("Error deleting tour: ", error);
         throw new Error("Could not delete tour.");
@@ -358,7 +353,6 @@ export async function createBlogPost(): Promise<string | null> {
             metaInformation: '',
         };
         const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
-        revalidatePath('/manage/blogs');
         return docRef.id;
     } catch (e) {
         console.error("Error creating blog post", e);
@@ -377,11 +371,6 @@ export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'i
         }
         
         await updateDoc(docRef, finalData);
-        revalidatePath('/manage/blogs');
-        revalidatePath(`/manage/blogs/${id}/edit`);
-        revalidatePath(`/blogs/${finalData.slug || ''}`);
-        revalidatePath('/blogs');
-
     } catch (e) {
         console.error("Error updating blog post", e);
         throw new Error("Could not update blog post.");
@@ -392,8 +381,6 @@ export async function deleteBlogPost(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await deleteDoc(doc(firestore, 'blogPosts', id));
-        revalidatePath('/manage/blogs');
-        revalidatePath('/blogs');
     } catch (e) {
         console.error("Error deleting blog post", e);
         throw new Error("Could not delete blog post.");
@@ -420,8 +407,6 @@ export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
         const slug = slugify(data.name);
         const newMember = { ...data, slug };
         await addDoc(collection(firestore, 'teamMembers'), newMember);
-        revalidatePath('/manage/team');
-        revalidatePath('/about/teams');
     } catch (error) {
         console.error("Error adding team member: ", error);
         throw new Error("Could not add team member.");
@@ -436,9 +421,6 @@ export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 
         const updatedMember = { ...data, slug };
         const docRef = doc(firestore, 'teamMembers', id);
         await updateDoc(docRef, updatedMember);
-        revalidatePath('/manage/team');
-        revalidatePath(`/manage/team/${id}/edit`);
-        revalidatePath('/about/teams');
     } catch (error) {
         console.error("Error updating team member: ", error);
         throw new Error("Could not update team member.");
@@ -451,8 +433,6 @@ export async function deleteTeamMember(id: string) {
     try {
         const docRef = doc(firestore, 'teamMembers', id);
         await deleteDoc(docRef);
-        revalidatePath('/manage/team');
-        revalidatePath('/about/teams');
     } catch (error) {
         console.error("Error deleting team member: ", error);
         throw new Error("Could not delete team member.");
@@ -514,8 +494,6 @@ export async function addPartner(data: Omit<Partner, 'id'>) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await addDoc(collection(firestore, 'partners'), data);
-        revalidatePath('/manage/partners');
-        revalidatePath('/#partners');
     } catch (error) {
         console.error("Error adding partner: ", error);
         throw new Error("Could not add partner.");
@@ -528,9 +506,6 @@ export async function updatePartner(id: string, data: Omit<Partner, 'id'>) {
     try {
         const docRef = doc(firestore, 'partners', id);
         await updateDoc(docRef, data);
-        revalidatePath('/manage/partners');
-        revalidatePath(`/manage/partners/${id}/edit`);
-        revalidatePath('/#partners');
     } catch (error) {
         console.error("Error updating partner: ", error);
         throw new Error("Could not update partner.");
@@ -542,8 +517,6 @@ export async function deletePartner(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await deleteDoc(doc(firestore, 'partners', id));
-        revalidatePath('/manage/partners');
-        revalidatePath('/#partners');
     } catch (error) {
         console.error("Error deleting partner: ", error);
         throw new Error("Could not delete partner.");
@@ -639,5 +612,3 @@ export async function getMediaUploads(): Promise<MediaUpload[]> {
     throw new Error("Could not fetch media uploads from the database.");
   }
 }
-
-    

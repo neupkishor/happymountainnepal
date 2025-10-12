@@ -1,9 +1,23 @@
+
+'use client';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { getPartners } from '@/lib/db';
+import type { Partner } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from './ui/skeleton';
 
-export async function OurPartners() {
-  const partners = await getPartners();
+export function OurPartners() {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getPartners().then(data => {
+      setPartners(data);
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto">
@@ -13,24 +27,36 @@ export async function OurPartners() {
             We are proud to be associated with leading organizations in the tourism industry and government bodies, ensuring the highest standards of service and credibility.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {partners.map(partner => (
-            <div key={partner.id} className="text-center">
-              <div className="bg-card p-6 rounded-lg flex justify-center items-center h-32 mb-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
-                <Image
-                  src={partner.logo}
-                  alt={`${partner.name} logo`}
-                  width={150}
-                  height={75}
-                  className="object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
-                  data-ai-hint="company logo"
-                />
-              </div>
-              <h3 className="font-semibold text-lg">{partner.name}</h3>
-              <p className="text-sm text-muted-foreground">{partner.description}</p>
+        {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="text-center">
+                        <Skeleton className="h-32 w-full mb-4" />
+                        <Skeleton className="h-6 w-3/4 mx-auto" />
+                        <Skeleton className="h-4 w-1/2 mx-auto mt-2" />
+                    </div>
+                ))}
             </div>
-          ))}
-        </div>
+        ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {partners.map(partner => (
+                <div key={partner.id} className="text-center">
+                <div className="bg-card p-6 rounded-lg flex justify-center items-center h-32 mb-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+                    <Image
+                    src={partner.logo}
+                    alt={`${partner.name} logo`}
+                    width={150}
+                    height={75}
+                    className="object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+                    data-ai-hint="company logo"
+                    />
+                </div>
+                <h3 className="font-semibold text-lg">{partner.name}</h3>
+                <p className="text-sm text-muted-foreground">{partner.description}</p>
+                </div>
+            ))}
+            </div>
+        )}
       </div>
     </section>
   );

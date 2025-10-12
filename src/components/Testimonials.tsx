@@ -1,14 +1,26 @@
+
+'use client';
+import { useState, useEffect } from 'react';
 import { getAllReviews } from '@/lib/db';
+import type { Review } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReviewStars } from '@/components/ReviewStars';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
-export async function Testimonials() {
-  // Get first 3 reviews from all tours
-  const allReviews = (await getAllReviews()).slice(0, 3);
+export function Testimonials() {
+  const [reviews, setReviews] = useState<(Review & { tourName: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getAllReviews().then(allReviews => {
+      setReviews(allReviews.slice(0, 3));
+      setLoading(false);
+    });
+  }, []);
 
   return (
     <section className="py-16 lg:py-24 bg-secondary">
@@ -19,25 +31,44 @@ export async function Testimonials() {
             Real stories from travelers who have explored the Himalayas with us.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {allReviews.map((review, index) => (
-            <Card key={index} className="flex flex-col">
-              <CardContent className="p-6 flex-grow">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar>
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.author}`} />
-                    <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{review.author}</p>
-                    <ReviewStars rating={review.rating} />
-                  </div>
-                </div>
-                <p className="text-muted-foreground italic">&quot;{review.comment}&quot;</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {loading ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => (
+                    <Card key={i}>
+                        <CardContent className="p-6">
+                            <div className="flex items-center gap-4 mb-4">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className='space-y-2'>
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-4 w-16" />
+                                </div>
+                            </div>
+                            <Skeleton className="h-20 w-full" />
+                        </CardContent>
+                    </Card>
+                ))}
+             </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {reviews.map((review, index) => (
+                <Card key={index} className="flex flex-col">
+                <CardContent className="p-6 flex-grow">
+                    <div className="flex items-center gap-4 mb-4">
+                    <Avatar>
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.author}`} />
+                        <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="font-semibold">{review.author}</p>
+                        <ReviewStars rating={review.rating} />
+                    </div>
+                    </div>
+                    <p className="text-muted-foreground italic">&quot;{review.comment}&quot;</p>
+                </CardContent>
+                </Card>
+            ))}
+            </div>
+        )}
         <div className="text-center mt-12">
             <Link href="/testimonials">
                 <Button size="lg">

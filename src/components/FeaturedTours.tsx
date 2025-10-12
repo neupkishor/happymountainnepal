@@ -1,13 +1,24 @@
+
+'use client';
+import { useState, useEffect } from 'react';
 import { getFeaturedTours } from '@/lib/db';
+import type { Tour } from '@/lib/types';
 import { TourCard } from './TourCard';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
-export async function FeaturedTours() {
-  const featuredToursData = await getFeaturedTours();
-  // In a real app, you might query for specific "featured" tours. Here we take the first 3.
-  const featuredTours = featuredToursData.slice(0, 3);
+export function FeaturedTours() {
+  const [featuredTours, setFeaturedTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getFeaturedTours().then(tours => {
+      setFeaturedTours(tours.slice(0, 3));
+      setLoading(false);
+    });
+  }, []);
 
   return (
     <section className="py-16 lg:py-24 bg-background">
@@ -18,11 +29,17 @@ export async function FeaturedTours() {
             Handpicked journeys that promise unforgettable memories and spectacular views.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredTours.map((tour) => (
-            <TourCard key={tour.id} tour={tour} />
-          ))}
-        </div>
+        {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[450px] w-full rounded-lg" />)}
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredTours.map((tour) => (
+                    <TourCard key={tour.id} tour={tour} />
+                ))}
+            </div>
+        )}
         <div className="text-center mt-12">
           <Link href="/tours">
             <Button size="lg" variant="outline">

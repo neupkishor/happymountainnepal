@@ -1,14 +1,25 @@
+
+'use client';
+import { useState, useEffect } from 'react';
 import { getTours } from '@/lib/db';
+import type { Tour } from '@/lib/types';
 import { TourCard } from './TourCard';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
-export async function PopularPackages() {
-  const toursData = await getTours();
-  // For now, we'll feature the same tours as the featured section.
-  // This can be changed later to a different selection logic.
-  const popularTours = toursData.slice(0, 3);
+export function PopularPackages() {
+  const [popularTours, setPopularTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getTours().then(tours => {
+      setPopularTours(tours.slice(0, 3));
+      setLoading(false);
+    });
+  }, []);
+
 
   return (
     <section className="py-16 lg:py-24 bg-background">
@@ -19,11 +30,17 @@ export async function PopularPackages() {
             Discover our most sought-after adventures, loved by travelers from around the world.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {popularTours.map((tour) => (
-            <TourCard key={tour.id} tour={tour} />
-          ))}
-        </div>
+        {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[450px] w-full rounded-lg" />)}
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {popularTours.map((tour) => (
+                <TourCard key={tour.id} tour={tour} />
+            ))}
+            </div>
+        )}
         <div className="text-center mt-12">
           <Link href="/tours">
             <Button size="lg">

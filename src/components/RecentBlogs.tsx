@@ -1,12 +1,24 @@
+
+'use client';
+import { useState, useEffect } from 'react';
 import { getRecentBlogPosts } from "@/lib/db";
+import type { BlogPost } from '@/lib/types';
 import { BlogCard } from "./BlogCard";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
+import { Skeleton } from './ui/skeleton';
 
-export async function RecentBlogs() {
-  const allPosts = await getRecentBlogPosts();
-  const recentPosts = allPosts.slice(0, 3);
+export function RecentBlogs() {
+  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getRecentBlogPosts().then(posts => {
+        setRecentPosts(posts.slice(0, 3));
+        setLoading(false);
+    });
+  }, []);
 
   return (
     <section className="py-16 lg:py-24 bg-background">
@@ -17,11 +29,17 @@ export async function RecentBlogs() {
             Tips, stories, and guides to inspire your next Himalayan journey.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {recentPosts.map((post) => (
-            <BlogCard key={post.id} post={post} />
-          ))}
-        </div>
+        {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[400px] w-full rounded-lg" />)}
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {recentPosts.map((post) => (
+                <BlogCard key={post.id} post={post} />
+            ))}
+            </div>
+        )}
         <div className="text-center mt-12">
           <Link href="/blogs">
             <Button size="lg" variant="outline">
