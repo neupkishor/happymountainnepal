@@ -7,7 +7,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orde
 import { firebaseConfig } from "@/firebase/config";
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, MediaUpload } from './types';
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { slugify } from "./utils";
 
 const app = initializeApp(firebaseConfig);
@@ -411,7 +411,6 @@ export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
         console.error("Error adding team member: ", error);
         throw new Error("Could not add team member.");
     }
-    redirect(`/manage/team`);
 }
 
 export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 'slug'>) {
@@ -425,7 +424,6 @@ export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 
         console.error("Error updating team member: ", error);
         throw new Error("Could not update team member.");
     }
-    redirect(`/manage/team`);
 }
 
 export async function deleteTeamMember(id: string) {
@@ -498,7 +496,6 @@ export async function addPartner(data: Omit<Partner, 'id'>) {
         console.error("Error adding partner: ", error);
         throw new Error("Could not add partner.");
     }
-    redirect(`/manage/partners`);
 }
 
 export async function updatePartner(id: string, data: Omit<Partner, 'id'>) {
@@ -510,7 +507,6 @@ export async function updatePartner(id: string, data: Omit<Partner, 'id'>) {
         console.error("Error updating partner: ", error);
         throw new Error("Could not update partner.");
     }
-    redirect(`/manage/partners`);
 }
 
 export async function deletePartner(id: string) {
