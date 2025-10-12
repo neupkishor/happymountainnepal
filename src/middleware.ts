@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { createAccountIfNotExists, logActivity } from './lib/db';
 
 const COOKIE_NAME = 'temp_account';
 
@@ -32,10 +31,6 @@ export async function middleware(request: NextRequest) {
     isNewAccount = true;
   }
 
-  // Ensure account exists in the database.
-  // This is fire-and-forget; we don't block the request for this.
-  createAccountIfNotExists(accountId, ip).catch(console.error);
-
   // If it was a new account, set the cookie in the response.
   if (isNewAccount) {
     response.cookies.set(COOKIE_NAME, accountId, {
@@ -44,19 +39,6 @@ export async function middleware(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 365, // 1 year
     });
   }
-
-  // Log page view activity for the given accountId.
-  // This is also fire-and-forget.
-  logActivity({
-    accountId,
-    activityName: 'page_view',
-    activityInfo: {
-        path: pathname,
-        userAgent: request.headers.get('user-agent') || 'unknown',
-    },
-    fromIp: ip,
-  }).catch(console.error);
-
 
   return response;
 }
