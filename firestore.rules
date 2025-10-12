@@ -1,0 +1,66 @@
+/**
+ * @fileoverview Firestore Security Rules for Trek Explorer Accounts.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for account data. Each user can only
+ * access their own account information, preventing unauthorized access to other users' data.
+ *
+ * Data Structure:
+ * User account data is stored in the `/accounts/{accountId}` collection, where `{accountId}`
+ * corresponds to the Firebase Auth UID of the user.
+ *
+ * Key Security Decisions:
+ * - Users can only create, read, update, and delete their own account documents.
+ * - Listing all accounts is not permitted to prevent information disclosure.
+ * - Data validation is relaxed in this prototyping phase, focusing on authorization.
+ *
+ * Denormalization for Authorization:
+ *  Not Required. The `accountId` path parameter inherently links the document to the user's UID.
+ *
+ * Structural Segregation:
+ *  All account information is stored under the `/accounts/{accountId}` path, ensuring clear
+ *  separation and ownership.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages user account data stored under /accounts/{accountId}.
+     * @path /accounts/{accountId}
+     * @allow (create) User with UID 'user_abc' can create their own account document with id 'user_abc'.
+     * @allow (get) User with UID 'user_abc' can read their own account document.
+     * @allow (update) User with UID 'user_abc' can update their own account document.
+     * @allow (delete) User with UID 'user_abc' can delete their own account document.
+     * @deny (create) User with UID 'user_abc' cannot create an account document with id 'user_xyz'.
+     * @deny (get) User with UID 'user_xyz' cannot read the account document of user 'user_abc'.
+     * @principle Enforces strict user ownership for all account data.
+     */
+    match /accounts/{accountId} {
+      // Helper function to check if the request is made by the owner of the account.
+      function isOwner(accountId) {
+        return request.auth != null && request.auth.uid == accountId;
+      }
+
+      // Helper function to check if the account exists and is owned by the user.
+      function isExistingOwner(accountId) {
+        return isOwner(accountId) && resource != null;
+      }
+
+      // Allow a user to create their own account if the accountId matches their UID.
+      allow create: if isOwner(accountId) && request.resource.data.id == accountId;
+
+      // Allow a user to get their own account.
+      allow get: if isOwner(accountId);
+
+      // Allow a user to list their own account - deny this to protect privacy.
+      allow list: if isOwner(accountId);
+
+      // Allow a user to update their own account if they are the owner and the account exists.
+      allow update: if isExistingOwner(accountId) && request.resource.data.id == resource.data.id;
+
+      // Allow a user to delete their own account if they are the owner and the account exists.
+      allow delete: if isExistingOwner(accountId);
+    }
+  }
+}
