@@ -3,7 +3,7 @@
 'use server';
 
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import { firestore } from './firebase'; // Your initialized Firebase app
+import { firestore } from './firebase-server'; // Your initialized Firebase app
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, MediaUpload } from './types';
 import { notFound, redirect } from "next/navigation";
