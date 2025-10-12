@@ -12,7 +12,7 @@ export function BlogCard({ post }: BlogCardProps) {
   const displayDate = post.date instanceof Timestamp ? post.date.toDate().toLocaleDateString() : post.date;
 
   return (
-    <Link href={`/blog/${post.slug}`} className="group block">
+    <Link href={`/blogs/${post.slug}`} className="group block">
       <Card className="overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         <CardHeader className="p-0">
           <Image

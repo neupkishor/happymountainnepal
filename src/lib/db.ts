@@ -358,7 +358,7 @@ export async function createBlogPost(): Promise<string | null> {
             metaInformation: '',
         };
         const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
-        revalidatePath('/manage/blog');
+        revalidatePath('/manage/blogs');
         return docRef.id;
     } catch (e) {
         console.error("Error creating blog post", e);
@@ -377,10 +377,10 @@ export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'i
         }
         
         await updateDoc(docRef, finalData);
-        revalidatePath('/manage/blog');
-        revalidatePath(`/manage/blog/${id}/edit`);
-        revalidatePath(`/blog/${finalData.slug || ''}`);
-        revalidatePath('/blog');
+        revalidatePath('/manage/blogs');
+        revalidatePath(`/manage/blogs/${id}/edit`);
+        revalidatePath(`/blogs/${finalData.slug || ''}`);
+        revalidatePath('/blogs');
 
     } catch (e) {
         console.error("Error updating blog post", e);
@@ -392,8 +392,8 @@ export async function deleteBlogPost(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await deleteDoc(doc(firestore, 'blogPosts', id));
-        revalidatePath('/manage/blog');
-        revalidatePath('/blog');
+        revalidatePath('/manage/blogs');
+        revalidatePath('/blogs');
     } catch (e) {
         console.error("Error deleting blog post", e);
         throw new Error("Could not delete blog post.");

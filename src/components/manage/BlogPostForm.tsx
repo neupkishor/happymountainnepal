@@ -75,7 +75,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           date: post.date, // Preserve original date
         });
         toast({ title: 'Success', description: 'Blog post updated.' });
-        router.push('/manage/blog');
+        router.push('/manage/blogs');
       } catch (error: any) {
         logError({ message: `Failed to update blog post ${post.id}`, stack: error.stack, pathname, context: { postId: post.id, values } });
         toast({

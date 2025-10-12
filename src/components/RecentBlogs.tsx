@@ -23,7 +23,7 @@ export async function RecentBlogs() {
           ))}
         </div>
         <div className="text-center mt-12">
-          <Link href="/blog">
+          <Link href="/blogs">
             <Button size="lg" variant="outline">
               Read More Articles <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

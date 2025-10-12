@@ -50,10 +50,10 @@ export function BlogTableRow({ post }: BlogTableRowProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/blog/${post.slug}`} target="_blank">View Public Page</Link>
+              <Link href={`/blogs/${post.slug}`} target="_blank">View Public Page</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/manage/blog/${post.id}/edit`}>Edit</Link>
+              <Link href={`/manage/blogs/${post.id}/edit`}>Edit</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DeleteBlogPostDialog post={post}>

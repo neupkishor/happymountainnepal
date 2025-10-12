@@ -67,7 +67,7 @@ const navLinks: NavLink[] = [
           },
           {
             title: 'Blog',
-            href: '/blog',
+            href: '/blogs',
             description: 'Guides, stories, and advice.',
           },
         ],

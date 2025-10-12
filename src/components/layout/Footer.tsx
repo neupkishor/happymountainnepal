@@ -29,7 +29,7 @@ export function Footer() {
             <ul className="mt-4 space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary">About Us</Link></li>
               <li><Link href="/about/teams" className="text-sm text-muted-foreground hover:text-primary">Our Team</Link></li>
-              <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
+              <li><Link href="/blogs" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
               <li><Link href="/testimonials" className="text-sm text-muted-foreground hover:text-primary">Testimonials</Link></li>
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">Contact</Link></li>
             </ul>

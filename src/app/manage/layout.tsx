@@ -66,7 +66,7 @@ export default function ManageLayout({
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                                 <SidebarMenuItem>
-                                  <SidebarMenuButton href="/manage/blog" isActive={pathname.startsWith('/manage/blog')} tooltip="Blog">
+                                  <SidebarMenuButton href="/manage/blogs" isActive={pathname.startsWith('/manage/blogs')} tooltip="Blog">
                                       <PenSquare />
                                       <span>Blog</span>
                                   </SidebarMenuButton>
