@@ -8,10 +8,10 @@ import { Reviews } from '@/components/tour-details/Reviews';
 import { InclusionsExclusions } from '@/components/tour-details/InclusionsExclusions';
 import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
-import { useFirestore, useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useFirestore, useDoc } from '@/firebase';
+import { collection, query, where, getDocs, doc } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type TourDetailPageProps = {
@@ -23,10 +23,28 @@ type TourDetailPageProps = {
 export default function TourDetailPage({ params }: TourDetailPageProps) {
   const { slug } = params;
   const firestore = useFirestore();
+  const [tourId, setTourId] = useState<string | null>(null);
+  const [isLoadingId, setIsLoadingId] = useState(true);
 
-  const tourQuery = query(collection(firestore, 'packages'), where('slug', '==', slug));
-  const { data: tours, isLoading } = useCollection<Tour>(tourQuery);
-  const tour = useMemo(() => tours?.[0], [tours]);
+  useEffect(() => {
+    if (!firestore || !slug) return;
+    const findTour = async () => {
+      setIsLoadingId(true);
+      const q = query(collection(firestore, 'packages'), where('slug', '==', slug));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        setTourId(querySnapshot.docs[0].id);
+      }
+      setIsLoadingId(false);
+    };
+    findTour();
+  }, [firestore, slug]);
+
+  const tourRef = tourId ? doc(firestore, 'packages', tourId) : null;
+  const { data: tour, isLoading: isLoadingTour } = useDoc<Tour>(tourRef);
+
+  const isLoading = isLoadingId || isLoadingTour;
+
 
   if (isLoading || !tour) {
     return (

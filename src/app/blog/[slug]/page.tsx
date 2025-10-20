@@ -3,9 +3,9 @@
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Timestamp } from 'firebase/firestore';
-import { useFirestore, useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { useMemo } from 'react';
+import { useFirestore, useDoc } from '@/firebase';
+import { collection, query, where, getDocs, doc } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 import type { BlogPost } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -18,9 +18,27 @@ type BlogDetailPageProps = {
 export default function BlogDetailPage({ params }: BlogDetailPageProps) {
   const { slug } = params;
   const firestore = useFirestore();
-  const postQuery = query(collection(firestore, 'blogPosts'), where('slug', '==', slug));
-  const { data: posts, isLoading } = useCollection<BlogPost>(postQuery);
-  const post = useMemo(() => posts?.[0], [posts]);
+  const [postId, setPostId] = useState<string | null>(null);
+  const [isLoadingId, setIsLoadingId] = useState(true);
+
+  useEffect(() => {
+    if (!firestore || !slug) return;
+    const findPost = async () => {
+      setIsLoadingId(true);
+      const q = query(collection(firestore, 'blogPosts'), where('slug', '==', slug));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        setPostId(querySnapshot.docs[0].id);
+      }
+      setIsLoadingId(false);
+    };
+    findPost();
+  }, [firestore, slug]);
+  
+  const postRef = postId ? doc(firestore, 'blogPosts', postId) : null;
+  const { data: post, isLoading: isLoadingPost } = useDoc<BlogPost>(postRef);
+
+  const isLoading = isLoadingId || isLoadingPost;
 
 
   if (isLoading || !post) {

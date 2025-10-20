@@ -1,10 +1,10 @@
 
 'use client';
 import Image from 'next/image';
-import { useFirestore, useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useFirestore, useDoc } from '@/firebase';
+import { collection, query, where, getDocs, doc } from 'firebase/firestore';
 import type { TeamMember } from '@/lib/types';
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type TeamMemberPageProps = {
@@ -16,10 +16,27 @@ type TeamMemberPageProps = {
 export default function TeamMemberPage({ params }: TeamMemberPageProps) {
   const { slug } = params;
   const firestore = useFirestore();
-  
-  const memberQuery = query(collection(firestore, 'teamMembers'), where('slug', '==', slug));
-  const { data: members, isLoading } = useCollection<TeamMember>(memberQuery);
-  const member = useMemo(() => members?.[0], [members]);
+  const [memberId, setMemberId] = useState<string | null>(null);
+  const [isLoadingId, setIsLoadingId] = useState(true);
+
+  useEffect(() => {
+    if (!firestore || !slug) return;
+    const findMember = async () => {
+      setIsLoadingId(true);
+      const q = query(collection(firestore, 'teamMembers'), where('slug', '==', slug));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        setMemberId(querySnapshot.docs[0].id);
+      }
+      setIsLoadingId(false);
+    };
+    findMember();
+  }, [firestore, slug]);
+
+  const memberRef = memberId ? doc(firestore, 'teamMembers', memberId) : null;
+  const { data: member, isLoading: isLoadingMember } = useDoc<TeamMember>(memberRef);
+
+  const isLoading = isLoadingId || isLoadingMember;
 
   if (isLoading || !member) {
      return (
