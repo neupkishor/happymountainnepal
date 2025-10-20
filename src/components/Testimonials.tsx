@@ -1,7 +1,7 @@
 
 'use client';
-import { useState, useEffect } from 'react';
-import { getAllReviews } from '@/lib/db';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collectionGroup, query, orderBy, limit } from 'firebase/firestore';
 import type { Review } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,16 +12,14 @@ import { ArrowRight } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 
 export function Testimonials() {
-  const [reviews, setReviews] = useState<(Review & { tourName: string })[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getAllReviews().then(allReviews => {
-      setReviews(allReviews.slice(0, 3));
-      setLoading(false);
-    });
-  }, []);
-
+  const firestore = useFirestore();
+  const reviewsQuery = useMemoFirebase(() => 
+    firestore 
+      ? query(collectionGroup(firestore, 'reviews'), orderBy('date', 'desc'), limit(3))
+      : null,
+  [firestore]);
+  const { data: reviews, isLoading } = useCollection<(Review & { tourName: string })>(reviewsQuery);
+  
   return (
     <section className="py-16 lg:py-24 bg-secondary">
       <div className="container mx-auto">
@@ -31,7 +29,7 @@ export function Testimonials() {
             Real stories from travelers who have explored the Himalayas with us.
           </p>
         </div>
-        {loading ? (
+        {isLoading ? (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(3)].map((_, i) => (
                     <Card key={i}>
@@ -50,7 +48,7 @@ export function Testimonials() {
              </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {reviews.map((review, index) => (
+            {reviews?.map((review, index) => (
                 <Card key={index} className="flex flex-col">
                 <CardContent className="p-6 flex-grow">
                     <div className="flex items-center gap-4 mb-4">

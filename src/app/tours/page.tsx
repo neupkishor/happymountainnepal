@@ -3,11 +3,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getTours } from '@/lib/db';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { TourFilters } from '@/components/TourFilters';
-import { Mountain, Loader2 } from 'lucide-react';
+import { Mountain } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const allDifficulties = ['Easy', 'Moderate', 'Strenuous', 'Challenging'];
@@ -17,8 +18,9 @@ export default function ToursPage() {
   const initialRegion = searchParams.get('region') || '';
   const initialSearch = searchParams.get('search') || '';
 
-  const [tours, setTours] = useState<Tour[]>([]);
-  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+  const toursQuery = collection(firestore, 'tours');
+  const { data: tours, isLoading: loading } = useCollection<Tour>(toursQuery);
 
   const [filters, setFilters] = useState({
     search: initialSearch,
@@ -27,28 +29,17 @@ export default function ToursPage() {
   });
 
   useEffect(() => {
-    getTours()
-      .then(fetchedTours => {
-        setTours(fetchedTours);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load tours:", err);
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    setFilters({
+    setFilters(prev => ({
+      ...prev,
       search: initialSearch,
       region: initialRegion,
-      difficulty: '',
-    });
+    }));
   }, [initialRegion, initialSearch]);
   
-  const allRegions = useMemo(() => [...new Set(tours.map(t => t.region))], [tours]);
+  const allRegions = useMemo(() => tours ? [...new Set(tours.map(t => t.region))] : [], [tours]);
 
   const filteredTours = useMemo(() => {
+    if (!tours) return [];
     return tours.filter((tour: Tour) => {
       return (
         (filters.search === '' || tour.name.toLowerCase().includes(filters.search.toLowerCase())) &&

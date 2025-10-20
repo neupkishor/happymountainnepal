@@ -1,24 +1,27 @@
 
 'use client';
-import { useState, useEffect } from 'react';
-import { getRecentBlogPosts } from "@/lib/db";
-import type { BlogPost } from '@/lib/types';
 import { BlogCard } from "./BlogCard";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from './ui/skeleton';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import type { BlogPost } from '@/lib/types';
 
 export function RecentBlogs() {
-  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getRecentBlogPosts().then(posts => {
-        setRecentPosts(posts.slice(0, 3));
-        setLoading(false);
-    });
-  }, []);
+  const firestore = useFirestore();
+  const postsQuery = useMemoFirebase(() => 
+    firestore 
+      ? query(
+          collection(firestore, 'blogPosts'), 
+          where('status', '==', 'published'),
+          orderBy('date', 'desc'), 
+          limit(3)
+        )
+      : null,
+  [firestore]);
+  const { data: recentPosts, isLoading } = useCollection<BlogPost>(postsQuery);
 
   return (
     <section className="py-16 lg:py-24 bg-background">
@@ -29,13 +32,13 @@ export function RecentBlogs() {
             Tips, stories, and guides to inspire your next Himalayan journey.
           </p>
         </div>
-        {loading ? (
+        {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[400px] w-full rounded-lg" />)}
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recentPosts.map((post) => (
+            {recentPosts?.map((post) => (
                 <BlogCard key={post.id} post={post} />
             ))}
             </div>

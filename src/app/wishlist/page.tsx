@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useWishlist } from '@/context/WishlistContext';
@@ -7,19 +8,23 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import type { Tour } from '@/lib/types';
-import { getTours } from '@/lib/db';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WishlistPage() {
   const { wishlist } = useWishlist();
   const [wishlistedTours, setWishlistedTours] = useState<Tour[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const firestore = useFirestore();
+  const toursQuery = collection(firestore, 'tours');
+  const { data: allTours, isLoading: loading } = useCollection<Tour>(toursQuery);
   
   useEffect(() => {
-    getTours().then(allTours => {
+    if (allTours) {
       setWishlistedTours(allTours.filter(tour => wishlist.includes(tour.id)));
-      setLoading(false);
-    })
-  }, [wishlist]);
+    }
+  }, [wishlist, allTours]);
 
   if (loading) {
     return (
@@ -31,7 +36,7 @@ export default function WishlistPage() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-96 bg-muted rounded-lg animate-pulse" />)}
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-96 bg-muted rounded-lg" />)}
         </div>
       </div>
     );

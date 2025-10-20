@@ -1,34 +1,26 @@
+
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getTours } from '@/lib/db';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { Mountain, Search as SearchIcon, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-export default function SearchPage() {
+function SearchComponent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [submittedTerm, setSubmittedTerm] = useState(initialQuery);
-  const [allTours, setAllTours] = useState<Tour[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getTours()
-      .then(tours => {
-        setAllTours(tours);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch tours:", err);
-        setLoading(false);
-      });
-  }, []);
+  
+  const firestore = useFirestore();
+  const toursQuery = collection(firestore, 'tours');
+  const { data: allTours, isLoading: loading } = useCollection<Tour>(toursQuery);
 
   useEffect(() => {
     setSearchTerm(initialQuery);
@@ -36,11 +28,11 @@ export default function SearchPage() {
   }, [initialQuery]);
 
   const filteredTours = useMemo(() => {
-    if (!submittedTerm || loading) return [];
+    if (!submittedTerm || !allTours) return [];
     return allTours.filter((tour: Tour) => {
       return tour.name.toLowerCase().includes(submittedTerm.toLowerCase());
     });
-  }, [submittedTerm, allTours, loading]);
+  }, [submittedTerm, allTours]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,4 +91,13 @@ export default function SearchPage() {
       )}
     </div>
   );
+}
+
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchComponent />
+    </Suspense>
+  )
 }

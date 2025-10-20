@@ -1,4 +1,5 @@
-import { getTours, getTourBySlug } from '@/lib/db';
+
+'use client';
 import { ImageGallery } from '@/components/tour-details/ImageGallery';
 import { KeyFacts } from '@/components/tour-details/KeyFacts';
 import { Itinerary } from '@/components/tour-details/Itinerary';
@@ -7,6 +8,11 @@ import { Reviews } from '@/components/tour-details/Reviews';
 import { InclusionsExclusions } from '@/components/tour-details/InclusionsExclusions';
 import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
+import { useFirestore, useCollection } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import type { Tour } from '@/lib/types';
+import { useMemo } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type TourDetailPageProps = {
   params: {
@@ -14,16 +20,30 @@ type TourDetailPageProps = {
   };
 };
 
-export async function generateStaticParams() {
-  const tours = await getTours();
-  return tours.map(tour => ({
-    slug: tour.slug,
-  }));
-}
-
-export default async function TourDetailPage({ params }: TourDetailPageProps) {
+export default function TourDetailPage({ params }: TourDetailPageProps) {
   const { slug } = params;
-  const tour = await getTourBySlug(slug);
+  const firestore = useFirestore();
+
+  const tourQuery = query(collection(firestore, 'tours'), where('slug', '==', slug));
+  const { data: tours, isLoading } = useCollection<Tour>(tourQuery);
+  const tour = useMemo(() => tours?.[0], [tours]);
+
+  if (isLoading || !tour) {
+    return (
+         <div className="bg-background">
+            <Skeleton className="h-[40vh] md:h-[60vh] w-full" />
+            <div className="container mx-auto py-8 lg:py-12">
+                <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
+                    <div className="lg:col-span-2 space-y-12">
+                         <Skeleton className="h-12 w-3/4" />
+                         <Skeleton className="h-6 w-full" />
+                         <Skeleton className="h-6 w-5/6" />
+                    </div>
+                </div>
+            </div>
+         </div>
+    );
+  }
 
   return (
     <div className="bg-background">

@@ -1,24 +1,20 @@
 
 'use client';
-import { useState, useEffect } from 'react';
-import { getFeaturedTours } from '@/lib/db';
-import type { Tour } from '@/lib/types';
 import { TourCard } from './TourCard';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, limit } from 'firebase/firestore';
+import type { Tour } from '@/lib/types';
 
 export function FeaturedTours() {
-  const [featuredTours, setFeaturedTours] = useState<Tour[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getFeaturedTours().then(tours => {
-      setFeaturedTours(tours.slice(0, 3));
-      setLoading(false);
-    });
-  }, []);
+  const firestore = useFirestore();
+  const toursQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'tours'), limit(3)) : null,
+  [firestore]);
+  const { data: featuredTours, isLoading } = useCollection<Tour>(toursQuery);
 
   return (
     <section className="py-16 lg:py-24 bg-background">
@@ -29,13 +25,13 @@ export function FeaturedTours() {
             Handpicked journeys that promise unforgettable memories and spectacular views.
           </p>
         </div>
-        {loading ? (
+        {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[450px] w-full rounded-lg" />)}
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {featuredTours.map((tour) => (
+                {featuredTours?.map((tour) => (
                     <TourCard key={tour.id} tour={tour} />
                 ))}
             </div>

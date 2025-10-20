@@ -1,17 +1,13 @@
 
-
 'use client';
 
-import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
 import { firebaseConfig } from "@/firebase/config";
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, MediaUpload } from './types';
 import { notFound } from "next/navigation";
 import { slugify } from "./utils";
-
-const app = initializeApp(firebaseConfig);
-const firestore = getFirestore(app);
+import { firestore } from './firebase-server';
 
 
 export interface Inquiry {
@@ -44,7 +40,6 @@ export async function saveInquiry(conversation: CustomizeTripInput): Promise<str
   }
 }
 
-
 /**
  * Fetches all trip inquiries from the 'inquiries' collection in Firestore, ordered by creation date.
  * 
@@ -71,112 +66,6 @@ export async function getInquiries(): Promise<Inquiry[]> {
   }
 }
 
-
-/**
- * Fetches all accounts from the 'accounts' collection in Firestore.
- * @returns A promise that resolves to an array of Account objects.
- */
-export async function getAccounts(): Promise<Account[]> {
-    if (!firestore) {
-        console.error("Firestore is not initialized.");
-        return [];
-    }
-    try {
-        const accountsRef = collection(firestore, 'accounts');
-        const q = query(accountsRef, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-
-        return querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ipAddress: data.ipAddress,
-                createdAt: data.createdAt,
-            } as Account;
-        });
-    } catch (error) {
-        console.error("Error fetching accounts: ", error);
-        throw new Error("Could not fetch accounts from the database.");
-    }
-}
-
-/**
- * Fetches activities for a specific account ID.
- * @param accountId The ID of the account to fetch activities for.
- * @returns A promise that resolves to an array of Activity objects.
- */
-export async function getActivitiesByAccountId(accountId: string): Promise<Activity[]> {
-    if (!firestore) {
-        console.error("Firestore is not initialized.");
-        return [];
-    }
-    try {
-        const activityRef = collection(firestore, 'activity');
-        const q = query(activityRef, where('accountId', '==', accountId), orderBy('activityTime', 'desc'));
-        const querySnapshot = await getDocs(q);
-
-        return querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                accountId: data.accountId,
-                activityName: data.activityName,
-                activityInfo: data.activityInfo,
-                fromIp: data.fromIp,
-                fromLocation: data.fromLocation,
-                activityTime: data.activityTime,
-            } as Activity;
-        });
-    } catch (error) {
-        console.error(`Error fetching activities for account ${accountId}: `, error);
-        throw new Error("Could not fetch activities from the database.");
-    }
-}
-
-
-async function getCollectionData<T>(name: string, filters: { key: string, op: '==' | '!=' | '<' | '<=' | '>' | '>=', value: any }[] = []): Promise<T[]> {
-  if (!firestore) {
-    console.error("Firestore is not initialized.");
-    return [];
-  }
-  try {
-    let q = query(collection(firestore, name));
-    if (filters.length > 0) {
-        filters.forEach(f => {
-            q = query(q, where(f.key, f.op, f.value));
-        })
-    }
-    
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      return [];
-    }
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
-  } catch (error) {
-    console.error(`Error fetching ${name}:`, error);
-    throw new Error(`Could not fetch ${name} from the database.`);
-  }
-}
-
-async function getDocBySlug<T>(collectionName: string, slug: string): Promise<T | null> {
-  if (!firestore) {
-    console.error("Firestore is not initialized.");
-    return null;
-  }
-  try {
-    const q = query(collection(firestore, collectionName), where("slug", "==", slug), limit(1));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      return null;
-    }
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as T;
-  } catch (error) {
-    console.error(`Error fetching doc from ${collectionName} with slug ${slug}:`, error);
-    throw new Error(`Could not fetch from ${collectionName}.`);
-  }
-}
-
 async function getDocById<T>(collectionName: string, id: string): Promise<T | null> {
   if (!firestore) {
     console.error("Firestore is not initialized.");
@@ -195,22 +84,6 @@ async function getDocById<T>(collectionName: string, id: string): Promise<T | nu
   }
 }
 
-// Tour Functions
-export async function getTours(): Promise<Tour[]> {
-    return getCollectionData<Tour>('tours');
-}
-export async function getTourBySlug(slug: string) {
-    const tour = await getDocBySlug<Tour>('tours', slug);
-    if (!tour) notFound();
-    return tour;
-}
-export async function getTourById(id: string): Promise<Tour | null> {
-    return getDocById<Tour>('tours', id);
-}
-
-export async function getFeaturedTours(): Promise<Tour[]> {
-    return getCollectionData<Tour>('tours'); // In a real app, this would be a query for featured tours.
-}
 
 export async function createTour(): Promise<string | null> {
     if (!firestore) {
@@ -273,25 +146,6 @@ export async function deleteTour(id: string) {
     }
 }
 
-// Blog Post Functions
-export async function getBlogPosts(): Promise<BlogPost[]> {
-    return getCollectionData<BlogPost>('blogPosts', [{ key: 'status', op: '==', value: 'published'}]);
-}
-export async function getAllBlogPosts(): Promise<BlogPost[]> {
-    return getCollectionData<BlogPost>('blogPosts');
-}
-export async function getBlogPostBySlug(slug: string) {
-    const post = await getDocBySlug<BlogPost>('blogPosts', slug);
-    if (!post || post.status !== 'published') notFound();
-    return post;
-};
-export async function getBlogPostById(id: string): Promise<BlogPost | null> {
-    return getDocById<BlogPost>('blogPosts', id);
-}
-
-export async function getRecentBlogPosts(): Promise<BlogPost[]> {
-    return getCollectionData<BlogPost>('blogPosts', [{ key: 'status', op: '==', value: 'published'}]);
-}
 
 export async function createBlogPost(): Promise<string | null> {
     if (!firestore) return null;
@@ -342,18 +196,8 @@ export async function deleteBlogPost(id: string) {
     }
 }
 
-
-// Team Member Functions
-export async function getTeamMembers(): Promise<TeamMember[]> {
-    return getCollectionData<TeamMember>('teamMembers');
-}
-export async function getTeamMemberBySlug(slug: string) {
-    const member = await getDocBySlug<TeamMember>('teamMembers', slug);
-if (!member) notFound();
-    return member;
-}
-export async function getTeamMemberById(id: string): Promise<TeamMember | null> {
-    return getDocById<TeamMember>('teamMembers', id);
+export async function getBlogPostById(id: string): Promise<BlogPost | null> {
+    return getDocById<BlogPost>('blogPosts', id);
 }
 
 export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
@@ -392,55 +236,8 @@ export async function deleteTeamMember(id: string) {
     }
 }
 
-// Destination Functions
-export async function getDestinations(): Promise<Destination[]> {
-    const tours = await getTours();
-    if (!tours.length) {
-        return [
-            { name: 'Everest', image: 'https://picsum.photos/seed/dest-everest/600/600', tourCount: 0},
-            { name: 'Annapurna', image: 'https://picsum.photos/seed/dest-annapurna/600/300', tourCount: 0},
-            { name: 'Langtang', image: 'https://picsum.photos/seed/dest-langtang/600/300', tourCount: 0},
-        ];
-    }
-    const regionCounts = tours.reduce((acc, tour) => {
-        if(tour.region) {
-            acc[tour.region] = (acc[tour.region] || 0) + 1;
-        }
-        return acc;
-    }, {} as Record<string, number>);
-
-    const sortedRegions = Object.entries(regionCounts)
-        .sort(([,a],[,b]) => b - a)
-        .slice(0, 3)
-        .map(([name, count]) => ({
-            name,
-            tourCount: count,
-            image: `https://picsum.photos/seed/dest-${slugify(name)}/${name === 'Everest' ? '600/600' : '600/300'}`
-        }));
-    
-    // Ensure we always have at least a few default destinations if there aren't enough tours.
-    const defaultDests = ['Everest', 'Annapurna', 'Langtang'];
-    for(const destName of defaultDests) {
-        if(!sortedRegions.some(r => r.name === destName) && sortedRegions.length < 3) {
-            sortedRegions.push({
-                 name: destName,
-                 tourCount: 0,
-                 image: `https://picsum.photos/seed/dest-${slugify(destName)}/600/300`
-            })
-        }
-    }
-
-    return sortedRegions;
-}
-
-
-// Partner Functions
-export async function getPartners(): Promise<Partner[]> {
-    return getCollectionData<Partner>('partners');
-}
-
-export async function getPartnerById(id: string): Promise<Partner | null> {
-    return getDocById<Partner>('partners', id);
+export async function getTeamMemberById(id: string): Promise<TeamMember | null> {
+    return getDocById<TeamMember>('teamMembers', id);
 }
 
 export async function addPartner(data: Omit<Partner, 'id'>) {
@@ -474,30 +271,8 @@ export async function deletePartner(id: string) {
     }
 }
 
-
-// Review Functions
-export async function getAllReviews(): Promise<(Review & { tourName: string })[]> {
-  if (!firestore) return [];
-  const q = query(collectionGroup(firestore, 'reviews'));
-  const snapshot = await getDocs(q);
-  const reviews = [];
-  for (const doc of snapshot.docs) {
-    const reviewData = doc.data() as Review;
-    const tourRef = doc.ref.parent.parent;
-    if (tourRef) {
-      const tourSnap = await getDoc(tourRef);
-      if (tourSnap.exists()) {
-        reviews.push({ ...reviewData, id: doc.id, tourName: tourSnap.data().name });
-      }
-    }
-  }
-  
-  // Sort in application code
-  return reviews.sort((a, b) => {
-    const dateA = a.date instanceof Timestamp ? a.date.toMillis() : new Date(a.date).getTime();
-    const dateB = b.date instanceof Timestamp ? b.date.toMillis() : new Date(b.date).getTime();
-    return dateB - dateA;
-  });
+export async function getPartnerById(id: string): Promise<Partner | null> {
+    return getDocById<Partner>('partners', id);
 }
 
 // Error Logging
@@ -548,18 +323,5 @@ export async function logMediaUpload(data: Omit<MediaUpload, 'id' | 'uploadedAt'
   } catch (error) {
     console.error('Failed to log media upload to Firestore:', error);
     // Don't throw, as the primary goal (upload) was successful.
-  }
-}
-
-export async function getMediaUploads(): Promise<MediaUpload[]> {
-  if (!firestore) return [];
-  try {
-    const mediaRef = collection(firestore, 'media');
-    const q = query(mediaRef, orderBy('uploadedAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MediaUpload));
-  } catch (error) {
-    console.error("Error fetching media uploads:", error);
-    throw new Error("Could not fetch media uploads from the database.");
   }
 }

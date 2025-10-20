@@ -1,5 +1,11 @@
-import { getTeamMembers, getTeamMemberBySlug } from '@/lib/db';
+
+'use client';
 import Image from 'next/image';
+import { useFirestore, useCollection } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import type { TeamMember } from '@/lib/types';
+import { useMemo } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type TeamMemberPageProps = {
   params: {
@@ -7,16 +13,31 @@ type TeamMemberPageProps = {
   };
 };
 
-export async function generateStaticParams() {
-  const teamMembers = await getTeamMembers();
-  return teamMembers.map(member => ({
-    slug: member.slug,
-  }));
-}
-
-export default async function TeamMemberPage({ params }: TeamMemberPageProps) {
+export default function TeamMemberPage({ params }: TeamMemberPageProps) {
   const { slug } = params;
-  const member = await getTeamMemberBySlug(slug);
+  const firestore = useFirestore();
+  
+  const memberQuery = query(collection(firestore, 'teamMembers'), where('slug', '==', slug));
+  const { data: members, isLoading } = useCollection<TeamMember>(memberQuery);
+  const member = useMemo(() => members?.[0], [members]);
+
+  if (isLoading || !member) {
+     return (
+        <div className="container mx-auto py-16">
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center bg-card p-8 rounded-lg shadow-lg">
+                <div className="md:col-span-1 flex justify-center">
+                    <Skeleton className="rounded-full h-48 w-48" />
+                </div>
+                <div className="md:col-span-2 space-y-4">
+                     <Skeleton className="h-8 w-1/2" />
+                     <Skeleton className="h-6 w-1/4" />
+                     <Skeleton className="h-4 w-full" />
+                     <Skeleton className="h-4 w-full" />
+                </div>
+            </div>
+        </div>
+     )
+  }
 
   return (
     <div className="container mx-auto py-16">

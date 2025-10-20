@@ -1,11 +1,47 @@
-import { getTeamMembers } from '@/lib/db';
+
+'use client';
 import { TeamMemberCard } from '@/components/TeamMemberCard';
 import Image from 'next/image';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { TeamMember } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useMemo } from 'react';
 
-export default async function AboutPage() {
-  const teamMembers = await getTeamMembers();
-  const founder = teamMembers.find(m => m.role.includes('Founder'));
-  const otherMembers = teamMembers.filter(m => !m.role.includes('Founder'));
+export default function AboutPage() {
+  const firestore = useFirestore();
+  const membersQuery = collection(firestore, 'teamMembers');
+  const { data: teamMembers, isLoading } = useCollection<TeamMember>(membersQuery);
+
+  const founder = useMemo(() => teamMembers?.find(m => m.role.includes('Founder')), [teamMembers]);
+  const otherMembers = useMemo(() => teamMembers?.filter(m => !m.role.includes('Founder')), [teamMembers]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-16">
+        <div className="text-center mb-16">
+          <Skeleton className="h-12 w-1/2 mx-auto" />
+          <Skeleton className="h-6 w-3/4 mx-auto mt-4" />
+        </div>
+        <div className="mb-20">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center bg-card p-8 rounded-lg shadow-lg">
+            <div className="md:col-span-1 flex justify-center">
+              <Skeleton className="rounded-full h-48 w-48" />
+            </div>
+            <div className="md:col-span-2 space-y-4">
+              <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-6 w-1/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-background">
@@ -43,7 +79,7 @@ export default async function AboutPage() {
             <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Experts</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12">
-          {otherMembers.map((member) => (
+          {otherMembers?.map((member) => (
             <TeamMemberCard key={member.id} member={member} />
           ))}
         </div>

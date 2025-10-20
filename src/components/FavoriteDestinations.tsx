@@ -3,23 +3,69 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getDestinations } from '@/lib/db';
+import { collection, getDocs, query, limit } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import type { Destination } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Skeleton } from './ui/skeleton';
+import { slugify } from '@/lib/utils';
 
 export function FavoriteDestinations() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
 
   useEffect(() => {
-    getDestinations().then(data => {
-      setDestinations(data);
+    async function fetchDestinations() {
+      if (!firestore) return;
+      
+      setLoading(true);
+      const toursSnapshot = await getDocs(query(collection(firestore, 'tours')));
+      const tours = toursSnapshot.docs.map(doc => doc.data() as { region: string });
+
+      const regionCounts = tours.reduce((acc, tour) => {
+          if (tour.region) {
+              acc[tour.region] = (acc[tour.region] || 0) + 1;
+          }
+          return acc;
+      }, {} as Record<string, number>);
+
+      const sortedRegions = Object.entries(regionCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([name, count]) => ({
+              name,
+              tourCount: count,
+              image: `https://picsum.photos/seed/dest-${slugify(name)}/${name === 'Everest' ? '600/600' : '600/300'}`
+          }));
+
+      const defaultDests = ['Everest', 'Annapurna', 'Langtang', 'Manaslu', 'Gokyo'];
+      for (const destName of defaultDests) {
+          if (!sortedRegions.some(r => r.name === destName) && sortedRegions.length < 5) {
+              sortedRegions.push({
+                  name: destName,
+                  tourCount: 0,
+                  image: `https://picsum.photos/seed/dest-${slugify(destName)}/600/300`
+              });
+          }
+      }
+      
+      // A bit of hardcoded logic to ensure Everest is the big one if it exists
+      const everestIndex = sortedRegions.findIndex(d => d.name === 'Everest');
+      if (everestIndex > 0) {
+        const everest = sortedRegions[everestIndex];
+        sortedRegions.splice(everestIndex, 1);
+        sortedRegions.unshift(everest);
+      }
+      
+      setDestinations(sortedRegions.slice(0, 5));
       setLoading(false);
-    });
-  }, []);
+    }
+
+    fetchDestinations();
+  }, [firestore]);
 
   if (loading) {
     return (
@@ -92,7 +138,7 @@ export function FavoriteDestinations() {
                     <h3 className="text-xl md:text-2xl font-bold !font-headline">{dest.name}</h3>
                     <Badge variant="secondary" className="mt-2 text-xs">
                       {dest.tourCount > 0
-                        ? `${dest.tourCount}+ Tour${dest.tourCount > 1 ? 's' : ''}`
+                        ? `${dest.tourCount} Tour${dest.tourCount > 1 ? 's' : ''}`
                         : 'Coming Soon'}
                     </Badge>
                   </div>
