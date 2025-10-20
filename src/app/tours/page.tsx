@@ -19,8 +19,8 @@ export default function ToursPage() {
   const initialSearch = searchParams.get('search') || '';
 
   const firestore = useFirestore();
-  const toursQuery = collection(firestore, 'tours');
-  const { data: tours, isLoading: loading } = useCollection<Tour>(toursQuery);
+  const packagesQuery = collection(firestore, 'packages');
+  const { data: tours, isLoading: loading } = useCollection<Tour>(packagesQuery);
 
   const [filters, setFilters] = useState({
     search: initialSearch,

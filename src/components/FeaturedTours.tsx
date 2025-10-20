@@ -11,10 +11,10 @@ import type { Tour } from '@/lib/types';
 
 export function FeaturedTours() {
   const firestore = useFirestore();
-  const toursQuery = useMemoFirebase(() => 
-    firestore ? query(collection(firestore, 'tours'), limit(3)) : null,
+  const packagesQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'packages'), limit(3)) : null,
   [firestore]);
-  const { data: featuredTours, isLoading } = useCollection<Tour>(toursQuery);
+  const { data: featuredTours, isLoading } = useCollection<Tour>(packagesQuery);
 
   return (
     <section className="py-16 lg:py-24 bg-background">

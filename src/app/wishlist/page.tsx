@@ -17,8 +17,8 @@ export default function WishlistPage() {
   const [wishlistedTours, setWishlistedTours] = useState<Tour[]>([]);
 
   const firestore = useFirestore();
-  const toursQuery = collection(firestore, 'tours');
-  const { data: allTours, isLoading: loading } = useCollection<Tour>(toursQuery);
+  const packagesQuery = collection(firestore, 'packages');
+  const { data: allTours, isLoading: loading } = useCollection<Tour>(packagesQuery);
   
   useEffect(() => {
     if (allTours) {

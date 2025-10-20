@@ -12,12 +12,12 @@ import type { Tour } from '@/lib/types';
 
 export function PopularPackages() {
   const firestore = useFirestore();
-  const toursQuery = useMemoFirebase(() => 
+  const packagesQuery = useMemoFirebase(() => 
     firestore 
-      ? query(collection(firestore, 'tours'), orderBy('price', 'desc'), limit(3)) 
+      ? query(collection(firestore, 'packages'), orderBy('price', 'desc'), limit(3)) 
       : null,
   [firestore]);
-  const { data: popularTours, isLoading } = useCollection<Tour>(toursQuery);
+  const { data: popularTours, isLoading } = useCollection<Tour>(packagesQuery);
 
 
   return (

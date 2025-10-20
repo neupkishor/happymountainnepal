@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import type { Destination } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
@@ -22,10 +22,10 @@ export function FavoriteDestinations() {
       if (!firestore) return;
       
       setLoading(true);
-      const toursSnapshot = await getDocs(query(collection(firestore, 'tours')));
-      const tours = toursSnapshot.docs.map(doc => doc.data() as { region: string });
+      const packagesSnapshot = await getDocs(query(collection(firestore, 'packages')));
+      const packages = packagesSnapshot.docs.map(doc => doc.data() as { region: string });
 
-      const regionCounts = tours.reduce((acc, tour) => {
+      const regionCounts = packages.reduce((acc, tour) => {
           if (tour.region) {
               acc[tour.region] = (acc[tour.region] || 0) + 1;
           }

@@ -24,7 +24,7 @@ export default function TourDetailPage({ params }: TourDetailPageProps) {
   const { slug } = params;
   const firestore = useFirestore();
 
-  const tourQuery = query(collection(firestore, 'tours'), where('slug', '==', slug));
+  const tourQuery = query(collection(firestore, 'packages'), where('slug', '==', slug));
   const { data: tours, isLoading } = useCollection<Tour>(tourQuery);
   const tour = useMemo(() => tours?.[0], [tours]);
 

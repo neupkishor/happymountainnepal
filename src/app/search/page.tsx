@@ -19,8 +19,8 @@ function SearchComponent() {
   const [submittedTerm, setSubmittedTerm] = useState(initialQuery);
   
   const firestore = useFirestore();
-  const toursQuery = collection(firestore, 'tours');
-  const { data: allTours, isLoading: loading } = useCollection<Tour>(toursQuery);
+  const packagesQuery = collection(firestore, 'packages');
+  const { data: allTours, isLoading: loading } = useCollection<Tour>(packagesQuery);
 
   useEffect(() => {
     setSearchTerm(initialQuery);

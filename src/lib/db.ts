@@ -1,11 +1,9 @@
 
-'use client';
+'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit, updateDoc, deleteDoc } from 'firebase/firestore';
-import { firebaseConfig } from "@/firebase/config";
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, MediaUpload } from './types';
-import { notFound } from "next/navigation";
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 
@@ -109,7 +107,7 @@ export async function createTour(): Promise<string | null> {
             mapImage: 'https://picsum.photos/seed/map-placeholder/800/600',
             reviews: [],
         };
-        const docRef = await addDoc(collection(firestore, 'tours'), newTourData);
+        const docRef = await addDoc(collection(firestore, 'packages'), newTourData);
         return docRef.id;
     } catch (error) {
         console.error("Error creating new tour: ", error);
@@ -120,7 +118,7 @@ export async function createTour(): Promise<string | null> {
 export async function updateTour(id: string, data: Partial<Omit<Tour, 'id' | 'slug'>>) {
     if (!firestore) throw new Error("Database not available.");
     try {
-        const docRef = doc(firestore, 'tours', id);
+        const docRef = doc(firestore, 'packages', id);
         
         let finalData: Partial<Omit<Tour, 'id'>> = {...data};
 
@@ -139,7 +137,7 @@ export async function updateTour(id: string, data: Partial<Omit<Tour, 'id' | 'sl
 export async function deleteTour(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
-        await deleteDoc(doc(firestore, 'tours', id));
+        await deleteDoc(doc(firestore, 'packages', id));
     } catch (error) {
         console.error("Error deleting tour: ", error);
         throw new Error("Could not delete tour.");
@@ -324,4 +322,100 @@ export async function logMediaUpload(data: Omit<MediaUpload, 'id' | 'uploadedAt'
     console.error('Failed to log media upload to Firestore:', error);
     // Don't throw, as the primary goal (upload) was successful.
   }
+}
+
+export async function getMediaUploads(): Promise<MediaUpload[]> {
+    if (!firestore) return [];
+    try {
+        const mediaRef = collection(firestore, 'media');
+        const q = query(mediaRef, orderBy('uploadedAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MediaUpload));
+    } catch (error) {
+        console.error("Error fetching media uploads:", error);
+        throw new Error("Could not fetch media uploads from the database.");
+    }
+}
+
+
+export async function getAccounts(): Promise<Account[]> {
+    if (!firestore) return [];
+    try {
+        const accountsRef = collection(firestore, 'accounts');
+        const q = query(accountsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account));
+    } catch (error) {
+        console.error("Error fetching accounts:", error);
+        throw new Error("Could not fetch accounts from the database.");
+    }
+}
+
+export async function getActivitiesByAccountId(accountId: string): Promise<Activity[]> {
+    if (!firestore) return [];
+    try {
+        const activitiesRef = collection(firestore, 'activities');
+        const q = query(activitiesRef, where('accountId', '==', accountId), orderBy('activityTime', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+    } catch (error) {
+        console.error("Error fetching activities:", error);
+        throw new Error("Could not fetch activities from the database.");
+    }
+}
+
+export async function getTeamMembers(): Promise<TeamMember[]> {
+    if (!firestore) return [];
+    try {
+        const teamMembersRef = collection(firestore, 'teamMembers');
+        const q = query(teamMembersRef);
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamMember));
+    } catch (error) {
+        console.error("Error fetching team members:", error);
+        throw new Error("Could not fetch team members from the database.");
+    }
+}
+
+export async function getPartners(): Promise<Partner[]> {
+    if (!firestore) return [];
+    try {
+        const partnersRef = collection(firestore, 'partners');
+        const q = query(partnersRef);
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Partner));
+    } catch (error) {
+        console.error("Error fetching partners:", error);
+        throw new Error("Could not fetch partners from the database.");
+    }
+}
+
+export async function getTours(): Promise<Tour[]> {
+    if (!firestore) return [];
+    try {
+        const packagesRef = collection(firestore, 'packages');
+        const q = query(packagesRef);
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+    } catch (error) {
+        console.error("Error fetching tours:", error);
+        throw new Error("Could not fetch tours from the database.");
+    }
+}
+
+export async function getTourById(id: string): Promise<Tour | null> {
+    return getDocById<Tour>('packages', id);
+}
+
+export async function getAllBlogPosts(): Promise<BlogPost[]> {
+    if (!firestore) return [];
+    try {
+        const blogPostsRef = collection(firestore, 'blogPosts');
+        const q = query(blogPostsRef, orderBy('date', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+    } catch (error) {
+        console.error("Error fetching all blog posts:", error);
+        throw new Error("Could not fetch all blog posts from the database.");
+    }
 }

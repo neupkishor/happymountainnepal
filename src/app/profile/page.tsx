@@ -9,17 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useState } from 'react';
 import type { Tour } from '@/lib/types';
-import { useAuth, useDoc, useFirestore, useUser } from '@/firebase';
+import { useAuth, useDoc, useFirestore, useUser, useCollection } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, collection } from 'firebase/firestore';
 import type { Account } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfilePage() {
   const { wishlist } = useWishlist();
   const [wishlistedTours, setWishlistedTours] = useState<Tour[]>([]);
-  const [allTours, setAllTours] = useState<Tour[]>([]);
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const auth = useAuth();
@@ -28,6 +27,10 @@ export default function ProfilePage() {
   const accountRef = user ? doc(firestore, 'accounts', user.uid) : null;
   const { data: account, isLoading: isAccountLoading } = useDoc<Account>(accountRef);
 
+  const packagesQuery = collection(firestore, 'packages');
+  const { data: allTours, isLoading: isToursLoading } = useCollection<Tour>(packagesQuery);
+
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
@@ -35,15 +38,10 @@ export default function ProfilePage() {
   }, [user, isUserLoading, router]);
   
   useEffect(() => {
-    // In a real app, you would fetch tours from your DB
-    // For now, we simulate this by dynamically importing
-    import('@/lib/db').then(db => {
-      db.getTours().then(tours => {
-        setAllTours(tours);
-        setWishlistedTours(tours.filter(tour => wishlist.includes(tour.id)));
-      });
-    });
-  }, [wishlist]);
+    if (allTours) {
+        setWishlistedTours(allTours.filter(tour => wishlist.includes(tour.id)));
+    }
+  }, [wishlist, allTours]);
 
   const handleSignOut = async () => {
     try {
@@ -54,7 +52,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isUserLoading || isAccountLoading) {
+  if (isUserLoading || isAccountLoading || isToursLoading) {
     return (
         <div className="container mx-auto py-12">
             <div className="mb-12 flex flex-col items-center text-center gap-4">
