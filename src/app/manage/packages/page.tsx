@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -69,7 +68,7 @@ export default function PackagesListPage() {
                 <TableHead>Package Name</TableHead>
                 <TableHead>Region</TableHead>
                 <TableHead>Duration</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead> {/* Added Status column */}
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

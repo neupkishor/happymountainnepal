@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -37,8 +36,8 @@ const departureDateSchema = z.object({
 });
 
 const formSchema = z.object({
-  price: z.coerce.number().positive({ message: "Base price must be positive." }),
   departureDates: z.array(departureDateSchema),
+  anyDateAvailable: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,11 +54,11 @@ export function PricingForm({ tour }: PricingFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      price: tour.price || 0,
       departureDates: tour.departureDates?.map(d => ({
           ...d,
           date: d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date)
       })) || [],
+      anyDateAvailable: tour.anyDateAvailable || false,
     },
   });
 
@@ -68,10 +67,20 @@ export function PricingForm({ tour }: PricingFormProps) {
     name: "departureDates",
   });
 
+  const anyDateAvailable = form.watch('anyDateAvailable');
+
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        await updateTour(tour.id, values);
+        // Convert Date objects to Timestamp before sending to Firestore
+        const convertedValues = {
+            ...values,
+            departureDates: values.departureDates.map(d => ({
+                ...d,
+                date: Timestamp.fromDate(d.date)
+            }))
+        };
+        await updateTour(tour.id, convertedValues);
         toast({ title: 'Success', description: 'Pricing updated.' });
       } catch (error: any) {
         logError({ message: `Failed to update pricing for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
@@ -90,21 +99,32 @@ export function PricingForm({ tour }: PricingFormProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             
+            {/* New "Any Date Available" checkbox */}
             <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Base Price (USD)</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 1500" {...field} disabled={isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                control={form.control}
+                name="anyDateAvailable"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                        <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isPending}
+                        />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                        <FormLabel>
+                        Any Date Available
+                        </FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                            Check this if the tour can be booked on any date, regardless of specific departure dates below.
+                        </p>
+                    </div>
+                    </FormItem>
+                )}
             />
 
-            <div className="space-y-4">
+            <div className={cn("space-y-4", anyDateAvailable && "opacity-50 pointer-events-none")}>
               <h3 className="text-lg font-medium">Departure Dates</h3>
               {fields.map((field, index) => (
                 <div key={field.id} className="p-4 border rounded-md space-y-4">
@@ -114,7 +134,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => remove(index)}
-                        disabled={isPending}
+                        disabled={isPending || anyDateAvailable}
                         >
                         <Trash2 className="h-4 w-4" />
                     </Button>
@@ -135,7 +155,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                                     "w-full pl-3 text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
-                                  disabled={isPending}
+                                  disabled={isPending || anyDateAvailable}
                                 >
                                   {field.value ? (
                                     format(field.value, "PPP")
@@ -151,7 +171,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={(date) => date < new Date("1900-01-01") || isPending}
+                                disabled={(date) => date < new Date("1900-01-01") || isPending || anyDateAvailable}
                                 initialFocus
                               />
                             </PopoverContent>
@@ -167,7 +187,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                         <FormItem>
                           <FormLabel>Price Override (USD)</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} placeholder={`Base: $${form.getValues('price')}`} disabled={isPending} />
+                            <Input type="number" {...field} placeholder={`Base: $${tour.price}`} disabled={isPending || anyDateAvailable} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -183,7 +203,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                                 <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
-                                disabled={isPending}
+                                disabled={isPending || anyDateAvailable}
                                 />
                             </FormControl>
                             <div className="space-y-1 leading-none">
@@ -196,7 +216,13 @@ export function PricingForm({ tour }: PricingFormProps) {
                         />
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => append({ date: new Date(), price: tour.price, guaranteed: false })}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => append({ date: new Date(), price: tour.price, guaranteed: false })}
+                disabled={isPending || anyDateAvailable}
+              >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Departure Date
               </Button>
@@ -212,5 +238,3 @@ export function PricingForm({ tour }: PricingFormProps) {
     </Card>
   );
 }
-
-    

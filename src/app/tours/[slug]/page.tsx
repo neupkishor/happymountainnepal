@@ -1,18 +1,7 @@
-
-'use client';
-import { ImageGallery } from '@/components/tour-details/ImageGallery';
-import { KeyFacts } from '@/components/tour-details/KeyFacts';
-import { Itinerary } from '@/components/tour-details/Itinerary';
-import { BookingWidget } from '@/components/tour-details/BookingWidget';
-import { Reviews } from '@/components/tour-details/Reviews';
-import { InclusionsExclusions } from '@/components/tour-details/InclusionsExclusions';
-import Image from 'next/image';
-import { TourNav } from '@/components/tour-details/TourNav';
-import { useFirestore, useDoc } from '@/firebase';
-import { collection, query, where, getDocs, doc } from 'firebase/firestore';
-import type { Tour } from '@/lib/types';
-import { useState, useEffect } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { getTourBySlug } from '@/lib/db';
+import TourDetailClient from './tour-detail-client';
+import { notFound } from 'next/navigation';
+import { Metadata } from 'next'; // Import Metadata type
 
 type TourDetailPageProps = {
   params: {
@@ -20,98 +9,55 @@ type TourDetailPageProps = {
   };
 };
 
-export default function TourDetailPage({ params }: TourDetailPageProps) {
-  const { slug } = params;
-  const firestore = useFirestore();
-  const [tourId, setTourId] = useState<string | null>(null);
-  const [isLoadingId, setIsLoadingId] = useState(true);
+// Generate dynamic metadata for each tour page
+export async function generateMetadata({ params }: TourDetailPageProps): Promise<Metadata> {
+  const tour = await getTourBySlug(params.slug);
 
-  useEffect(() => {
-    if (!firestore || !slug) return;
-    const findTour = async () => {
-      setIsLoadingId(true);
-      const q = query(collection(firestore, 'packages'), where('slug', '==', slug));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        setTourId(querySnapshot.docs[0].id);
-      }
-      setIsLoadingId(false);
+  if (!tour) {
+    return {
+      title: 'Tour Not Found',
+      description: 'The requested tour could not be found.',
     };
-    findTour();
-  }, [firestore, slug]);
-
-  const tourRef = tourId ? doc(firestore, 'packages', tourId) : null;
-  const { data: tour, isLoading: isLoadingTour } = useDoc<Tour>(tourRef);
-
-  const isLoading = isLoadingId || isLoadingTour;
-
-
-  if (isLoading || !tour) {
-    return (
-         <div className="bg-background">
-            <Skeleton className="h-[40vh] md:h-[60vh] w-full" />
-            <div className="container mx-auto py-8 lg:py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
-                    <div className="lg:col-span-2 space-y-12">
-                         <Skeleton className="h-12 w-3/4" />
-                         <Skeleton className="h-6 w-full" />
-                         <Skeleton className="h-6 w-5/6" />
-                    </div>
-                </div>
-            </div>
-         </div>
-    );
   }
 
-  return (
-    <div className="bg-background">
-      <ImageGallery images={tour.images} mainImage={tour.mainImage} tourName={tour.name} />
-      
-      <TourNav />
+  return {
+    title: tour.name,
+    description: tour.description,
+    alternates: {
+      canonical: `https://happymountainnepal.com/tours/${tour.slug}`, // Replace with your actual domain
+      languages: {
+        'en': `https://happymountainnepal.com/tours/${tour.slug}`,
+        'x-default': `https://happymountainnepal.com/tours/${tour.slug}`,
+      },
+    },
+    openGraph: {
+      title: tour.name,
+      description: tour.description,
+      url: `https://happymountainnepal.com/tours/${tour.slug}`,
+      images: [
+        {
+          url: tour.mainImage,
+          alt: tour.name,
+        },
+      ],
+      type: 'article',
+      siteName: 'Happy Mountain Nepal',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: tour.name,
+      description: tour.description,
+      images: [tour.mainImage],
+    },
+  };
+}
 
-      <div className="container mx-auto py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
-          
-          {/* Main content */}
-          <div className="lg:col-span-2 space-y-12">
-            <header>
-              <h1 className="text-4xl md:text-5xl font-bold !font-headline text-primary">{tour.name}</h1>
-              <p className="mt-4 text-lg text-muted-foreground">{tour.description}</p>
-            </header>
+export default async function TourDetailPage({ params }: TourDetailPageProps) {
+  const tour = await getTourBySlug(params.slug);
 
-            {/* Booking Widget for mobile */}
-            <div className="lg:hidden my-8">
-              <BookingWidget tour={tour} />
-            </div>
-            
-            <section id="key-facts" className="scroll-m-20">
-                <KeyFacts tour={tour} />
-            </section>
-            <section id="itinerary" className="scroll-m-20">
-                <Itinerary items={tour.itinerary} />
-            </section>
-            <section id="inclusions" className="scroll-m-20">
-                <InclusionsExclusions tour={tour} />
-            </section>
-            
-            <section id="map" className="scroll-m-20">
-              <h2 className="text-3xl font-bold !font-headline mb-6">Trek Map</h2>
-              <div className="bg-card p-4 rounded-lg shadow-sm">
-                <Image src={tour.mapImage} alt={`Map for ${tour.name}`} width={800} height={600} className="w-full rounded-md" data-ai-hint="map illustration" />
-              </div>
-            </section>
+  if (!tour) {
+    notFound();
+  }
 
-            <section id="reviews" className="scroll-m-20">
-                <Reviews reviews={tour.reviews} />
-            </section>
-          </div>
-
-          {/* Sidebar for Desktop */}
-          <aside className="lg:col-span-1 mt-12 lg:mt-0 hidden lg:block">
-            <BookingWidget tour={tour} />
-          </aside>
-        </div>
-      </div>
-    </div>
-  );
+  return <TourDetailClient tour={tour} />;
 }

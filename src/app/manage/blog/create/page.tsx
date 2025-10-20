@@ -1,4 +1,3 @@
-
 'use server';
 import { createBlogPost } from '@/lib/db';
 import { redirect } from 'next/navigation';

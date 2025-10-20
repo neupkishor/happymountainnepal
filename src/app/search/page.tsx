@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useFirestore } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore'; // Added where
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { Mountain, Search as SearchIcon, Loader2 } from 'lucide-react';
@@ -26,7 +25,8 @@ function SearchComponent() {
     if (!firestore) return;
     const fetchTours = async () => {
       setLoading(true);
-      const querySnapshot = await getDocs(collection(firestore, 'packages'));
+      const q = query(collection(firestore, 'packages'), where('status', '==', 'published')); // Filter by published status
+      const querySnapshot = await getDocs(q);
       const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
       setAllTours(tours);
       setLoading(false);
@@ -48,7 +48,9 @@ function SearchComponent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmittedTerm(searchTerm);
+    if (searchTerm.trim()) {
+      setSubmittedTerm(searchTerm);
+    }
   };
 
   return (

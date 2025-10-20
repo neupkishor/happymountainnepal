@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useWishlist } from '@/context/WishlistContext';
@@ -12,7 +11,7 @@ import type { Tour, Account } from '@/lib/types';
 import { useAuth, useDoc, useFirestore, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, getDocs } from 'firebase/firestore';
+import { doc, collection, getDocs, query, where } from 'firebase/firestore'; // Added query, where
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfilePage() {
@@ -32,7 +31,7 @@ export default function ProfilePage() {
     if (!firestore) return;
     const fetchTours = async () => {
       setIsToursLoading(true);
-      const packagesQuery = collection(firestore, 'packages');
+      const packagesQuery = query(collection(firestore, 'packages'), where('status', '==', 'published')); // Filter by published status
       const querySnapshot = await getDocs(packagesQuery);
       const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
       setAllTours(tours);
@@ -99,7 +98,7 @@ export default function ProfilePage() {
         <div className="flex flex-col items-center text-center gap-4">
             <Avatar className="h-24 w-24">
                 <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${account.fullName}`} />
-                <AvatarFallback>{account.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                <AvatarFallback>{account.fullName.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
             </Avatar>
             <div>
                 <h1 className="text-3xl md:text-4xl font-bold !font-headline">{account.fullName}</h1>

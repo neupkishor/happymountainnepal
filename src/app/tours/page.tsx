@@ -1,10 +1,9 @@
-
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useFirestore } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, where } from 'firebase/firestore'; // Added where
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { TourFilters } from '@/components/TourFilters';
@@ -13,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const allDifficulties = ['Easy', 'Moderate', 'Strenuous', 'Challenging'];
 
-export default function ToursPage() {
+function ToursPageContent() { // Renamed to ToursPageContent
   const searchParams = useSearchParams();
   const initialRegion = searchParams.get('region') || '';
   const initialSearch = searchParams.get('search') || '';
@@ -32,7 +31,8 @@ export default function ToursPage() {
     if (!firestore) return;
     const fetchTours = async () => {
       setLoading(true);
-      const querySnapshot = await getDocs(collection(firestore, 'packages'));
+      const q = query(collection(firestore, 'packages'), where('status', '==', 'published')); // Filter by published status
+      const querySnapshot = await getDocs(q);
       const fetchedTours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
       setTours(fetchedTours);
       setLoading(false);
@@ -48,16 +48,24 @@ export default function ToursPage() {
     }));
   }, [initialRegion, initialSearch]);
   
-  const allRegions = useMemo(() => tours ? [...new Set(tours.map(t => t.region))] : [], [tours]);
+  const allRegions = useMemo(() => {
+    if (!tours) return [];
+    const regionsSet = new Set<string>();
+    tours.forEach(tour => {
+      if (Array.isArray(tour.region)) {
+        tour.region.forEach(r => regionsSet.add(r));
+      }
+    });
+    return Array.from(regionsSet);
+  }, [tours]);
 
   const filteredTours = useMemo(() => {
     if (!tours) return [];
     return tours.filter((tour: Tour) => {
-      return (
-        (filters.search === '' || tour.name.toLowerCase().includes(filters.search.toLowerCase())) &&
-        (filters.region === '' || tour.region === filters.region) &&
-        (filters.difficulty === '' || tour.difficulty === filters.difficulty)
-      );
+      const matchesSearch = filters.search === '' || tour.name.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesRegion = filters.region === '' || (Array.isArray(tour.region) && tour.region.includes(filters.region));
+      const matchesDifficulty = filters.difficulty === '' || tour.difficulty === filters.difficulty;
+      return matchesSearch && matchesRegion && matchesDifficulty;
     });
   }, [filters, tours]);
 
@@ -108,4 +116,12 @@ export default function ToursPage() {
       )}
     </div>
   );
+}
+
+export default function ToursPage() {
+  return (
+    <Suspense fallback={<div>Loading tours...</div>}>
+      <ToursPageContent />
+    </Suspense>
+  )
 }

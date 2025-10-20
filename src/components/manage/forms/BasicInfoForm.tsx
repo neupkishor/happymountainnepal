@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -17,20 +16,24 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour, logError } from '@/lib/db';
-import { useTransition } from 'react';
-import { Loader2 } from 'lucide-react';
+import { updateTour, logError, checkSlugAvailability, validateTourForPublishing } from '@/lib/db';
+import { useTransition, useState, useEffect } from 'react';
+import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePathname } from 'next/navigation';
+import { slugify } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
 
 const formSchema = z.object({
   name: z.string().min(5, { message: "Name must be at least 5 characters." }),
-  region: z.string().min(3, { message: "Region must be at least 3 characters." }),
+  slug: z.string().min(3, { message: "Slug must be at least 3 characters." }).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, alphanumeric, and use hyphens for spaces."),
+  region: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)).refine(val => val.length > 0, { message: "At least one region is required." }), // Updated schema for string[]
   type: z.enum(['Trek', 'Tour', 'Peak Climbing']),
   difficulty: z.enum(['Easy', 'Moderate', 'Strenuous', 'Challenging']),
   duration: z.coerce.number().int().min(1, { message: "Duration must be at least 1 day." }),
   description: z.string().min(20, { message: "Description must be at least 20 characters." }),
+  status: z.enum(['draft', 'published', 'unpublished']), // Added status field
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,17 +51,85 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: tour.name || '',
-      region: tour.region || '',
+      slug: tour.slug || slugify(tour.name || 'new-package'),
+      region: Array.isArray(tour.region) ? tour.region.join(', ') : tour.region || '', // Handle existing string or array
       type: tour.type || 'Trek',
       difficulty: tour.difficulty || 'Moderate',
       duration: tour.duration || 0,
       description: tour.description || '',
+      status: tour.status || 'draft', // Set default from tour prop
     },
   });
+
+  const name = form.watch('name');
+  const currentSlug = form.watch('slug');
+  const currentStatus = form.watch('status'); // Watch status field
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+  const [isSlugChecking, setIsSlugChecking] = useState(false);
+  const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
+
+  const debouncedSlug = useDebounce(currentSlug, 500);
+
+  // Auto-generate slug from name if not manually edited
+  useEffect(() => {
+    if (!isSlugManuallyEdited && name) {
+      form.setValue('slug', slugify(name), { shouldValidate: true });
+    }
+  }, [name, isSlugManuallyEdited, form]);
+
+  // Check slug availability
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (debouncedSlug && form.formState.errors.slug?.message === undefined) { // Only check if slug is valid format
+        setIsSlugChecking(true);
+        try {
+          const available = await checkSlugAvailability(debouncedSlug, tour.id);
+          setIsSlugAvailable(available);
+          if (!available) {
+            form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
+          } else {
+            form.clearErrors('slug');
+          }
+        } catch (error) {
+          console.error("Error checking slug availability:", error);
+          setIsSlugAvailable(false);
+          form.setError('slug', { type: 'manual', message: 'Could not check slug availability.' });
+        } finally {
+          setIsSlugChecking(false);
+        }
+      } else {
+        setIsSlugAvailable(null);
+      }
+    };
+    checkAvailability();
+  }, [debouncedSlug, tour.id, form, form.formState.errors.slug?.message]);
+
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
+        // If status is being changed to 'published', run validation
+        if (values.status === 'published' && tour.status !== 'published') {
+          const validationResult = await validateTourForPublishing(tour.id);
+          if (validationResult !== true) {
+            toast({
+              variant: 'destructive',
+              title: 'Cannot Publish',
+              description: (
+                <div>
+                  <p>The package cannot be published due to missing information:</p>
+                  <ul className="list-disc list-inside mt-2">
+                    {validationResult.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ),
+            });
+            return; // Prevent update if validation fails
+          }
+        }
+
         await updateTour(tour.id, values);
         toast({ title: 'Success', description: 'Basic info updated.' });
       } catch (error: any) {
@@ -93,6 +164,40 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
             />
             <FormField
               control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL Slug</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., everest-base-camp-trek"
+                        {...field}
+                        disabled={isPending || isSlugChecking}
+                        onChange={(e) => {
+                          field.onChange(slugify(e.target.value));
+                          setIsSlugManuallyEdited(true);
+                          setIsSlugAvailable(null); // Reset availability status on change
+                        }}
+                      />
+                    </FormControl>
+                    {isSlugChecking && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
+                    )}
+                    {!isSlugChecking && isSlugAvailable !== null && (
+                      isSlugAvailable ? (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
+                      ) : (
+                        <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                      )
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -114,9 +219,9 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                 name="region"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Region</FormLabel>
+                    <FormLabel>Region (comma-separated)</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., Everest" {...field} disabled={isPending} />
+                        <Textarea placeholder="e.g., Everest, Annapurna" {...field} disabled={isPending} rows={3} /> {/* Changed to Textarea */}
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -183,8 +288,31 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     )}
                 />
             </div>
+            {/* New Status Field */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="unpublished">Unpublished</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || isSlugChecking || !isSlugAvailable}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
@@ -194,5 +322,3 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
     </Card>
   );
 }
-
-    

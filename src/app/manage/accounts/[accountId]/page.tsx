@@ -1,9 +1,9 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getActivitiesByAccountId, Activity } from '@/lib/db';
+import { getActivitiesByAccountId } from '@/lib/db';
+import type { Activity } from '@/lib/types'; // Corrected import for Activity
 import {
   Table,
   TableBody,

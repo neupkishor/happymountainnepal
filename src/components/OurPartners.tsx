@@ -1,6 +1,6 @@
-
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { useFirestore } from '@/firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -32,7 +32,7 @@ export function OurPartners() {
   }, [firestore]);
 
   return (
-    <section className="py-16 lg:py-24 bg-background">
+    <section className="py-16 lg:py-24">
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Partners & Affiliations</h2>
@@ -54,12 +54,11 @@ export function OurPartners() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {partners?.map(partner => (
                 <div key={partner.id} className="text-center">
-                <div className="bg-card p-6 rounded-lg flex justify-center items-center h-32 mb-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
+                <div className="bg-card p-8 rounded-lg flex justify-center items-center relative aspect-square mb-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <Image
                     src={partner.logo}
                     alt={`${partner.name} logo`}
-                    width={150}
-                    height={75}
+                    fill
                     className="object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
                     data-ai-hint="company logo"
                     />

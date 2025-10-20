@@ -1,4 +1,3 @@
-
 'use client';
 import { BlogCard } from "./BlogCard";
 import Link from "next/link";
@@ -34,7 +33,7 @@ export function RecentBlogs() {
   }, [firestore]);
 
   return (
-    <section className="py-16 lg:py-24 bg-background">
+    <section className="py-16 lg:py-24">
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold !font-headline">From Our Travel Journal</h2>
@@ -54,7 +53,7 @@ export function RecentBlogs() {
             </div>
         )}
         <div className="text-center mt-12">
-          <Link href="/blogs">
+          <Link href="/blog">
             <Button size="lg" variant="outline">
               Read More Articles <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

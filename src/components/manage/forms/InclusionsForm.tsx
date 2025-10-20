@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form'; // Removed FieldPath import
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -22,12 +21,16 @@ import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 
+// Define an explicit interface for FormValues
+interface InclusionsFormValues {
+  inclusions: string[];
+  exclusions: string[];
+}
+
 const formSchema = z.object({
   inclusions: z.array(z.string().min(1, "Inclusion cannot be empty.")),
   exclusions: z.array(z.string().min(1, "Exclusion cannot be empty.")),
 });
-
-type FormValues = z.infer<typeof formSchema>;
 
 interface InclusionsFormProps {
   tour: Tour;
@@ -38,7 +41,8 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
   const { toast } = useToast();
   const pathname = usePathname();
 
-  const form = useForm<FormValues>({
+  // Use the explicit interface for useForm
+  const form = useForm<InclusionsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       inclusions: tour.inclusions || [],
@@ -46,17 +50,18 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
     },
   });
 
-  const { fields: inclusionFields, append: appendInclusion, remove: removeInclusion } = useFieldArray({
+  // Now use the explicit interface for useFieldArray
+  const { fields: inclusionFields, append: appendInclusion, remove: removeInclusion } = useFieldArray<InclusionsFormValues>({
     control: form.control,
     name: "inclusions",
   });
 
-  const { fields: exclusionFields, append: appendExclusion, remove: removeExclusion } = useFieldArray({
+  const { fields: exclusionFields, append: appendExclusion, remove: removeExclusion } = useFieldArray<InclusionsFormValues>({
     control: form.control,
     name: "exclusions",
   });
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = (values: InclusionsFormValues) => {
     startTransition(async () => {
       try {
         await updateTour(tour.id, values);
@@ -146,5 +151,3 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
     </Card>
   );
 }
-
-    

@@ -10,24 +10,16 @@ import { OurPartners } from "@/components/OurPartners";
 
 export default function Home() {
   return (
-    <>
+    <div className="homepage-sections-wrapper">
       <HeroSection />
-      <div className="bg-secondary">
-        <FavoriteDestinations />
-      </div>
+      <FavoriteDestinations />
       <FeaturedTours />
-      <div className="bg-secondary">
-        <PopularPackages />
-      </div>
+      <PopularPackages />
       <WhyUs />
-      <div className="bg-secondary">
-        <Testimonials />
-      </div>
+      <Testimonials />
       <RecentBlogs />
-      <div className="bg-secondary">
-        <OurPartners />
-      </div>
+      <OurPartners />
       <CustomizeTrip />
-    </>
+    </div>
   );
 }

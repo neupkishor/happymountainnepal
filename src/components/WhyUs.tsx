@@ -26,7 +26,7 @@ const features = [
 
 export function WhyUs() {
   return (
-    <section className="py-16 lg:py-24 bg-background">
+    <section className="py-16 lg:py-24">
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold !font-headline">Why Trek with Us?</h2>

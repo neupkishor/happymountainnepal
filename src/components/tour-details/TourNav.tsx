@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,6 +10,9 @@ const navItems = [
   { href: '#itinerary', label: 'Itinerary' },
   { href: '#inclusions', label: 'Inclusions' },
   { href: '#map', label: 'Map' },
+  { href: '#gallery', label: 'Gallery' },
+  { href: '#faq', label: 'FAQ' },
+  { href: '#additional-info', label: 'More Info' }, // New navigation item
   { href: '#reviews', label: 'Reviews' },
 ];
 

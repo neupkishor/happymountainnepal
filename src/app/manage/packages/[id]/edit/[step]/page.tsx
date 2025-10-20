@@ -1,12 +1,15 @@
-
 import { getTourById } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { EditPackageNav } from '@/components/manage/EditPackageNav';
 import { BasicInfoForm } from '@/components/manage/forms/BasicInfoForm';
 import { ItineraryForm } from '@/components/manage/forms/ItineraryForm';
 import { InclusionsForm } from '@/components/manage/forms/InclusionsForm';
-import { MediaForm } from '@/components/manage/forms/MediaForm';
+import { BasicMediaForm } from '@/components/manage/forms/BasicMediaForm';
+import { GalleryForm } from '@/components/manage/forms/GalleryForm';
 import { PricingForm } from '@/components/manage/forms/PricingForm';
+import { FaqForm } from '@/components/manage/forms/FaqForm';
+import { AdditionalInfoForm } from '@/components/manage/forms/AdditionalInfoForm';
+import { BookingForm } from '@/components/manage/forms/BookingForm'; // Added this import
 
 
 type EditPackagePageProps = {
@@ -29,14 +32,22 @@ export default async function EditPackagePage({ params }: EditPackagePageProps) 
     switch(step) {
       case 'basic-info':
         return <BasicInfoForm tour={tour} />;
+      case 'booking': // New case for Booking form
+        return <BookingForm tour={tour} />;
       case 'itinerary':
         return <ItineraryForm tour={tour} />;
       case 'inclusions':
         return <InclusionsForm tour={tour} />;
       case 'media':
-          return <MediaForm tour={tour} />;
+          return <BasicMediaForm tour={tour} />;
+      case 'gallery':
+          return <GalleryForm tour={tour} />;
       case 'pricing':
           return <PricingForm tour={tour} />;
+      case 'faq':
+          return <FaqForm tour={tour} />;
+      case 'info':
+          return <AdditionalInfoForm tour={tour} />;
       default:
         notFound();
     }

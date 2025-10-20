@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useWishlist } from '@/context/WishlistContext';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import type { Tour } from '@/lib/types';
 import { useFirestore } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore'; // Added query, where
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WishlistPage() {
@@ -23,7 +22,8 @@ export default function WishlistPage() {
     if (!firestore) return;
     const fetchTours = async () => {
       setLoading(true);
-      const querySnapshot = await getDocs(collection(firestore, 'packages'));
+      const packagesQuery = query(collection(firestore, 'packages'), where('status', '==', 'published')); // Filter by published status
+      const querySnapshot = await getDocs(packagesQuery);
       const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
       setAllTours(tours);
       setLoading(false);

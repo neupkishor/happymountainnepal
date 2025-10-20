@@ -1,47 +1,13 @@
-/**
- * @file Firestore Security Rules
- * @core_philosophy This ruleset enforces a strict user-ownership model for account data.
- *   Each user can only access their own account information. No listing of accounts is allowed.
- * @data_structure All user data is stored under the `/accounts/{accountId}` path, where `{accountId}`
- *   must match the Firebase Auth UID of the user.
- * @key_security_decisions User accounts are private and cannot be listed. Only the authenticated user
- *   can read or write their own account data.
- * @denormalization_for_authorization The `accountId` is implicitly denormalized because it is enforced
- *   that the document ID in `/accounts/{accountId}` must match the `request.auth.uid`.
- * @structural_segregation N/A
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Controls access to user account documents.
-     * @path /accounts/{accountId}
-     * @allow (get, update, delete) User with UID matching {accountId} can read, update, or delete their account.
-     * @allow (create) User with UID matching {accountId} can create their account.
-     * @deny (get, list, create, update, delete) Any other user cannot access this account.
-     * @principle Enforces document ownership for all operations.
-     */
     match /accounts/{accountId} {
-      // isOwner is used here.
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(accountId) {
-        return request.auth.uid == accountId;
-      }
-      function isExistingOwner(accountId) {
-        return isOwner(accountId) && resource != null;
-      }
+      allow read, create, update, delete: if request.auth != null && request.auth.uid == accountId;
+    }
 
-      // Read rules
-      allow get: if isOwner(accountId);
-      allow list: if false; // Account listing is not allowed.
-
-      // Write Rules
-      allow create: if isSignedIn() && isOwner(accountId) && request.resource.data.id == accountId;
-      allow update: if isExistingOwner(accountId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(accountId);
+    // Allow anyone to read reviews for public display
+    match /reviews/{reviewId} {
+      allow read: if true;
     }
   }
 }

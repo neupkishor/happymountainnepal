@@ -58,7 +58,7 @@ export function HeroSection() {
   return (
     <section className="relative w-full h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white">
       <Image
-        src="https://picsum.photos/seed/everest-hero/1600/900"
+        src="https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg"
         alt="Majestic mountain range at sunrise"
         fill
         className="object-cover"

@@ -1,4 +1,3 @@
-
 'use client';
 import { TourCard } from './TourCard';
 import Link from 'next/link';
@@ -6,7 +5,7 @@ import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFirestore } from '@/firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
 import { useState, useEffect } from 'react';
 
@@ -20,7 +19,12 @@ export function PopularPackages() {
     if (!firestore) return;
     const fetchTours = async () => {
       setIsLoading(true);
-      const packagesQuery = query(collection(firestore, 'packages'), orderBy('price', 'desc'), limit(3));
+      const packagesQuery = query(
+        collection(firestore, 'packages'),
+        where('status', '==', 'published'), // Filter by published status
+        orderBy('price', 'desc'),
+        limit(3)
+      );
       const querySnapshot = await getDocs(packagesQuery);
       const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
       setPopularTours(tours);
@@ -31,7 +35,7 @@ export function PopularPackages() {
 
 
   return (
-    <section className="py-16 lg:py-24 bg-background">
+    <section className="py-16 lg:py-24">
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold !font-headline">Popular Packages</h2>

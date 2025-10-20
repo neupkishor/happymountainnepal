@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -17,12 +16,29 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { DeletePackageDialog } from '@/components/manage/DeletePackageDialog';
+import { Badge } from '@/components/ui/badge'; // Import Badge
 
 interface PackageTableRowProps {
   tour: Tour;
 }
 
 export function PackageTableRow({ tour }: PackageTableRowProps) {
+  const getStatusVariant = (status: Tour['status']) => {
+    switch (status) {
+      case 'published':
+        return 'default';
+      case 'draft':
+        return 'secondary';
+      case 'unpublished':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  // Ensure tour.status is a string, defaulting to 'draft' if undefined or null
+  const displayStatus = tour.status || 'draft';
+
   return (
     <TableRow>
       <TableCell>
@@ -31,7 +47,11 @@ export function PackageTableRow({ tour }: PackageTableRowProps) {
       </TableCell>
       <TableCell>{tour.region}</TableCell>
       <TableCell>{tour.duration} days</TableCell>
-      <TableCell>${tour.price}</TableCell>
+      <TableCell>
+        <Badge variant={getStatusVariant(displayStatus)}>
+          {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+        </Badge>
+      </TableCell>
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

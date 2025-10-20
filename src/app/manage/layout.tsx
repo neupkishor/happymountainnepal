@@ -1,9 +1,7 @@
-
-
 'use client';
 
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare } from "lucide-react";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarProvider, SidebarMenuItem } from "@/components/ui/sidebar";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
@@ -32,9 +30,9 @@ export default function ManageLayout({
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                                <SidebarMenuItem>
-                                  <SidebarMenuButton href="/manage/media" isActive={pathname.startsWith('/manage/media')} tooltip="Media">
+                                  <SidebarMenuButton href="/manage/uploads" isActive={pathname.startsWith('/manage/uploads')} tooltip="Uploads">
                                       <PictureInPicture />
-                                      <span>Media</span>
+                                      <span>Uploads</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                               <SidebarMenuItem>
@@ -50,7 +48,7 @@ export default function ManageLayout({
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                                 <SidebarMenuItem>
-                                  <SidebarMenuButton href="/manage/blogs" isActive={pathname.startsWith('/manage/blogs')} tooltip="Blog">
+                                  <SidebarMenuButton href="/manage/blog" isActive={pathname.startsWith('/manage/blog')} tooltip="Blog">
                                       <PenSquare />
                                       <span>Blog</span>
                                   </SidebarMenuButton>
@@ -71,6 +69,12 @@ export default function ManageLayout({
                                   <SidebarMenuButton href="/manage/partners" isActive={pathname.startsWith('/manage/partners')} tooltip="Partners">
                                       <Handshake />
                                       <span>Partners</span>
+                                  </SidebarMenuButton>
+                              </SidebarMenuItem>
+                              <SidebarMenuItem>
+                                  <SidebarMenuButton href="/manage/reviews" isActive={pathname.startsWith('/manage/reviews')} tooltip="Reviews">
+                                      <Star />
+                                      <span>Reviews</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                               <SidebarMenuItem>

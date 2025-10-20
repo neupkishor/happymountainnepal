@@ -1,14 +1,25 @@
-import type { Tour } from '@/lib/types';
+'use client';
+import type { ManagedReview } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReviewStars } from '@/components/ReviewStars';
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
+import { Loader2, ExternalLink } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import Link from 'next/link';
 
 interface ReviewsProps {
-  reviews: Tour['reviews'];
+  reviews: ManagedReview[];
+  tourId: string;
+  isLoading: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
+  allToursMap: Map<string, string>; // Map of tourId -> tourName
 }
 
-export function Reviews({ reviews }: ReviewsProps) {
+export function Reviews({ reviews, tourId, isLoading, hasMore, onLoadMore, allToursMap }: ReviewsProps) {
   if (!reviews || reviews.length === 0) {
     return (
         <div>
@@ -22,7 +33,7 @@ export function Reviews({ reviews }: ReviewsProps) {
     );
   }
 
-  const averageRating = reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
+  const averageRating = reviews.reduce((acc, review) => acc + review.stars, 0) / reviews.length;
 
   return (
     <div>
@@ -42,25 +53,66 @@ export function Reviews({ reviews }: ReviewsProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           {reviews.map((review) => {
-            const displayDate = review.date instanceof Timestamp ? review.date.toDate().toLocaleDateString() : review.date;
+            const dateObject = review.reviewedOn instanceof Timestamp ? review.reviewedOn.toDate() : new Date(review.reviewedOn);
+            const displayDate = format(dateObject, 'PPP');
+            
+            let reviewTag = null;
+            if (review.type === 'onSite' && review.reviewFor === tourId) {
+                reviewTag = <Badge variant="default" className="bg-primary/10 text-primary hover:bg-primary/20">For this package</Badge>;
+            } else if (review.type === 'onSite' && review.reviewFor && review.reviewFor !== tourId) {
+                const otherTourName = allToursMap.get(review.reviewFor);
+                reviewTag = (
+                    <Link href={`/tours/${review.reviewFor}`} className="hover:underline">
+                        <Badge variant="secondary">For: {otherTourName || 'Another Package'}</Badge>
+                    </Link>
+                );
+            } else if (review.type === 'offSite') {
+                reviewTag = <Badge variant="outline">Off-site Review</Badge>;
+            }
+
             return (
               <div key={review.id} className="flex gap-4">
                 <Avatar>
-                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.author}`} />
-                  <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.userName}`} />
+                  <AvatarFallback>{review.userName.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold">{review.author}</p>
+                    <p className="font-semibold">{review.userName}</p>
+                    {review.userRole && <span className="text-xs text-muted-foreground">({review.userRole})</span>}
                     <span className="text-xs text-muted-foreground">&bull;</span>
                     <p className="text-xs text-muted-foreground">{displayDate}</p>
                   </div>
-                  <ReviewStars rating={review.rating} />
-                  <p className="mt-2 text-muted-foreground">{review.comment}</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <ReviewStars rating={review.stars} />
+                    {reviewTag}
+                  </div>
+                  <p className="mt-2 text-muted-foreground">{review.reviewBody}</p>
+                  {review.type === 'offSite' && review.originalReviewUrl && (
+                    <a 
+                        href={review.originalReviewUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center text-sm text-primary hover:underline mt-2"
+                    >
+                        View Original <ExternalLink className="ml-1 h-3 w-3" />
+                    </a>
+                  )}
                 </div>
               </div>
             )
           })}
+          {hasMore && (
+            <div className="text-center mt-8">
+              <Button onClick={onLoadMore} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  'Show More Reviews'
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

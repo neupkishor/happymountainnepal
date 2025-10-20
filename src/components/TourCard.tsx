@@ -9,6 +9,7 @@ import { Heart, Clock, Mountain, BarChart } from 'lucide-react';
 import type { Tour } from '@/lib/types';
 import { useWishlist } from '@/context/WishlistContext';
 import { cn } from '@/lib/utils';
+import { PlaceHolderImages } from '@/lib/placeholder-images'; // Import placeholder images
 
 interface TourCardProps {
   tour: Tour;
@@ -17,6 +18,11 @@ interface TourCardProps {
 export function TourCard({ tour }: TourCardProps) {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const isWishlisted = isInWishlist(tour.id);
+
+  // Use a fallback image if tour.mainImage is missing or empty
+  const imageUrl = tour.mainImage && tour.mainImage.length > 0 
+    ? tour.mainImage 
+    : PlaceHolderImages.find(img => img.id === 'tour-ebc')?.imageUrl || 'https://placehold.co/600x400';
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -33,7 +39,7 @@ export function TourCard({ tour }: TourCardProps) {
       <Card className="overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         <CardHeader className="p-0 relative">
           <Image
-            src={tour.mainImage}
+            src={imageUrl}
             alt={tour.name}
             width={600}
             height={400}
@@ -66,11 +72,7 @@ export function TourCard({ tour }: TourCardProps) {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="p-4 pt-0 flex justify-between items-center">
-          <div>
-            <span className="text-sm text-muted-foreground">From </span>
-            <span className="text-xl font-bold text-primary">${tour.price}</span>
-          </div>
+        <CardFooter className="p-4 pt-0 flex justify-end items-center">
           <Button variant="ghost" className="text-primary">
             View Details
           </Button>

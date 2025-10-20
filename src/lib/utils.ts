@@ -15,3 +15,16 @@ export function slugify(text: string): string {
     .replace(/^-+/, '')             // Trim - from start of text
     .replace(/-+$/, '');            // Trim - from end of text
 }
+
+// Helper to extract filename from URL
+export const getFileNameFromUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+    const pathSegments = urlObj.pathname.split('/');
+    const fileNameWithExtension = pathSegments[pathSegments.length - 1];
+    // Remove query parameters and hash from filename
+    return fileNameWithExtension.split('?')[0].split('#')[0];
+  } catch (error) {
+    return url; // Return original URL if parsing fails
+  }
+};

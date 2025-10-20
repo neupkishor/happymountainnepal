@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
@@ -21,7 +20,7 @@ import { addTeamMember, updateTeamMember, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ImageUpload } from './ImageUpload';
+import { MediaPicker } from './MediaPicker'; // Updated import
 import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
@@ -128,7 +127,7 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
                 )}
                 />
                 
-                <ImageUpload name="image" />
+                <MediaPicker name="image" label="Profile Image" /> {/* Using MediaPicker */}
                 <FormMessage>{form.formState.errors.image?.message}</FormMessage>
 
                 <Button type="submit" disabled={isPending}>
@@ -142,5 +141,3 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
     </FormProvider>
   );
 }
-
-    

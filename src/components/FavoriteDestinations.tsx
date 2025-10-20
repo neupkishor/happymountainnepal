@@ -1,11 +1,10 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, getDocs, query, limit } from 'firebase/firestore';
+import { collection, getDocs, query, limit, where } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import type { Destination } from '@/lib/types';
+import type { Destination, Tour } from '@/lib/types'; // Import Tour type
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
@@ -22,12 +21,17 @@ export function FavoriteDestinations() {
       if (!firestore) return;
       
       setLoading(true);
-      const packagesSnapshot = await getDocs(query(collection(firestore, 'packages')));
-      const packages = packagesSnapshot.docs.map(doc => doc.data() as { region: string });
+      const packagesSnapshot = await getDocs(query(collection(firestore, 'packages'), where('status', '==', 'published'))); // Filter by published status
+      const packages = packagesSnapshot.docs.map(doc => doc.data() as Tour); // Cast to Tour to get region as string[]
 
       const regionCounts = packages.reduce((acc, tour) => {
-          if (tour.region) {
-              acc[tour.region] = (acc[tour.region] || 0) + 1;
+          if (tour.region && Array.isArray(tour.region)) { // Ensure region is an array
+              tour.region.forEach(r => {
+                  const regionName = r.trim();
+                  if (regionName) {
+                      acc[regionName] = (acc[regionName] || 0) + 1;
+                  }
+              });
           }
           return acc;
       }, {} as Record<string, number>);

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -55,13 +54,13 @@ const navLinks: NavLink[] = [
         description: 'Stories and feedback.',
         children: [
           {
-            title: 'Testimonials',
-            href: '/testimonials',
+            title: 'Reviews',
+            href: '/reviews',
             description: 'Read stories from our happy travelers.',
           },
           {
             title: 'Blog',
-            href: '/blogs',
+            href: '/blog',
             description: 'Guides, stories, and advice.',
           },
         ],

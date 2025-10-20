@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableCell, // Imported TableCell
 } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { BlogTableRow } from '@/components/manage/BlogTableRow';

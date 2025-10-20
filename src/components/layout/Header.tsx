@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import * as React from "react";
@@ -18,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Mountain, Search, User } from "lucide-react";
-import { getDestinations } from "@/lib/db";
+// Removed import { getDestinations } from "@/lib/db";
 import type { Destination } from "@/lib/types";
 
 interface NavLink {
@@ -44,8 +42,8 @@ const staticNavLinks: NavLink[] = [
         description: "Meet the experts behind your Himalayan adventure.",
       },
       {
-        title: "Testimonials",
-        href: "/testimonials",
+        title: "Reviews",
+        href: "/reviews",
         description: "Read stories from our happy and satisfied travelers.",
       },
       {
@@ -93,19 +91,10 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [navLinks, setNavLinks] = React.useState<NavLink[]>(staticNavLinks);
 
-  React.useEffect(() => {
-    getDestinations().then(destinations => {
-      const destinationLink: NavLink = {
-        title: "Destinations",
-        items: destinations.map((d: Destination) => ({
-            title: d.name,
-            href: `/tours?region=${d.name}`,
-            description: d.tourCount > 0 ? `${d.tourCount}+ tours available` : 'Coming soon'
-        }))
-      };
-      setNavLinks([staticNavLinks[0], destinationLink, ...staticNavLinks.slice(1)]);
-    });
-  }, []);
+  // The getDestinations call was removed as it's no longer needed here.
+  // The HeaderV3 component uses a static navLinks array which is more appropriate for a client component.
+  // If dynamic destinations are needed, they should be fetched in a server component and passed down,
+  // or handled in a client component with proper loading states.
 
   const renderNavLinks = (links: NavLink[], isSubmenu = false) => {
     return links.map(link => {

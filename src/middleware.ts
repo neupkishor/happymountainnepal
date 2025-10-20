@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +21,8 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
   let accountId = request.cookies.get(COOKIE_NAME)?.value;
-  const ip = request.ip ?? '127.0.0.1';
+  // Use x-forwarded-for header to get the client IP, or a fallback
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? '127.0.0.1';
   let isNewAccount = false;
 
   // If no cookie, generate a new accountId

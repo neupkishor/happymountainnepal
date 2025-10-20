@@ -1,0 +1,95 @@
+'use client';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import type { ManagedReview } from '@/lib/types'; // Changed from Review
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ReviewStars } from '@/components/ReviewStars';
+import { Timestamp } from 'firebase/firestore'; // Added missing import
+import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns'; // Import format from date-fns
+import { useFirestore } from '@/firebase';
+
+
+export default function ReviewsPage() {
+  const firestore = useFirestore();
+  const [allReviews, setAllReviews] = useState<ManagedReview[]>([]); // Changed type
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchReviews = async () => {
+      setIsLoading(true);
+      // Query the top-level 'reviews' collection, ordered by reviewedOn
+      const reviewsQuery = query(collection(firestore, 'reviews'), orderBy('reviewedOn', 'desc'));
+      const querySnapshot = await getDocs(reviewsQuery);
+      const reviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagedReview)); // Changed type
+      setAllReviews(reviews);
+      setIsLoading(false);
+    };
+    fetchReviews();
+  }, [firestore]);
+
+
+  return (
+    <div className="container mx-auto py-12">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold !font-headline">What Our Adventurers Say</h1>
+        <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
+          Real stories from travelers who have explored the Himalayas with us.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+                <Card key={i}>
+                    <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className='space-y-2'>
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-16" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {allReviews?.map((review, index) => {
+                // Safely get the date object, handling both Timestamp and Date types
+                const dateObject = review.reviewedOn instanceof Timestamp 
+                    ? review.reviewedOn.toDate() 
+                    : (review.reviewedOn instanceof Date ? review.reviewedOn : null);
+                const displayDate = dateObject ? format(dateObject, 'PPP') : 'N/A';
+
+                return (
+                    <Card key={`${review.id}-${index}`} className="flex flex-col">
+                        <CardContent className="p-6 flex-grow">
+                            <div className="flex items-center gap-4 mb-4">
+                                <Avatar>
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.userName}`} />
+                                    <AvatarFallback>{review.userName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{review.userName}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {review.type === 'onSite' && review.reviewFor ? `on ${review.reviewFor}` : ''}
+                                        {review.type === 'onSite' && review.reviewFor && displayDate !== 'N/A' && ' • '}
+                                        {displayDate !== 'N/A' && displayDate}
+                                    </p>
+                                </div>
+                            </div>
+                            <ReviewStars rating={review.stars} /> {/* Changed from rating to stars */}
+                            <p className="text-muted-foreground italic mt-4">&quot;{review.reviewBody}&quot;</p> {/* Changed from comment to reviewBody */}
+                        </CardContent>
+                    </Card>
+                );
+            })}
+        </div>
+      )}
+    </div>
+  );
+}

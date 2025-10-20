@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
@@ -21,7 +20,7 @@ import { updateBlogPost, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ImageUpload } from './ImageUpload';
+import { MediaPicker } from './MediaPicker';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Select,
@@ -31,12 +30,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Timestamp } from 'firebase/firestore';
+import { RichTextEditor } from '@/components/ui/RichTextEditor'; // Import the new RichTextEditor
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
   content: z.string().min(20, "Content must be at least 20 characters."),
   excerpt: z.string().min(10).max(200, "Excerpt must be between 10 and 200 characters."),
   author: z.string().min(2, "Author name is required."),
+  authorPhoto: z.string().url("A valid author photo URL is required.").min(1, "Author photo is required."), // New field
   image: z.string().url("A valid image URL is required."),
   metaInformation: z.string().optional(),
   status: z.enum(['draft', 'published']),
@@ -61,6 +62,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
       content: post.content || '',
       excerpt: post.excerpt || '',
       author: post.author || 'Admin',
+      authorPhoto: post.authorPhoto || '', // Set default for new field
       image: post.image || '',
       metaInformation: post.metaInformation || '',
       status: post.status || 'draft',
@@ -75,7 +77,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           date: post.date, // Preserve original date
         });
         toast({ title: 'Success', description: 'Blog post updated.' });
-        router.push('/manage/blogs');
+        router.push('/manage/blog');
       } catch (error: any) {
         logError({ message: `Failed to update blog post ${post.id}`, stack: error.stack, pathname, context: { postId: post.id, values } });
         toast({
@@ -114,10 +116,10 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                   <FormItem>
                     <FormLabel>Content (HTML)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="<h1>Title</h1><p>Your content here...</p>"
-                        {...field}
-                        rows={15}
+                      <RichTextEditor // Using RichTextEditor here
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Start writing your amazing blog post here..."
                         disabled={isPending}
                       />
                     </FormControl>
@@ -126,7 +128,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                 )}
               />
 
-              <ImageUpload name="image" />
+              <MediaPicker name="image" label="Featured Image" />
 
               <FormField
                 control={form.control}
@@ -161,29 +163,31 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="published">Published</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                
+                <MediaPicker name="authorPhoto" label="Author Photo" /> {/* New MediaPicker for author photo */}
               </div>
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

@@ -3,7 +3,7 @@ import { Mountain } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="border-t bg-secondary">
+    <footer className="border-t bg-footer-background">
       <div className="container mx-auto py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
@@ -29,8 +29,8 @@ export function Footer() {
             <ul className="mt-4 space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary">About Us</Link></li>
               <li><Link href="/about/teams" className="text-sm text-muted-foreground hover:text-primary">Our Team</Link></li>
-              <li><Link href="/blogs" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
-              <li><Link href="/testimonials" className="text-sm text-muted-foreground hover:text-primary">Testimonials</Link></li>
+              <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
+              <li><Link href="/reviews" className="text-sm text-muted-foreground hover:text-primary">Reviews</Link></li>
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">Contact</Link></li>
             </ul>
           </div>

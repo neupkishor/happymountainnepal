@@ -1,9 +1,8 @@
-
-
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Added Image import
 import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeaderV3Nav, type NavLink } from './HeaderV3Nav';
@@ -63,13 +62,13 @@ const navLinks: NavLink[] = [
         description: 'Stories and feedback.',
         children: [
           {
-            title: 'Testimonials',
-            href: '/testimonials',
+            title: 'Reviews',
+            href: '/reviews',
             description: 'Read stories from our happy travelers.',
           },
           {
             title: 'Blog',
-            href: '/blogs',
+            href: '/blog',
             description: 'Guides, stories, and advice.',
           },
         ],
@@ -150,8 +149,9 @@ function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
     return (
         <div className="fixed inset-0 bg-background z-50 p-6 flex flex-col">
             <div className="flex items-center justify-between mb-8">
-                <Link href="/" className="font-bold text-xl" onClick={() => setMenuOpen(false)}>
-                    Happy Mountain
+                <Link href="/" className="flex items-center space-x-2" onClick={() => setMenuOpen(false)}>
+                    <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
+                    <span className="font-bold">Happy Mountain Nepal</span>
                 </Link>
                 <Button variant="ghost" size="icon" onClick={() => setMenuOpen(false)}>
                     <X className="h-6 w-6" />
@@ -201,7 +201,7 @@ export function HeaderV3() {
   return (
     <>
       <header 
-        className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur-sm"
+        className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur-sm shadow-xl"
         onMouseLeave={handleMouseLeave}
       >
         <div className="container flex h-16 items-center">
@@ -216,8 +216,8 @@ export function HeaderV3() {
             {/* Left aligned logo */}
             <div className="flex items-center">
                 <Link href="/" className="flex items-center space-x-2 md:mr-6">
-                    <Mountain className="h-6 w-6 text-primary" />
-                    <span className="font-bold hidden sm:inline-block">Happy Mountain</span>
+                    <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
+                    <span className="font-bold hidden sm:inline-block">Happy Mountain Nepal</span>
                 </Link>
             </div>
 

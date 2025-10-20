@@ -1,7 +1,7 @@
-
 import { getBlogPostById } from '@/lib/db';
 import { BlogPostForm } from '@/components/manage/BlogPostForm';
 import { notFound } from 'next/navigation';
+import { Timestamp } from 'firebase/firestore'; // Import Timestamp
 
 type EditBlogPostPageProps = {
   params: { id: string };
@@ -14,6 +14,12 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
     notFound();
   }
 
+  // Convert Firestore Timestamp to ISO string for client component serialization
+  const serializablePost = {
+    ...post,
+    date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
@@ -22,7 +28,7 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
           Editing "{post.title}".
         </p>
       </div>
-      <BlogPostForm post={post} />
+      <BlogPostForm post={serializablePost} />
     </div>
   );
 }
