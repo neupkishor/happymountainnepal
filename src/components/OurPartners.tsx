@@ -1,17 +1,35 @@
 
 'use client';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import type { Partner } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 
 export function OurPartners() {
   const firestore = useFirestore();
-  const partnersQuery = useMemoFirebase(() => 
-    firestore ? collection(firestore, 'partners') : null,
-  [firestore]);
-  const { data: partners, isLoading } = useCollection<Partner>(partnersQuery);
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+
+    const fetchPartners = async () => {
+      setIsLoading(true);
+      try {
+        const querySnapshot = await getDocs(collection(firestore, 'partners'));
+        const partnersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Partner));
+        setPartners(partnersData);
+      } catch (error) {
+        console.error("Error fetching partners:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPartners();
+  }, [firestore]);
 
   return (
     <section className="py-16 lg:py-24 bg-background">
