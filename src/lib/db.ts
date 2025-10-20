@@ -6,6 +6,8 @@ import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
 import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, MediaUpload } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 export interface Inquiry {
@@ -109,8 +111,13 @@ export async function createTour(): Promise<string | null> {
         };
         const docRef = await addDoc(collection(firestore, 'packages'), newTourData);
         return docRef.id;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating new tour: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: 'packages',
+            operation: 'create',
+            requestResourceData: newTourData
+        }));
         return null;
     }
 }
@@ -128,8 +135,13 @@ export async function updateTour(id: string, data: Partial<Omit<Tour, 'id' | 'sl
         }
 
         await updateDoc(docRef, finalData);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error updating tour: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `packages/${id}`,
+            operation: 'update',
+            requestResourceData: data
+        }));
         throw new Error("Could not update tour.");
     }
 }
@@ -138,8 +150,12 @@ export async function deleteTour(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await deleteDoc(doc(firestore, 'packages', id));
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting tour: ", error);
+         errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `packages/${id}`,
+            operation: 'delete',
+        }));
         throw new Error("Could not delete tour.");
     }
 }
@@ -161,8 +177,13 @@ export async function createBlogPost(): Promise<string | null> {
         };
         const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
         return docRef.id;
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error creating blog post", e);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `blogPosts`,
+            operation: 'create',
+            requestResourceData: newPost
+        }));
         return null;
     }
 }
@@ -178,8 +199,13 @@ export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'i
         }
         
         await updateDoc(docRef, finalData);
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error updating blog post", e);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `blogPosts/${id}`,
+            operation: 'update',
+            requestResourceData: data
+        }));
         throw new Error("Could not update blog post.");
     }
 }
@@ -188,8 +214,12 @@ export async function deleteBlogPost(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await deleteDoc(doc(firestore, 'blogPosts', id));
-    } catch (e) {
+    } catch (e: any) {
         console.error("Error deleting blog post", e);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `blogPosts/${id}`,
+            operation: 'delete',
+        }));
         throw new Error("Could not delete blog post.");
     }
 }
@@ -204,8 +234,13 @@ export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
         const slug = slugify(data.name);
         const newMember = { ...data, slug };
         await addDoc(collection(firestore, 'teamMembers'), newMember);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error adding team member: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `teamMembers`,
+            operation: 'create',
+            requestResourceData: data
+        }));
         throw new Error("Could not add team member.");
     }
 }
@@ -217,8 +252,13 @@ export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 
         const updatedMember = { ...data, slug };
         const docRef = doc(firestore, 'teamMembers', id);
         await updateDoc(docRef, updatedMember);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error updating team member: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `teamMembers/${id}`,
+            operation: 'update',
+            requestResourceData: data
+        }));
         throw new Error("Could not update team member.");
     }
 }
@@ -228,8 +268,12 @@ export async function deleteTeamMember(id: string) {
     try {
         const docRef = doc(firestore, 'teamMembers', id);
         await deleteDoc(docRef);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting team member: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `teamMembers/${id}`,
+            operation: 'delete',
+        }));
         throw new Error("Could not delete team member.");
     }
 }
@@ -242,8 +286,13 @@ export async function addPartner(data: Omit<Partner, 'id'>) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await addDoc(collection(firestore, 'partners'), data);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error adding partner: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `partners`,
+            operation: 'create',
+            requestResourceData: data
+        }));
         throw new Error("Could not add partner.");
     }
 }
@@ -253,8 +302,13 @@ export async function updatePartner(id: string, data: Omit<Partner, 'id'>) {
     try {
         const docRef = doc(firestore, 'partners', id);
         await updateDoc(docRef, data);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error updating partner: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `partners/${id}`,
+            operation: 'update',
+            requestResourceData: data
+        }));
         throw new Error("Could not update partner.");
     }
 }
@@ -263,8 +317,12 @@ export async function deletePartner(id: string) {
     if (!firestore) throw new Error("Database not available.");
     try {
         await deleteDoc(doc(firestore, 'partners', id));
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting partner: ", error);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: `partners/${id}`,
+            operation: 'delete',
+        }));
         throw new Error("Could not delete partner.");
     }
 }
