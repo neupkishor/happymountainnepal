@@ -1,6 +1,6 @@
 
+'use client';
 import Link from 'next/link';
-import { getTours } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,12 +15,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableCell,
 } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { PackageTableRow } from '@/components/manage/PackageTableRow';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import type { Tour } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function PackagesListPage() {
-  const tours = await getTours();
+export default function PackagesListPage() {
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchTours = async () => {
+      setLoading(true);
+      const packagesRef = collection(firestore, 'packages');
+      const q = query(packagesRef);
+      const querySnapshot = await getDocs(q);
+      setTours(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour)));
+      setLoading(false);
+    };
+    fetchTours();
+  }, [firestore]);
+
 
   return (
     <div>
@@ -52,9 +74,17 @@ export default async function PackagesListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tours.map((tour) => (
-                <PackageTableRow key={tour.id} tour={tour} />
-              ))}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <Skeleton className="h-10 w-full" />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                tours.map((tour) => (
+                  <PackageTableRow key={tour.id} tour={tour} />
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

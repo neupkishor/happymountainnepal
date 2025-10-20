@@ -1,6 +1,6 @@
 
+'use client';
 import Link from 'next/link';
-import { getAllBlogPosts } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,9 +18,29 @@ import {
 } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { BlogTableRow } from '@/components/manage/BlogTableRow';
+import { useFirestore } from '@/firebase';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import type { BlogPost } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function BlogListPage() {
-  const posts = await getAllBlogPosts();
+export default function BlogListPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchPosts = async () => {
+      setLoading(true);
+      const blogPostsRef = collection(firestore, 'blogPosts');
+      const q = query(blogPostsRef, orderBy('date', 'desc'));
+      const querySnapshot = await getDocs(q);
+      setPosts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost)));
+      setLoading(false);
+    };
+    fetchPosts();
+  }, [firestore]);
 
   return (
     <div>
@@ -52,9 +72,23 @@ export default async function BlogListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {posts.map((post) => (
-                <BlogTableRow key={post.id} post={post} />
-              ))}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    <Skeleton className="w-full h-10" />
+                  </TableCell>
+                </TableRow>
+              ) : posts.length > 0 ? (
+                posts.map((post) => (
+                  <BlogTableRow key={post.id} post={post} />
+                ))
+              ) : (
+                 <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No posts found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

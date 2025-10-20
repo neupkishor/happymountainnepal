@@ -5,23 +5,33 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from './ui/skeleton';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import type { BlogPost } from '@/lib/types';
+import { useState, useEffect } from 'react';
 
 export function RecentBlogs() {
   const firestore = useFirestore();
-  const postsQuery = useMemoFirebase(() => 
-    firestore 
-      ? query(
-          collection(firestore, 'blogPosts'), 
-          where('status', '==', 'published'),
-          orderBy('date', 'desc'), 
-          limit(3)
-        )
-      : null,
-  [firestore]);
-  const { data: recentPosts, isLoading } = useCollection<BlogPost>(postsQuery);
+  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      const postsQuery = query(
+        collection(firestore, 'blogPosts'),
+        where('status', '==', 'published'),
+        orderBy('date', 'desc'),
+        limit(3)
+      );
+      const querySnapshot = await getDocs(postsQuery);
+      const posts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+      setRecentPosts(posts);
+      setIsLoading(false);
+    };
+    fetchPosts();
+  }, [firestore]);
 
   return (
     <section className="py-16 lg:py-24 bg-background">

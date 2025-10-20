@@ -1,6 +1,6 @@
 
+'use client';
 import Link from 'next/link';
-import { getPartners } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,12 +15,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableCell,
 } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { PartnerTableRow } from '@/components/manage/PartnerTableRow';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import type { Partner } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function PartnersListPage() {
-  const partners = await getPartners();
+export default function PartnersListPage() {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchPartners = async () => {
+      setLoading(true);
+      const partnersRef = collection(firestore, 'partners');
+      const q = query(partnersRef);
+      const querySnapshot = await getDocs(q);
+      setPartners(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Partner)));
+      setLoading(false);
+    };
+    fetchPartners();
+  }, [firestore]);
+
 
   return (
     <div>
@@ -50,9 +72,17 @@ export default async function PartnersListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {partners.map((partner) => (
-                <PartnerTableRow key={partner.id} partner={partner} />
-              ))}
+               {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3}>
+                    <Skeleton className="h-10 w-full" />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                partners.map((partner) => (
+                  <PartnerTableRow key={partner.id} partner={partner} />
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -60,5 +90,3 @@ export default async function PartnersListPage() {
     </div>
   );
 }
-
-    

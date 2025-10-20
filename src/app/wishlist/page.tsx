@@ -8,20 +8,31 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import type { Tour } from '@/lib/types';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WishlistPage() {
   const { wishlist } = useWishlist();
   const [wishlistedTours, setWishlistedTours] = useState<Tour[]>([]);
-
+  const [allTours, setAllTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
-  const packagesQuery = collection(firestore, 'packages');
-  const { data: allTours, isLoading: loading } = useCollection<Tour>(packagesQuery);
   
   useEffect(() => {
-    if (allTours) {
+    if (!firestore) return;
+    const fetchTours = async () => {
+      setLoading(true);
+      const querySnapshot = await getDocs(collection(firestore, 'packages'));
+      const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+      setAllTours(tours);
+      setLoading(false);
+    };
+    fetchTours();
+  }, [firestore]);
+  
+  useEffect(() => {
+    if (allTours.length > 0) {
       setWishlistedTours(allTours.filter(tour => wishlist.includes(tour.id)));
     }
   }, [wishlist, allTours]);

@@ -5,16 +5,29 @@ import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, limit } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, query, limit, getDocs } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
+import { useEffect, useState } from 'react';
 
 export function FeaturedTours() {
   const firestore = useFirestore();
-  const packagesQuery = useMemoFirebase(() => 
-    firestore ? query(collection(firestore, 'packages'), limit(3)) : null,
-  [firestore]);
-  const { data: featuredTours, isLoading } = useCollection<Tour>(packagesQuery);
+  const [featuredTours, setFeaturedTours] = useState<Tour[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchTours = async () => {
+      setIsLoading(true);
+      const packagesQuery = query(collection(firestore, 'packages'), limit(3));
+      const querySnapshot = await getDocs(packagesQuery);
+      const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+      setFeaturedTours(tours);
+      setIsLoading(false);
+    };
+    fetchTours();
+  }, [firestore]);
+
 
   return (
     <section className="py-16 lg:py-24 bg-background">

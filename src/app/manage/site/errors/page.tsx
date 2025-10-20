@@ -1,6 +1,6 @@
 
+'use client';
 import Link from 'next/link';
-import { getErrors, SiteError } from '@/lib/db';
 import {
   Card,
   CardContent,
@@ -20,9 +20,30 @@ import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+import type { SiteError } from '@/lib/types';
+import { useFirestore } from '@/firebase';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function ErrorsPage() {
-  const errors = await getErrors();
+export default function ErrorsPage() {
+  const [errors, setErrors] = useState<SiteError[]>([]);
+  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchErrors = async () => {
+      setLoading(true);
+      const errorsRef = collection(firestore, 'errors');
+      const q = query(errorsRef, orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      setErrors(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SiteError)));
+      setLoading(false);
+    };
+    fetchErrors();
+  }, [firestore]);
+
 
   return (
     <div>
@@ -37,7 +58,11 @@ export default async function ErrorsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {errors.length > 0 ? (
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            </div>
+          ) : errors.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>

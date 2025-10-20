@@ -1,6 +1,6 @@
 
+'use client';
 import Link from 'next/link';
-import { getTeamMembers } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,12 +15,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableCell,
 } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { TeamTableRow } from '@/components/manage/TeamTableRow';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import type { TeamMember } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function TeamListPage() {
-  const teamMembers = await getTeamMembers();
+export default function TeamListPage() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchTeamMembers = async () => {
+      setLoading(true);
+      const teamMembersRef = collection(firestore, 'teamMembers');
+      const q = query(teamMembersRef);
+      const querySnapshot = await getDocs(q);
+      setTeamMembers(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamMember)));
+      setLoading(false);
+    };
+    fetchTeamMembers();
+  }, [firestore]);
+
 
   return (
     <div>
@@ -50,9 +72,17 @@ export default async function TeamListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {teamMembers.map((member) => (
-                <TeamTableRow key={member.id} member={member} />
-              ))}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3}>
+                    <Skeleton className="h-10 w-full" />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                teamMembers.map((member) => (
+                  <TeamTableRow key={member.id} member={member} />
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

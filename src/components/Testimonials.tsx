@@ -1,7 +1,7 @@
 
 'use client';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collectionGroup, query, orderBy, limit } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collectionGroup, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import type { Review } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,15 +10,25 @@ import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { useState, useEffect } from 'react';
 
 export function Testimonials() {
   const firestore = useFirestore();
-  const reviewsQuery = useMemoFirebase(() => 
-    firestore 
-      ? query(collectionGroup(firestore, 'reviews'), orderBy('date', 'desc'), limit(3))
-      : null,
-  [firestore]);
-  const { data: reviews, isLoading } = useCollection<(Review & { tourName: string })>(reviewsQuery);
+  const [reviews, setReviews] = useState<(Review & { tourName: string })[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchReviews = async () => {
+      setIsLoading(true);
+      const reviewsQuery = query(collectionGroup(firestore, 'reviews'), orderBy('date', 'desc'), limit(3));
+      const querySnapshot = await getDocs(reviewsQuery);
+      const fetchedReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review & { tourName: string }));
+      setReviews(fetchedReviews);
+      setIsLoading(false);
+    };
+    fetchReviews();
+  }, [firestore]);
   
   return (
     <section className="py-16 lg:py-24 bg-secondary">

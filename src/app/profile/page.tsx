@@ -3,17 +3,16 @@
 
 import { useWishlist } from '@/context/WishlistContext';
 import { TourCard } from '@/components/TourCard';
-import { Heart, Loader2, LogOut } from 'lucide-react';
+import { Heart, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useState } from 'react';
-import type { Tour } from '@/lib/types';
-import { useAuth, useDoc, useFirestore, useUser, useCollection } from '@/firebase';
+import type { Tour, Account } from '@/lib/types';
+import { useAuth, useDoc, useFirestore, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection } from 'firebase/firestore';
-import type { Account } from '@/lib/types';
+import { doc, collection, getDocs } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfilePage() {
@@ -23,12 +22,24 @@ export default function ProfilePage() {
   const router = useRouter();
   const auth = useAuth();
   const firestore = useFirestore();
+  const [allTours, setAllTours] = useState<Tour[]>([]);
+  const [isToursLoading, setIsToursLoading] = useState(true);
 
   const accountRef = user ? doc(firestore, 'accounts', user.uid) : null;
   const { data: account, isLoading: isAccountLoading } = useDoc<Account>(accountRef);
 
-  const packagesQuery = collection(firestore, 'packages');
-  const { data: allTours, isLoading: isToursLoading } = useCollection<Tour>(packagesQuery);
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchTours = async () => {
+      setIsToursLoading(true);
+      const packagesQuery = collection(firestore, 'packages');
+      const querySnapshot = await getDocs(packagesQuery);
+      const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+      setAllTours(tours);
+      setIsToursLoading(false);
+    };
+    fetchTours();
+  }, [firestore]);
 
 
   useEffect(() => {
@@ -52,7 +63,9 @@ export default function ProfilePage() {
     }
   };
 
-  if (isUserLoading || isAccountLoading || isToursLoading) {
+  const isLoading = isUserLoading || isAccountLoading || isToursLoading;
+
+  if (isLoading) {
     return (
         <div className="container mx-auto py-12">
             <div className="mb-12 flex flex-col items-center text-center gap-4">

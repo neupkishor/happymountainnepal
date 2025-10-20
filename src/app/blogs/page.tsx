@@ -2,19 +2,33 @@
 'use client';
 
 import { BlogCard } from '@/components/BlogCard';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import type { BlogPost } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
 
 export default function BlogPage() {
   const firestore = useFirestore();
-  const postsQuery = query(
-    collection(firestore, 'blogPosts'),
-    where('status', '==', 'published'),
-    orderBy('date', 'desc')
-  );
-  const { data: blogPosts, isLoading } = useCollection<BlogPost>(postsQuery);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      const postsQuery = query(
+        collection(firestore, 'blogPosts'),
+        where('status', '==', 'published'),
+        orderBy('date', 'desc')
+      );
+      const querySnapshot = await getDocs(postsQuery);
+      const posts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+      setBlogPosts(posts);
+      setIsLoading(false);
+    };
+    fetchPosts();
+  }, [firestore]);
 
   return (
     <div className="container mx-auto py-12">

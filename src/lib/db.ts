@@ -337,72 +337,6 @@ export async function getMediaUploads(): Promise<MediaUpload[]> {
     }
 }
 
-
-export async function getAccounts(): Promise<Account[]> {
-    if (!firestore) return [];
-    try {
-        const accountsRef = collection(firestore, 'accounts');
-        const q = query(accountsRef, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account));
-    } catch (error) {
-        console.error("Error fetching accounts:", error);
-        throw new Error("Could not fetch accounts from the database.");
-    }
-}
-
-export async function getActivitiesByAccountId(accountId: string): Promise<Activity[]> {
-    if (!firestore) return [];
-    try {
-        const activitiesRef = collection(firestore, 'activities');
-        const q = query(activitiesRef, where('accountId', '==', accountId), orderBy('activityTime', 'desc'));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
-    } catch (error) {
-        console.error("Error fetching activities:", error);
-        throw new Error("Could not fetch activities from the database.");
-    }
-}
-
-export async function getTeamMembers(): Promise<TeamMember[]> {
-    if (!firestore) return [];
-    try {
-        const teamMembersRef = collection(firestore, 'teamMembers');
-        const q = query(teamMembersRef);
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamMember));
-    } catch (error) {
-        console.error("Error fetching team members:", error);
-        throw new Error("Could not fetch team members from the database.");
-    }
-}
-
-export async function getPartners(): Promise<Partner[]> {
-    if (!firestore) return [];
-    try {
-        const partnersRef = collection(firestore, 'partners');
-        const q = query(partnersRef);
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Partner));
-    } catch (error) {
-        console.error("Error fetching partners:", error);
-        throw new Error("Could not fetch partners from the database.");
-    }
-}
-
-export async function getTours(): Promise<Tour[]> {
-    if (!firestore) return [];
-    try {
-        const packagesRef = collection(firestore, 'packages');
-        const q = query(packagesRef);
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
-    } catch (error) {
-        console.error("Error fetching tours:", error);
-        throw new Error("Could not fetch tours from the database.");
-    }
-}
-
 export async function getTourById(id: string): Promise<Tour | null> {
     return getDocById<Tour>('packages', id);
 }
@@ -417,5 +351,18 @@ export async function getAllBlogPosts(): Promise<BlogPost[]> {
     } catch (error) {
         console.error("Error fetching all blog posts:", error);
         throw new Error("Could not fetch all blog posts from the database.");
+    }
+}
+
+export async function getTeamMembers(): Promise<TeamMember[]> {
+    if (!firestore) return [];
+    try {
+        const teamMembersRef = collection(firestore, 'teamMembers');
+        const q = query(teamMembersRef);
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamMember));
+    } catch (error) {
+        console.error("Error fetching team members:", error);
+        throw new Error("Could not fetch team members from the database.");
     }
 }

@@ -1,18 +1,33 @@
 
 'use client';
-import { useCollection, useFirestore } from '@/firebase';
-import { collectionGroup, query, orderBy } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collectionGroup, query, orderBy, getDocs } from 'firebase/firestore';
 import type { Review } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReviewStars } from '@/components/ReviewStars';
 import type { Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
 
 export default function TestimonialsPage() {
   const firestore = useFirestore();
-  const reviewsQuery = query(collectionGroup(firestore, 'reviews'), orderBy('date', 'desc'));
-  const { data: allReviews, isLoading } = useCollection<(Review & { tourName: string })>(reviewsQuery);
+  const [allReviews, setAllReviews] = useState<(Review & { tourName: string })[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchReviews = async () => {
+      setIsLoading(true);
+      const reviewsQuery = query(collectionGroup(firestore, 'reviews'), orderBy('date', 'desc'));
+      const querySnapshot = await getDocs(reviewsQuery);
+      const reviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review & { tourName: string }));
+      setAllReviews(reviews);
+      setIsLoading(false);
+    };
+    fetchReviews();
+  }, [firestore]);
+
 
   return (
     <div className="container mx-auto py-12">

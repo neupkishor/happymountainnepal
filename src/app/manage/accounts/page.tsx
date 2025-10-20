@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAccounts, Account } from '@/lib/db';
 import {
   Table,
   TableBody,
@@ -24,18 +23,25 @@ import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useFirestore } from '@/firebase';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import type { Account } from '@/lib/types';
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const firestore = useFirestore();
 
   useEffect(() => {
+    if (!firestore) return;
     const fetchAccounts = async () => {
       try {
         setLoading(true);
-        const fetchedAccounts = await getAccounts();
-        setAccounts(fetchedAccounts);
+        const accountsRef = collection(firestore, 'accounts');
+        const q = query(accountsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        setAccounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account)));
         setError(null);
       } catch (err) {
         console.error(err);
@@ -46,15 +52,15 @@ export default function AccountsPage() {
     };
 
     fetchAccounts();
-  }, []);
+  }, [firestore]);
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Tracked Users</CardTitle>
+          <CardTitle>Registered Users</CardTitle>
           <CardDescription>
-            List of anonymous user accounts created upon visiting the site.
+            List of user accounts with email and password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -79,9 +85,9 @@ export default function AccountsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tracked Users</CardTitle>
+        <CardTitle>Registered Users</CardTitle>
         <CardDescription>
-          List of anonymous user accounts created upon visiting the site.
+           List of user accounts with email and password.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -89,28 +95,18 @@ export default function AccountsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Account ID</TableHead>
-                <TableHead>IP Address</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {accounts.map((account) => (
                 <TableRow key={account.id}>
-                  <TableCell className="font-mono text-xs">{account.id}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{account.ipAddress}</Badge>
-                  </TableCell>
+                  <TableCell className="font-medium">{ (account as any).fullName || 'N/A'}</TableCell>
+                   <TableCell>{ (account as any).email || 'N/A'}</TableCell>
                   <TableCell>
                     {account.createdAt?.toDate ? formatDistanceToNow(account.createdAt.toDate(), { addSuffix: true }) : 'N/A'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button asChild variant="ghost" size="sm">
-                      <Link href={`/manage/accounts/${account.id}`}>
-                        View Activity <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -120,7 +116,7 @@ export default function AccountsPage() {
           <div className="text-center py-16 text-muted-foreground">
             <Users className="mx-auto h-12 w-12" />
             <h3 className="mt-4 text-lg font-semibold">No Accounts Yet</h3>
-            <p>New user accounts will appear here as they visit the site.</p>
+            <p>New user accounts will appear here as they are created.</p>
           </div>
         )}
       </CardContent>

@@ -2,16 +2,29 @@
 'use client';
 import { TeamMemberCard } from '@/components/TeamMemberCard';
 import Image from 'next/image';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import type { TeamMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 export default function AboutPage() {
   const firestore = useFirestore();
-  const membersQuery = collection(firestore, 'teamMembers');
-  const { data: teamMembers, isLoading } = useCollection<TeamMember>(membersQuery);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchMembers = async () => {
+      setIsLoading(true);
+      const membersQuery = collection(firestore, 'teamMembers');
+      const querySnapshot = await getDocs(membersQuery);
+      const members = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamMember));
+      setTeamMembers(members);
+      setIsLoading(false);
+    };
+    fetchMembers();
+  }, [firestore]);
 
   const founder = useMemo(() => teamMembers?.find(m => m.role.includes('Founder')), [teamMembers]);
   const otherMembers = useMemo(() => teamMembers?.filter(m => !m.role.includes('Founder')), [teamMembers]);

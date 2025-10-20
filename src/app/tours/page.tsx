@@ -3,8 +3,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { TourFilters } from '@/components/TourFilters';
@@ -17,16 +17,28 @@ export default function ToursPage() {
   const searchParams = useSearchParams();
   const initialRegion = searchParams.get('region') || '';
   const initialSearch = searchParams.get('search') || '';
-
+  
   const firestore = useFirestore();
-  const packagesQuery = collection(firestore, 'packages');
-  const { data: tours, isLoading: loading } = useCollection<Tour>(packagesQuery);
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
     search: initialSearch,
     region: initialRegion,
     difficulty: '',
   });
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchTours = async () => {
+      setLoading(true);
+      const querySnapshot = await getDocs(collection(firestore, 'packages'));
+      const fetchedTours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+      setTours(fetchedTours);
+      setLoading(false);
+    };
+    fetchTours();
+  }, [firestore]);
 
   useEffect(() => {
     setFilters(prev => ({

@@ -5,19 +5,29 @@ import Link from 'next/link';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
+import { useState, useEffect } from 'react';
 
 
 export function PopularPackages() {
   const firestore = useFirestore();
-  const packagesQuery = useMemoFirebase(() => 
-    firestore 
-      ? query(collection(firestore, 'packages'), orderBy('price', 'desc'), limit(3)) 
-      : null,
-  [firestore]);
-  const { data: popularTours, isLoading } = useCollection<Tour>(packagesQuery);
+  const [popularTours, setPopularTours] = useState<Tour[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchTours = async () => {
+      setIsLoading(true);
+      const packagesQuery = query(collection(firestore, 'packages'), orderBy('price', 'desc'), limit(3));
+      const querySnapshot = await getDocs(packagesQuery);
+      const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+      setPopularTours(tours);
+      setIsLoading(false);
+    };
+    fetchTours();
+  }, [firestore]);
 
 
   return (

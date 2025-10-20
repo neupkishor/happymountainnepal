@@ -3,8 +3,8 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { Mountain, Search as SearchIcon, Loader2 } from 'lucide-react';
@@ -19,8 +19,20 @@ function SearchComponent() {
   const [submittedTerm, setSubmittedTerm] = useState(initialQuery);
   
   const firestore = useFirestore();
-  const packagesQuery = collection(firestore, 'packages');
-  const { data: allTours, isLoading: loading } = useCollection<Tour>(packagesQuery);
+  const [allTours, setAllTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    const fetchTours = async () => {
+      setLoading(true);
+      const querySnapshot = await getDocs(collection(firestore, 'packages'));
+      const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+      setAllTours(tours);
+      setLoading(false);
+    };
+    fetchTours();
+  }, [firestore]);
 
   useEffect(() => {
     setSearchTerm(initialQuery);
