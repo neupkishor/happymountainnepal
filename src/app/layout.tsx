@@ -6,7 +6,7 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { HeaderV3 as Header } from '@/components/layout/HeaderV3';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import 'react-quill/dist/quill.snow.css'; // Import react-quill CSS
+import 'quill/dist/quill.snow.css'; // Import Quill's CSS
 
 export const metadata: Metadata = {
   title: 'Happy Mountain Nepal',
