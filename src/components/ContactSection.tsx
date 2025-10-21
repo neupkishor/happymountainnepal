@@ -34,21 +34,32 @@ export function ContactSection() {
             </div>
         ) : (
             <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2 hover:bg-accent/50 transition-colors">
+                <a 
+                    href={googleMapsUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2 transition-all duration-300 hover:ring-2 hover:ring-primary/50 hover:shadow-lg"
+                >
                     <MapPin className="h-8 w-8 text-primary" />
                     <h3 className="font-semibold text-lg">Our Office</h3>
                     <p className="text-muted-foreground">{address}</p>
                 </a>
-                <div className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2">
+                <a 
+                    href={`tel:${phone}`}
+                    className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2 transition-all duration-300 hover:ring-2 hover:ring-primary/50 hover:shadow-lg"
+                >
                     <Phone className="h-8 w-8 text-primary" />
                     <h3 className="font-semibold text-lg">Call Us</h3>
-                    <a href={`tel:${phone}`} className="text-muted-foreground hover:text-primary">{phone}</a>
-                </div>
-                <div className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2">
+                    <p className="text-muted-foreground hover:text-primary">{phone}</p>
+                </a>
+                <a 
+                    href={`mailto:${email}`}
+                    className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2 transition-all duration-300 hover:ring-2 hover:ring-primary/50 hover:shadow-lg"
+                >
                     <Mail className="h-8 w-8 text-primary" />
                     <h3 className="font-semibold text-lg">Email Us</h3>
-                    <a href={`mailto:${email}`} className="text-muted-foreground hover:text-primary">{email}</a>
-                </div>
+                    <p className="text-muted-foreground hover:text-primary">{email}</p>
+                </a>
             </div>
         )}
 
