@@ -13,6 +13,8 @@ export function ContactSection() {
   const address = profile?.address || 'Thamel, Kathmandu, Nepal';
   const phone = profile?.phone || '+977 984-3725521';
   const email = profile?.contactEmail || 'info@happymountainnepal.com';
+  
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
   return (
     <section className="py-16 lg:py-24">
@@ -32,11 +34,11 @@ export function ContactSection() {
             </div>
         ) : (
             <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <div className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2">
+                <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2 hover:bg-accent/50 transition-colors">
                     <MapPin className="h-8 w-8 text-primary" />
                     <h3 className="font-semibold text-lg">Our Office</h3>
                     <p className="text-muted-foreground">{address}</p>
-                </div>
+                </a>
                 <div className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2">
                     <Phone className="h-8 w-8 text-primary" />
                     <h3 className="font-semibold text-lg">Call Us</h3>
