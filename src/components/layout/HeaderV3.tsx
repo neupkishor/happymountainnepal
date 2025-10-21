@@ -117,7 +117,7 @@ function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
                             className="flex items-center justify-between w-full py-3"
                             onClick={() => toggleSubMenu(link.title)}
                         >
-                            <span>{link.title}</span>
+                            <span className="font-headline text-lg">{link.title}</span>
                             <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
                         </button>
                         <div
@@ -151,7 +151,7 @@ function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
             <div className="flex items-center justify-between mb-8">
                 <Link href="/" className="flex items-center space-x-2" onClick={() => setMenuOpen(false)}>
                     <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
-                    <span className="font-bold">Happy Mountain Nepal</span>
+                    <span className="font-bold font-headline">Happy Mountain Nepal</span>
                 </Link>
                 <Button variant="ghost" size="icon" onClick={() => setMenuOpen(false)}>
                     <X className="h-6 w-6" />
@@ -217,7 +217,7 @@ export function HeaderV3() {
             <div className="flex items-center">
                 <Link href="/" className="flex items-center space-x-2 md:mr-6">
                     <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
-                    <span className="font-bold hidden sm:inline-block">Happy Mountain Nepal</span>
+                    <span className="font-bold font-headline hidden sm:inline-block">Happy Mountain Nepal</span>
                 </Link>
             </div>
 
@@ -279,7 +279,7 @@ export function HeaderV3() {
                                     <div key={child.title}>
                                         {hasChildren(child) ? (
                                             <>
-                                                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">{child.title}</h3>
+                                                <div className="font-headline text-lg font-semibold text-foreground mb-3">{child.title}</div>
                                                 <ul className="space-y-2">
                                                     {child.children?.map(subItem => (
                                                         <li key={subItem.title}>
@@ -293,7 +293,7 @@ export function HeaderV3() {
                                             </>
                                         ) : (
                                             <Link href={child.href || '#'} className="group block">
-                                                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{child.title}</h3>
+                                                <p className="font-headline text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{child.title}</p>
                                                 {child.description && <p className="text-sm text-muted-foreground mt-1">{child.description}</p>}
                                             </Link>
                                         )}

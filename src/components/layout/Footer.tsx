@@ -56,7 +56,7 @@ export function Footer() {
             </div>
           </div>
           <div>
-            <h3 className="font-semibold tracking-wider uppercase">Tours</h3>
+            <p className="font-headline text-lg font-semibold tracking-wider uppercase">Tours</p>
             <ul className="mt-4 space-y-2">
               <li><Link href="/tours?region=Everest" className="text-sm text-muted-foreground hover:text-primary">Everest</Link></li>
               <li><Link href="/tours?region=Annapurna" className="text-sm text-muted-foreground hover:text-primary">Annapurna</Link></li>
@@ -65,7 +65,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold tracking-wider uppercase">Company</h3>
+            <p className="font-headline text-lg font-semibold tracking-wider uppercase">Company</p>
             <ul className="mt-4 space-y-2">
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary">About Us</Link></li>
               <li><Link href="/about/teams" className="text-sm text-muted-foreground hover:text-primary">Our Team</Link></li>
