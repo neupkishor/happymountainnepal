@@ -49,14 +49,14 @@ export default async function ErrorDetailPage({ params }: ErrorDetailPageProps) 
             <CardContent className="space-y-6">
                 <div>
                     <h3 className="font-semibold mb-2">Message</h3>
-                    <p className="text-destructive font-mono bg-secondary p-4 rounded-md">{error.message}</p>
+                    <p className="text-destructive font-mono bg-secondary p-4 rounded-md break-words">{error.message}</p>
                 </div>
 
                 {error.stack && (
                     <div>
                         <h3 className="font-semibold mb-2">Stack Trace</h3>
                         <pre className="text-sm bg-secondary p-4 rounded-md overflow-x-auto">
-                            <code>{error.stack}</code>
+                            <code className="whitespace-pre-wrap break-all">{error.stack}</code>
                         </pre>
                     </div>
                 )}
@@ -65,7 +65,7 @@ export default async function ErrorDetailPage({ params }: ErrorDetailPageProps) 
                      <div>
                         <h3 className="font-semibold mb-2">Component Stack</h3>
                         <pre className="text-sm bg-secondary p-4 rounded-md overflow-x-auto">
-                            <code>{error.componentStack}</code>
+                            <code className="whitespace-pre-wrap break-all">{error.componentStack}</code>
                         </pre>
                     </div>
                 )}
@@ -74,7 +74,7 @@ export default async function ErrorDetailPage({ params }: ErrorDetailPageProps) 
                     <div>
                         <h3 className="font-semibold mb-2">Context</h3>
                         <pre className="text-sm bg-secondary p-4 rounded-md overflow-x-auto">
-                            <code>{JSON.stringify(error.context, null, 2)}</code>
+                            <code className="whitespace-pre-wrap break-all">{JSON.stringify(error.context, null, 2)}</code>
                         </pre>
                     </div>
                 )}
@@ -83,3 +83,4 @@ export default async function ErrorDetailPage({ params }: ErrorDetailPageProps) 
     </div>
   );
 }
+

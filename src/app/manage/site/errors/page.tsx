@@ -75,7 +75,7 @@ export default function ErrorsPage() {
               <TableBody>
                 {errors.map((error: SiteError) => (
                   <TableRow key={error.id}>
-                    <TableCell className="font-medium max-w-sm truncate">{error.message}</TableCell>
+                    <TableCell className="font-medium max-w-sm truncate break-words">{error.message}</TableCell>
                     <TableCell><Badge variant="outline">{error.pathname}</Badge></TableCell>
                     <TableCell>
                       {error.createdAt?.toDate ? formatDistanceToNow(error.createdAt.toDate(), { addSuffix: true }) : 'N/A'}

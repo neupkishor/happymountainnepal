@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -29,8 +30,8 @@ export function BlogTableRow({ post }: BlogTableRowProps) {
   return (
     <TableRow>
       <TableCell>
-        <div className="font-medium">{post.title}</div>
-        <div className="text-xs text-muted-foreground">{post.slug}</div>
+        <div className="font-medium break-words">{post.title}</div>
+        <div className="text-xs text-muted-foreground break-all">{post.slug}</div>
       </TableCell>
       <TableCell>{post.author}</TableCell>
       <TableCell>

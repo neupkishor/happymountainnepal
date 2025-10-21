@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -42,8 +43,8 @@ export function PackageTableRow({ tour }: PackageTableRowProps) {
   return (
     <TableRow>
       <TableCell>
-        <div className="font-medium">{tour.name}</div>
-        <div className="text-xs text-muted-foreground">{tour.id}</div>
+        <div className="font-medium break-words">{tour.name}</div>
+        <div className="text-xs text-muted-foreground break-all">{tour.id}</div>
       </TableCell>
       <TableCell>{tour.region}</TableCell>
       <TableCell>{tour.duration} days</TableCell>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -116,7 +117,7 @@ export default function AccountActivityPage({ params }: ActivityPageProps) {
                   <TableCell>
                     <Badge>{activity.activityName}</Badge>
                   </TableCell>
-                  <TableCell className="text-xs font-mono">
+                  <TableCell className="text-xs font-mono break-all whitespace-pre-wrap">
                     {activity.activityName === 'page_view' ? activity.activityInfo.path : JSON.stringify(activity.activityInfo)}
                   </TableCell>
                   <TableCell>
