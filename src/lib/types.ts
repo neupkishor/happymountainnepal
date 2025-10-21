@@ -143,6 +143,7 @@ export interface OffSiteReview extends BaseReview {
 
 export type ManagedReview = OnSiteReview | OffSiteReview;
 
+export type ChatbotPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'middle-right' | 'middle-left';
 
 export interface SiteProfile {
   id: string;
@@ -160,6 +161,12 @@ export interface SiteProfile {
     twitter?: string;
   };
   whyUs?: { icon: string; title: string; description: string; }[];
+  chatbot?: {
+    enabled?: boolean;
+    position?: ChatbotPosition;
+    whatsappNumber?: string;
+    emailAddress?: string;
+  };
 }
 
 export interface LegalDocument {

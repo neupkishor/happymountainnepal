@@ -1,0 +1,132 @@
+
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageSquare, X, Bot, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSiteProfile } from '@/hooks/use-site-profile';
+import { cn } from '@/lib/utils';
+import { CustomizeTrip } from './CustomizeTrip';
+
+const WhatsAppIcon = () => (
+    <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current">
+        <path d=" M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.043-.765.315-.23.272-.904.867-.904 2.09 0 1.223.945 2.64 1.088 2.804.143.164 1.569 3.254 3.787 4.47 2.06.996 2.64 1.13 2.96.945.315-.187.99-.945 1.13-1.39.143-.446.143-.867.073-1.13-.073-.272-.24-.372-.51-.65Z"></path>
+        <path d="M20.57 14.317c-1.61-3.617-4.38-6.387-8.28-8.28C9.39 4.62 6.8 5.46 5.46 6.8c-1.34 1.34-2.18 3.93-1.76 6.87 1.45 10.02 9.38 17.96 19.4 19.4 2.94.42 5.53-.42 6.87-1.76 1.34-1.34.8-3.93-1.12-6.87-1.8-2.8-4.5-5.4-7.27-7.27Z"></path>
+    </svg>
+);
+
+
+export function Chatbot() {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isChatting, setIsChatting] = useState(false);
+    const { profile, isLoading } = useSiteProfile();
+
+    if (isLoading || !profile?.chatbot?.enabled) {
+        return null;
+    }
+    
+    const { position, whatsappNumber, emailAddress } = profile.chatbot;
+
+    const positionClasses = {
+        'bottom-right': 'bottom-4 right-4',
+        'bottom-left': 'bottom-4 left-4',
+        'top-right': 'top-4 right-4',
+        'top-left': 'top-4 left-4',
+        'middle-right': 'top-1/2 right-4 -translate-y-1/2',
+        'middle-left': 'top-1/2 left-4 -translate-y-1/2',
+    };
+
+    const menuAnimation = {
+        open: { opacity: 1, y: 0, scale: 1 },
+        closed: { opacity: 0, y: 20, scale: 0.95 },
+    };
+
+    if (isChatting) {
+        return (
+            <div className={cn("fixed z-50", positionClasses[position || 'bottom-right'])}>
+                <Card className="w-[350px] h-[500px] flex flex-col">
+                    <CardHeader className='flex-row items-center justify-between'>
+                        <CardTitle>Customize Your Trip</CardTitle>
+                        <Button variant="ghost" size="icon" onClick={() => setIsChatting(false)}><X className="h-4 w-4" /></Button>
+                    </CardHeader>
+                    <CardContent className="flex-grow overflow-auto">
+                        <CustomizeTrip />
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
+
+    return (
+        <div className={cn("fixed z-50", positionClasses[position || 'bottom-right'])}>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        variants={menuAnimation}
+                        initial="closed"
+                        animate="open"
+                        exit="closed"
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="mb-2 w-72 origin-bottom-right"
+                    >
+                        <Card className="shadow-2xl">
+                            <CardHeader>
+                                <CardTitle>How can we help?</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <Button className="w-full justify-start" onClick={() => { setIsChatting(true); setIsOpen(false); }}>
+                                    <Bot className="mr-2 h-5 w-5" /> Message Now
+                                </Button>
+                                {whatsappNumber && (
+                                    <Button variant="outline" className="w-full justify-start" asChild>
+                                        <a href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                            <WhatsAppIcon /> <span className='ml-2'>WhatsApp</span>
+                                        </a>
+                                    </Button>
+                                )}
+                                {emailAddress && (
+                                     <Button variant="outline" className="w-full justify-start" asChild>
+                                        <a href={`mailto:${emailAddress}`}>
+                                            <Mail className="mr-2 h-5 w-5" /> Email Us
+                                        </a>
+                                    </Button>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <Button
+                size="icon"
+                className="rounded-full w-16 h-16 shadow-lg"
+                onClick={() => setIsOpen(prev => !prev)}
+            >
+                <AnimatePresence>
+                    {isOpen ? (
+                        <motion.div key="close" initial={{ rotate: 45, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: -45, scale: 0 }}>
+                            <X className="h-8 w-8" />
+                        </motion.div>
+                    ) : (
+                        <motion.div key="open" initial={{ rotate: -45, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: 45, scale: 0 }}>
+                            <MessageSquare className="h-8 w-8" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                <span className="sr-only">Toggle Chat</span>
+            </Button>
+        </div>
+    );
+}
+
+// A minimal version of CustomizeTrip for the popup
+function CustomizeTripPopup() {
+    return (
+        <div>
+            {/* The full logic from /customize page would go here */}
+            <p>Chat interface placeholder.</p>
+        </div>
+    );
+}

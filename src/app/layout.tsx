@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -6,6 +7,7 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { HeaderV3 as Header } from '@/components/layout/HeaderV3';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { Chatbot } from '@/components/Chatbot'; // New import
 import 'quill/dist/quill.snow.css'; // Import Quill's CSS
 
 export const metadata: Metadata = {
@@ -63,6 +65,7 @@ export default function RootLayout({
               <main className="flex-grow">{children}</main>
               <Footer />
             </div>
+            <Chatbot />
             <Toaster />
           </WishlistProvider>
         </FirebaseClientProvider>

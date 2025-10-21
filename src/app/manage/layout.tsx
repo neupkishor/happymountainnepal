@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarProvider, SidebarMenuItem } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
@@ -45,6 +46,12 @@ export default function ManageLayout({
                                   <SidebarMenuButton href="/manage/inquiries" isActive={pathname === '/manage/inquiries'} tooltip="Inquiries">
                                       <Mail />
                                       <span>Inquiries</span>
+                                  </SidebarMenuButton>
+                              </SidebarMenuItem>
+                              <SidebarMenuItem>
+                                  <SidebarMenuButton href="/manage/chatbot" isActive={pathname === '/manage/chatbot'} tooltip="Chatbot">
+                                      <MessageSquare />
+                                      <span>Chatbot</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                                <SidebarMenuItem>

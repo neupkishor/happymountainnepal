@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
@@ -16,13 +17,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { updateSiteProfile, logError } from '@/lib/db';
 import { useTransition, useEffect } from 'react';
-import { Facebook, Instagram, Loader2, Twitter, PlusCircle, Trash2 } from 'lucide-react';
+import { Facebook, Instagram, Loader2, Twitter, PlusCircle, Trash2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { MediaPicker } from '../MediaPicker';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const whyUsSchema = z.object({
   icon: z.string().url("Icon URL must be a valid URL."),
@@ -45,6 +48,12 @@ const formSchema = z.object({
     twitter: z.string().url().or(z.literal('')).optional(),
   }).optional(),
   whyUs: z.array(whyUsSchema).optional(),
+  chatbot: z.object({
+    enabled: z.boolean(),
+    position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left', 'middle-right', 'middle-left']),
+    whatsappNumber: z.string().optional(),
+    emailAddress: z.string().email({ message: "Please enter a valid email." }).optional(),
+  }).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -72,6 +81,12 @@ export function ProfileForm() {
         twitter: '',
       },
       whyUs: [],
+      chatbot: {
+        enabled: true,
+        position: 'bottom-right',
+        whatsappNumber: '',
+        emailAddress: '',
+      },
     },
   });
   
@@ -97,6 +112,12 @@ export function ProfileForm() {
           twitter: profile.socials?.twitter || '',
         },
         whyUs: profile.whyUs || [],
+        chatbot: {
+          enabled: profile.chatbot?.enabled ?? true,
+          position: profile.chatbot?.position || 'bottom-right',
+          whatsappNumber: profile.chatbot?.whatsappNumber || '',
+          emailAddress: profile.chatbot?.emailAddress || '',
+        },
       });
     }
   }, [profile, form]);
@@ -358,7 +379,8 @@ export function ProfileForm() {
 
             <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Profile
+                <Save className="mr-2 h-4 w-4" />
+                Save All Profile Settings
             </Button>
         </form>
         </Form>
