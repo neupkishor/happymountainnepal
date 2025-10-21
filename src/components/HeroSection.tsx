@@ -22,7 +22,8 @@ export function HeroSection() {
 
   const heroContent = {
     title: profile?.heroTitle || 'Discover Your Next Adventure',
-    description: profile?.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.'
+    description: profile?.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
+    image: profile?.heroImage || 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg'
   };
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export function HeroSection() {
   return (
     <section className="relative w-full h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white">
       <Image
-        src="https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg"
+        src={heroContent.image}
         alt="Majestic mountain range at sunrise"
         fill
         className="object-cover"
@@ -101,7 +102,7 @@ export function HeroSection() {
         )}
 
         {!isLoading && (
-        <div ref={searchContainerRef}>
+        <div ref={searchContainerRef} className="flex flex-col items-center w-full">
           {isSearchActive ? (
             <form onSubmit={handleSearch} className="max-w-lg mx-auto animate-fade-in-up relative">
             <Input

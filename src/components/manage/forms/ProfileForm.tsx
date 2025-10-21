@@ -23,6 +23,7 @@ import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useSiteProfile } from '@/hooks/use-site-profile';
+import { MediaPicker } from '../MediaPicker';
 
 const formSchema = z.object({
   reviewCount: z.coerce.number().int().min(0, "Review count cannot be negative.").optional(),
@@ -32,6 +33,7 @@ const formSchema = z.object({
   heroTitle: z.string().optional(),
   heroDescription: z.string().optional(),
   footerTagline: z.string().optional(),
+  heroImage: z.string().url("Please provide a valid image URL.").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,6 +54,7 @@ export function ProfileForm() {
       heroTitle: 'Discover Your Next Adventure',
       heroDescription: 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
       footerTagline: 'Your gateway to Himalayan adventures.',
+      heroImage: 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg',
     },
   });
 
@@ -65,6 +68,7 @@ export function ProfileForm() {
         heroTitle: profile.heroTitle || 'Discover Your Next Adventure',
         heroDescription: profile.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
         footerTagline: profile.footerTagline || 'Your gateway to Himalayan adventures.',
+        heroImage: profile.heroImage || 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg',
       });
     }
   }, [profile, form]);
@@ -108,9 +112,10 @@ export function ProfileForm() {
             <Card>
                 <CardHeader>
                     <CardTitle>Homepage Content</CardTitle>
-                    <CardDescription>Manage the main text content for your homepage.</CardDescription>
+                    <CardDescription>Manage the main text content and background image for your homepage.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                    <MediaPicker name="heroImage" label="Hero Background Image" />
                     <FormField
                         control={form.control}
                         name="heroTitle"

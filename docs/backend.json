@@ -63,6 +63,10 @@
         "footerTagline": {
           "type": "string",
           "description": "The company tagline displayed in the footer."
+        },
+        "heroImage": {
+          "type": "string",
+          "description": "The background image URL for the homepage hero section."
         }
       }
     }

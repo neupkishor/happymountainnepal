@@ -149,4 +149,5 @@ export interface SiteProfile {
   heroTitle?: string;
   heroDescription?: string;
   footerTagline?: string;
+  heroImage?: string; // New field for hero image
 }
