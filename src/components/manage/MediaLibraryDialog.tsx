@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, Upload, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { Loader2, Search, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { getFileUploads } from '@/lib/db';
 import type { FileUpload } from '@/lib/types';
 import Image from 'next/image';
@@ -21,19 +19,19 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MediaLibraryDialogProps {
-  children: React.ReactNode;
-  onSelect: (urls: string[]) => void; // Now expects an array of URLs
-  initialSelectedUrls?: string[]; // Initial selected URLs for multi-selection
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (urls: string[]) => void;
+  initialSelectedUrls?: string[];
 }
 
-export function MediaLibraryDialog({ children, onSelect, initialSelectedUrls = [] }: MediaLibraryDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState('library');
+export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = [] }: MediaLibraryDialogProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentSelection, setCurrentSelection] = useState<string[]>(initialSelectedUrls); // State for current selection in dialog
-  const [isPending, startTransition] = useTransition(); // For potential future async actions within dialog
+  const [currentSelection, setCurrentSelection] = useState<string[]>(initialSelectedUrls);
+  const [isUploading, setIsUploading] = useState(false);
+  const [skipCompression, setSkipCompression] = useState(false);
   const { toast } = useToast();
 
   const fetchUploads = async () => {
@@ -54,11 +52,11 @@ export function MediaLibraryDialog({ children, onSelect, initialSelectedUrls = [
   };
 
   useEffect(() => {
-    if (open) {
+    if (isOpen) {
       fetchUploads();
-      setCurrentSelection(initialSelectedUrls); // Reset selection when dialog opens
+      setCurrentSelection(initialSelectedUrls);
     }
-  }, [open, initialSelectedUrls]);
+  }, [isOpen, initialSelectedUrls]);
 
   const filteredUploads = uploads.filter((upload) =>
     upload.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,33 +76,45 @@ export function MediaLibraryDialog({ children, onSelect, initialSelectedUrls = [
   const handleFileUploadSuccess = (url: string) => {
     toast({ title: 'Upload Successful', description: 'File added to library.' });
     fetchUploads(); // Refresh library
-    setTab('library'); // Switch back to library tab
-    setCurrentSelection(prev => [...prev, url]); // Add newly uploaded file to selection
+    setCurrentSelection(prev => [...prev, url]);
   };
 
   const handleInsertSelected = () => {
     onSelect(currentSelection);
-    setOpen(false);
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
         </DialogHeader>
-        <Tabs value={tab} onValueChange={setTab} className="flex flex-col flex-grow">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="library">
-              <ImageIcon className="mr-2 h-4 w-4" /> Browse Library
-            </TabsTrigger>
-            <TabsTrigger value="upload">
-              <Upload className="mr-2 h-4 w-4" /> Upload New
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="library" className="flex flex-col flex-grow mt-4 data-[state=inactive]:hidden">
-            <div className="relative mb-4">
+        
+        <div className="flex-grow flex flex-col gap-4 overflow-hidden">
+          {/* Upload Area */}
+          <div className="border border-dashed p-4 rounded-lg space-y-4">
+              <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">Upload New File</h3>
+                  <Button
+                    variant={skipCompression ? 'secondary' : 'outline'}
+                    size="sm"
+                    onClick={() => setSkipCompression(!skipCompression)}
+                    >
+                    {skipCompression ? 'Uncompressed' : 'Compressed'}
+                  </Button>
+              </div>
+              <FileUploadInput 
+                name="media-library-upload"
+                onUploadSuccess={handleFileUploadSuccess}
+                onUploadingChange={setIsUploading}
+                skipCompression={skipCompression}
+              />
+          </div>
+
+          {/* Library Browser */}
+          <div className="flex-grow flex flex-col gap-4 overflow-hidden">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search files..."
@@ -113,6 +123,7 @@ export function MediaLibraryDialog({ children, onSelect, initialSelectedUrls = [
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
             {isLoading ? (
               <div className="flex flex-col items-center justify-center flex-grow text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin mb-4" />
@@ -124,7 +135,7 @@ export function MediaLibraryDialog({ children, onSelect, initialSelectedUrls = [
                 <p>No files found. Try uploading some!</p>
               </div>
             ) : (
-              <ScrollArea className="flex-grow pr-4">
+              <ScrollArea className="flex-grow -mr-4 pr-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {filteredUploads.map((file) => (
                     <div
@@ -151,18 +162,14 @@ export function MediaLibraryDialog({ children, onSelect, initialSelectedUrls = [
                 </div>
               </ScrollArea>
             )}
-            <div className="flex justify-end mt-4">
-                <Button onClick={handleInsertSelected} disabled={currentSelection.length === 0}>
-                    Insert Selected ({currentSelection.length})
-                </Button>
-            </div>
-          </TabsContent>
-          <TabsContent value="upload" className="flex flex-col flex-grow mt-4 data-[state=inactive]:hidden">
-            <div className="flex-grow flex items-center justify-center">
-              <FileUploadInput name="media-library-upload" onUploadSuccess={handleFileUploadSuccess} />
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+          
+          <div className="flex justify-end mt-auto pt-4 border-t">
+              <Button onClick={handleInsertSelected} disabled={currentSelection.length === 0 || isUploading}>
+                  Insert Selected ({currentSelection.length})
+              </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { useFormContext, useController } from 'react-hook-form';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Upload, XCircle, Image as ImageIcon, Library, PlusCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Upload, XCircle, Library, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MediaLibraryDialog } from './MediaLibraryDialog';
 import { FileUploadInput } from './FileUploadInput';
 import { getFileUploads } from '@/lib/db';
 import type { FileUpload } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { Card } from '../ui/card';
 
 interface MediaPickerProps {
   name: string;
@@ -19,7 +20,7 @@ interface MediaPickerProps {
   maxRecent?: number;
 }
 
-export function MediaPicker({ name, label, maxRecent = 10 }: MediaPickerProps) {
+export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
   const { control, setValue } = useFormContext();
   const { field } = useController({ name, control });
   const { toast } = useToast();
@@ -27,13 +28,14 @@ export function MediaPicker({ name, label, maxRecent = 10 }: MediaPickerProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(field.value || null);
   const [recentUploads, setRecentUploads] = useState<FileUpload[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
-  const [isUploading, setIsUploading] = useState(false); // State for direct upload via FileUploadInput
+  const [isUploading, setIsUploading] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   const fetchRecentUploads = async () => {
     setIsLoadingRecent(true);
     try {
       const uploads = await getFileUploads();
-      setRecentUploads(uploads.slice(0, maxRecent));
+      setRecentUploads(uploads);
     } catch (error) {
       console.error('Failed to fetch recent uploads:', error);
       toast({
@@ -51,36 +53,34 @@ export function MediaPicker({ name, label, maxRecent = 10 }: MediaPickerProps) {
   }, []);
 
   useEffect(() => {
-    console.log(`[MediaPicker - ${name}] field.value changed:`, field.value);
     setPreviewUrl(field.value || null);
-  }, [field.value, name]); // Added 'name' to dependencies for clarity
+  }, [field.value]);
 
-  // Modified to handle array from MediaLibraryDialog, but only takes the first one for single selection
   const handleSelectImage = (urls: string[]) => {
-    const url = urls.length > 0 ? urls[0] : ''; // Take the first selected URL
-    console.log(`[MediaPicker - ${name}] Selected URL:`, url);
+    const url = urls.length > 0 ? urls[0] : '';
     setValue(name, url, { shouldValidate: true, shouldDirty: true });
-    setPreviewUrl(url); // Update local preview immediately
+    setPreviewUrl(url);
+    setIsLibraryOpen(false);
   };
 
   const handleClearImage = () => {
-    console.log(`[MediaPicker - ${name}] Clearing image.`);
     setValue(name, '', { shouldValidate: true, shouldDirty: true });
     setPreviewUrl(null);
   };
 
   const handleDirectUploadSuccess = (url: string) => {
-    console.log(`[MediaPicker - ${name}] Direct upload success, URL:`, url);
-    handleSelectImage([url]); // Pass as array for consistency
-    fetchRecentUploads(); // Refresh recent uploads after a new one
+    handleSelectImage([url]);
+    fetchRecentUploads();
     setIsUploading(false);
     toast({ title: 'Upload Successful', description: 'New file uploaded and selected.' });
   };
+  
+  const displayedRecent = recentUploads.slice(0, maxRecent);
 
   return (
     <div className="space-y-2">
       <Label htmlFor={name}>{label || 'Image'}</Label>
-      <div className="border rounded-lg p-4 space-y-4">
+      <Card className="p-4">
         {previewUrl && (
           <div className="relative group w-full h-48 mb-4">
             <Image
@@ -102,69 +102,64 @@ export function MediaPicker({ name, label, maxRecent = 10 }: MediaPickerProps) {
         )}
 
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">Recent Uploads</h4>
-          {isLoadingRecent ? (
-            <div className="grid grid-cols-5 gap-2">
-              {[...Array(maxRecent)].map((_, i) => (
-                <div key={i} className="h-16 w-full bg-muted rounded-md animate-pulse" />
-              ))}
-            </div>
-          ) : recentUploads.length > 0 ? (
-            <div className="grid grid-cols-5 gap-2">
-              {recentUploads.map((file) => (
-                <div
-                  key={file.id}
-                  className={cn(
-                    'relative h-16 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
-                    previewUrl === file.url ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
-                  )}
-                  onClick={() => handleSelectImage([file.url])} // Pass as array for consistency
-                >
-                  <Image
-                    src={file.url}
-                    alt={file.fileName}
-                    fill
-                    className="object-cover"
-                  />
-                  {previewUrl === file.url && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
-                      <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No recent uploads.</p>
-          )}
-        </div>
+          <h4 className="text-sm font-medium text-muted-foreground">Select an Image</h4>
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+            {/* Upload Box */}
+            <FileUploadInput
+              name={`${name}-direct-upload`}
+              onUploadSuccess={handleDirectUploadSuccess}
+              onUploadingChange={setIsUploading}
+            >
+              <div className="flex items-center justify-center h-24 w-full rounded-md border-2 border-dashed text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors cursor-pointer">
+                {isUploading ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <Upload className="h-6 w-6" />
+                )}
+              </div>
+            </FileUploadInput>
 
-        <div className="flex flex-col sm:flex-row gap-2 mt-4">
-          <MediaLibraryDialog onSelect={handleSelectImage} initialSelectedUrls={previewUrl ? [previewUrl] : []}>
-            <Button type="button" variant="outline" className="w-full">
-              <Library className="mr-2 h-4 w-4" /> Choose from Library
-            </Button>
-          </MediaLibraryDialog>
-          <FileUploadInput
-            name={`${name}-direct-upload`}
-            onUploadSuccess={handleDirectUploadSuccess}
-            onUploadingChange={setIsUploading}
-          >
-            <Button type="button" className="w-full" disabled={isUploading}>
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Upload New
-                </>
-              )}
-            </Button>
-          </FileUploadInput>
+            {/* Recent Images */}
+            {displayedRecent.map((file) => (
+              <div
+                key={file.id}
+                className={cn(
+                  'relative h-24 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
+                  previewUrl === file.url ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                )}
+                onClick={() => handleSelectImage([file.url])}
+              >
+                <Image
+                  src={file.url}
+                  alt={file.fileName}
+                  fill
+                  className="object-cover"
+                />
+                {previewUrl === file.url && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
+                    <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {/* Show More Box */}
+            <div
+              className="flex items-center justify-center h-24 w-full rounded-md border text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors cursor-pointer"
+              onClick={() => setIsLibraryOpen(true)}
+            >
+              <Library className="h-6 w-6" />
+            </div>
+          </div>
         </div>
-      </div>
+      </Card>
+      
+      <MediaLibraryDialog
+        isOpen={isLibraryOpen}
+        onClose={() => setIsLibraryOpen(false)}
+        onSelect={handleSelectImage}
+        initialSelectedUrls={previewUrl ? [previewUrl] : []}
+      />
     </div>
   );
 }

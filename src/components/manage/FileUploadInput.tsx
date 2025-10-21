@@ -17,6 +17,7 @@ interface FileUploadInputProps {
   onUploadSuccess?: (url: string) => void;
   onUploadingChange?: (isUploading: boolean) => void;
   customFileName?: string;
+  skipCompression?: boolean;
 }
 
 export function FileUploadInput({
@@ -25,6 +26,7 @@ export function FileUploadInput({
   onUploadSuccess,
   onUploadingChange,
   customFileName,
+  skipCompression = false,
 }: FileUploadInputProps) {
   const { control, setValue } = useFormContext();
   const { field } = useController({ name, control });
@@ -43,50 +45,52 @@ export function FileUploadInput({
     onUploadingChange?.(true);
     setUploadError(null);
 
-    let compressedFile = file;
-    try {
-      const options = {
-        maxSizeMB: 0.2,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-      };
-      compressedFile = await imageCompression(file, options);
-    } catch (compressionError: any) {
-      logError({
-        message: `Image compression failed: ${compressionError.message}`,
-        stack: compressionError.stack,
-        pathname,
-      });
-      toast({
-        variant: 'destructive',
-        title: 'Compression Failed',
-        description: 'Could not compress the image. Please try a different file.',
-      });
-      setIsUploadingInternal(false);
-      onUploadingChange?.(false);
-      return;
+    let finalFile = file;
+
+    if (!skipCompression && file.type.startsWith('image/')) {
+        try {
+          const options = {
+            maxSizeMB: 0.2,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          finalFile = await imageCompression(file, options);
+          console.log(`[Compression] Original: ${(file.size / 1024).toFixed(2)} KB, Compressed: ${(finalFile.size / 1024).toFixed(2)} KB`);
+        } catch (compressionError: any) {
+          logError({
+            message: `Image compression failed: ${compressionError.message}`,
+            stack: compressionError.stack,
+            pathname,
+          });
+          toast({
+            variant: 'destructive',
+            title: 'Compression Failed',
+            description: 'Could not compress the image. Please try a different file.',
+          });
+          setIsUploadingInternal(false);
+          onUploadingChange?.(false);
+          return;
+        }
+    } else {
+        console.log('[Compression] Skipped for this file type or setting.');
     }
 
-    // 🔧 Ensure the file has a valid extension and MIME type
     let extension = file.name.split('.').pop()?.toLowerCase();
-    if (!extension || !['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extension)) {
-      extension = 'jpg'; // fallback
+    const isImage = file.type.startsWith('image/');
+    if (isImage && (!extension || !['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extension))) {
+      extension = 'jpg';
     }
 
     const safeBaseName = customFileName || slugify(file.name.replace(/\.[^/.]+$/, ''));
-    const safeFileName = `${safeBaseName}.${extension}`;
-    const mimeType = `image/${extension === 'jpg' ? 'jpeg' : extension}`;
+    const safeFileName = extension ? `${safeBaseName}.${extension}` : safeBaseName;
+    
+    // Use the original file's MIME type if available, otherwise construct it
+    const mimeType = file.type || (isImage ? `image/${extension === 'jpg' ? 'jpeg' : extension}` : 'application/octet-stream');
 
-    const correctedFile = new File([compressedFile], safeFileName, { type: mimeType });
-
-    console.log('[Final File Details]', {
-      name: correctedFile.name,
-      type: correctedFile.type,
-      size: correctedFile.size,
-    });
+    const correctedFile = new File([finalFile], safeFileName, { type: mimeType });
 
     const formData = new FormData();
-    const userId = 'admin-user';
+    const userId = 'admin-user'; // Replace with actual user ID if available
     const fieldNameSlug = slugify(name);
 
     formData.append('file', correctedFile);
@@ -149,7 +153,7 @@ export function FileUploadInput({
         <Input
           id={name}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={handleFileChange}
           disabled={isUploading}
           className="hidden"
@@ -167,7 +171,7 @@ export function FileUploadInput({
             <Input
               id={name}
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               onChange={handleFileChange}
               disabled={isUploading}
               className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
@@ -186,7 +190,7 @@ export function FileUploadInput({
               ) : (
                 <>
                   <Upload className="mr-2 h-4 w-4" />
-                  Choose Image
+                  Choose File
                 </>
               )}
             </Button>
