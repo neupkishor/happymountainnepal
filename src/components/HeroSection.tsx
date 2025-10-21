@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -7,8 +8,8 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Search } from 'lucide-react';
-import { getSiteProfile } from '@/lib/db';
 import { Skeleton } from './ui/skeleton';
+import { useSiteProfile } from '@/hooks/use-site-profile';
 
 export function HeroSection() {
   const router = useRouter();
@@ -16,30 +17,13 @@ export function HeroSection() {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const [heroContent, setHeroContent] = useState({
-    title: 'Discover Your Next Adventure',
-    description: 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.'
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const { profile, isLoading } = useSiteProfile();
 
-  useEffect(() => {
-    async function fetchContent() {
-      try {
-        const profile = await getSiteProfile();
-        if (profile) {
-          setHeroContent({
-            title: profile.heroTitle || 'Discover Your Next Adventure',
-            description: profile.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.'
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch hero content:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchContent();
-  }, []);
+  const heroContent = {
+    title: profile?.heroTitle || 'Discover Your Next Adventure',
+    description: profile?.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.'
+  };
 
   useEffect(() => {
     if (isSearchActive) {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
@@ -14,15 +15,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { type SiteProfile } from '@/lib/types';
-import { getSiteProfile, updateSiteProfile, logError } from '@/lib/db';
-import { useTransition, useState, useEffect } from 'react';
+import { updateSiteProfile, logError } from '@/lib/db';
+import { useTransition, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { useSiteProfile } from '@/hooks/use-site-profile';
 
 const formSchema = z.object({
   reviewCount: z.coerce.number().int().min(0, "Review count cannot be negative.").optional(),
@@ -38,7 +38,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function ProfileForm() {
   const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(true);
+  const { profile, isLoading } = useSiteProfile();
   const { toast } = useToast();
   const pathname = usePathname();
 
@@ -56,39 +56,25 @@ export function ProfileForm() {
   });
 
   useEffect(() => {
-    async function fetchProfile() {
-      setIsLoading(true);
-      try {
-        const profileData = await getSiteProfile();
-        if (profileData) {
-          form.reset({
-            reviewCount: profileData.reviewCount || 0,
-            contactEmail: profileData.contactEmail || '',
-            phone: profileData.phone || '',
-            address: profileData.address || '',
-            heroTitle: profileData.heroTitle || 'Discover Your Next Adventure',
-            heroDescription: profileData.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
-            footerTagline: profileData.footerTagline || 'Your gateway to Himalayan adventures.',
-          });
-        }
-      } catch (error: any) {
-        console.error("Failed to fetch site profile:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not load site profile.',
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    if (profile) {
+      form.reset({
+        reviewCount: profile.reviewCount || 0,
+        contactEmail: profile.contactEmail || '',
+        phone: profile.phone || '',
+        address: profile.address || '',
+        heroTitle: profile.heroTitle || 'Discover Your Next Adventure',
+        heroDescription: profile.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
+        footerTagline: profile.footerTagline || 'Your gateway to Himalayan adventures.',
+      });
     }
-    fetchProfile();
-  }, [form, toast]);
+  }, [profile, form]);
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
         await updateSiteProfile(values);
+        // Invalidate session storage cache
+        sessionStorage.removeItem('site-profile');
         toast({ title: 'Success', description: 'Company profile updated.' });
       } catch (error: any) {
         logError({ message: `Failed to update site profile: ${error.message}`, stack: error.stack, pathname, context: { values } });

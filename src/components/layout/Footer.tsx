@@ -2,25 +2,12 @@
 'use client';
 import { Link } from '@/components/ui/link';
 import { Mountain } from 'lucide-react';
-import { getSiteProfile } from '@/lib/db';
-import { useState, useEffect } from 'react';
+import { useSiteProfile } from '@/hooks/use-site-profile';
 
 export function Footer() {
-  const [tagline, setTagline] = useState('Your gateway to Himalayan adventures.');
+  const { profile } = useSiteProfile();
   
-  useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const profile = await getSiteProfile();
-        if (profile?.footerTagline) {
-          setTagline(profile.footerTagline);
-        }
-      } catch (error) {
-        console.error("Failed to fetch site profile for footer:", error);
-      }
-    }
-    fetchProfile();
-  }, []);
+  const tagline = profile?.footerTagline || 'Your gateway to Himalayan adventures.';
 
   return (
     <footer className="border-t bg-footer-background">

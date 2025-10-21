@@ -1,7 +1,6 @@
 
 'use client';
 import { useFirestore } from '@/firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import type { ManagedReview } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,37 +10,35 @@ import { Button } from './ui/button';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useState, useEffect } from 'react';
-import { Timestamp } from 'firebase/firestore';
-import { getSiteProfile, getFiveStarReviews } from '@/lib/db'; // Import getSiteProfile and getFiveStarReviews
+import { getFiveStarReviews } from '@/lib/db';
+import { useSiteProfile } from '@/hooks/use-site-profile';
 
 const REVIEW_TRUNCATE_LENGTH = 150; // Max characters before truncating
 
 export function Testimonials() {
   const firestore = useFirestore();
   const [reviews, setReviews] = useState<ManagedReview[]>([]);
-  const [totalReviewCount, setTotalReviewCount] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { profile, isLoading: isProfileLoading } = useSiteProfile();
+  const [isReviewsLoading, setIsReviewsLoading] = useState(true);
   const [expandedReviews, setExpandedReviews] = useState<Record<string, boolean>>({});
+
+  const totalReviewCount = profile?.reviewCount;
+  const isLoading = isProfileLoading || isReviewsLoading;
 
   useEffect(() => {
     if (!firestore) return;
-    const fetchReviewsAndCount = async () => {
-      setIsLoading(true);
+    const fetchReviews = async () => {
+      setIsReviewsLoading(true);
       try {
-        // Fetch total count from the site profile
-        const siteProfile = await getSiteProfile();
-        setTotalReviewCount(siteProfile?.reviewCount || 0);
-
-        // Fetch 10 random 5-star reviews for display on the homepage
         const fetchedFiveStarReviews = await getFiveStarReviews();
         setReviews(fetchedFiveStarReviews);
       } catch (error) {
-        console.error("Error fetching reviews and count:", error);
+        console.error("Error fetching 5-star reviews:", error);
       } finally {
-        setIsLoading(false);
+        setIsReviewsLoading(false);
       }
     };
-    fetchReviewsAndCount();
+    fetchReviews();
   }, [firestore]);
 
   const toggleExpandReview = (reviewId: string) => {
