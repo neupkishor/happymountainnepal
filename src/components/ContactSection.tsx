@@ -26,25 +26,25 @@ export function ContactSection() {
 
         {isLoading ? (
             <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-32 w-full rounded-lg" />
+                <Skeleton className="h-32 w-full rounded-lg" />
+                <Skeleton className="h-32 w-full rounded-lg" />
             </div>
         ) : (
             <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <div className="flex flex-col items-center gap-2">
+                <div className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2">
                     <MapPin className="h-8 w-8 text-primary" />
-                    <h3 className="font-semibold">Our Office</h3>
+                    <h3 className="font-semibold text-lg">Our Office</h3>
                     <p className="text-muted-foreground">{address}</p>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2">
                     <Phone className="h-8 w-8 text-primary" />
-                    <h3 className="font-semibold">Call Us</h3>
+                    <h3 className="font-semibold text-lg">Call Us</h3>
                     <a href={`tel:${phone}`} className="text-muted-foreground hover:text-primary">{phone}</a>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="p-6 bg-card rounded-lg shadow-sm flex flex-col items-center gap-2">
                     <Mail className="h-8 w-8 text-primary" />
-                    <h3 className="font-semibold">Email Us</h3>
+                    <h3 className="font-semibold text-lg">Email Us</h3>
                     <a href={`mailto:${email}`} className="text-muted-foreground hover:text-primary">{email}</a>
                 </div>
             </div>
