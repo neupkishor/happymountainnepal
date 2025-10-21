@@ -133,18 +133,18 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
               <BookingWidget tour={tour} />
             </div>
             
-            <section id="key-facts" className="scroll-m-20">
+            <section id="key-facts" className="scroll-m-32">
                 <KeyFacts tour={tour} />
             </section>
-            <section id="itinerary" className="scroll-m-20">
+            <section id="itinerary" className="scroll-m-32">
                 <Itinerary items={tour.itinerary} />
             </section>
-            <section id="inclusions" className="scroll-m-20">
+            <section id="inclusions" className="scroll-m-32">
                 <InclusionsExclusions tour={tour} />
             </section>
             
             {tour.map && (
-              <section id="map" className="scroll-m-20">
+              <section id="map" className="scroll-m-32">
                 <h2 className="text-3xl font-bold !font-headline mb-6">Trek Map</h2>
                 <div className="bg-card p-4 rounded-lg shadow-sm aspect-video">
                   <iframe
@@ -163,18 +163,18 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
             )}
 
             {tour.images && tour.images.length > 0 && (
-              <section id="gallery" className="scroll-m-20">
+              <section id="gallery" className="scroll-m-32">
                 <TourGallery images={tour.images} tourName={tour.name} />
               </section>
             )}
 
             {tour.faq && tour.faq.length > 0 && (
-              <section id="faq" className="scroll-m-20">
+              <section id="faq" className="scroll-m-32">
                 <FaqSection faq={tour.faq} />
               </section>
             )}
 
-            <section id="reviews" className="scroll-m-20">
+            <section id="reviews" className="scroll-m-32">
                 <Reviews 
                     reviews={displayedReviews} 
                     tourId={tour.id}
@@ -186,7 +186,7 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
             </section>
 
             {tour.additionalInfoSections && tour.additionalInfoSections.length > 0 && ( // Conditionally render Additional Info section
-              <section id="additional-info" className="scroll-m-20">
+              <section id="additional-info" className="scroll-m-32">
                 <AdditionalInfoSection sections={tour.additionalInfoSections} />
               </section>
             )}
@@ -194,7 +194,9 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
 
           {/* Sidebar for Desktop */}
           <aside className="lg:col-span-1 mt-12 lg:mt-0 hidden lg:block">
-            <BookingWidget tour={tour} />
+            <div className="sticky top-28">
+              <BookingWidget tour={tour} />
+            </div>
           </aside>
         </div>
       </div>
