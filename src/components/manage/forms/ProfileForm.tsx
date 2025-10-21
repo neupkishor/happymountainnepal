@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { updateSiteProfile, logError } from '@/lib/db';
 import { useTransition, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Facebook, Instagram, Loader2, Twitter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,6 +34,11 @@ const formSchema = z.object({
   heroDescription: z.string().optional(),
   footerTagline: z.string().optional(),
   heroImage: z.string().url("Please provide a valid image URL.").optional(),
+  socials: z.object({
+    facebook: z.string().url().or(z.literal('')).optional(),
+    instagram: z.string().url().or(z.literal('')).optional(),
+    twitter: z.string().url().or(z.literal('')).optional(),
+  }).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,6 +60,11 @@ export function ProfileForm() {
       heroDescription: 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
       footerTagline: 'Your gateway to Himalayan adventures.',
       heroImage: 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg',
+      socials: {
+        facebook: '',
+        instagram: '',
+        twitter: '',
+      }
     },
   });
 
@@ -69,6 +79,11 @@ export function ProfileForm() {
         heroDescription: profile.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
         footerTagline: profile.footerTagline || 'Your gateway to Himalayan adventures.',
         heroImage: profile.heroImage || 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg',
+        socials: {
+          facebook: profile.socials?.facebook || '',
+          instagram: profile.socials?.instagram || '',
+          twitter: profile.socials?.twitter || '',
+        }
       });
     }
   }, [profile, form]);
@@ -218,6 +233,55 @@ export function ProfileForm() {
                     />
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Social Media Links</CardTitle>
+                    <CardDescription>Enter the full URLs for your social media profiles.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="socials.facebook"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Facebook className="h-4 w-4" /> Facebook</FormLabel>
+                            <FormControl>
+                                <Input placeholder="https://facebook.com/your-page" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="socials.instagram"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Instagram className="h-4 w-4" /> Instagram</FormLabel>
+                            <FormControl>
+                                <Input placeholder="https://instagram.com/your-profile" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="socials.twitter"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Twitter className="h-4 w-4" /> Twitter / X</FormLabel>
+                            <FormControl>
+                                <Input placeholder="https://twitter.com/your-handle" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
+
             <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Profile

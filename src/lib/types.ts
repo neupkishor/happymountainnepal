@@ -150,6 +150,11 @@ export interface SiteProfile {
   heroDescription?: string;
   footerTagline?: string;
   heroImage?: string; // New field for hero image
+  socials?: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+  };
 }
 
 export interface LegalDocument {

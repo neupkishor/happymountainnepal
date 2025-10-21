@@ -1,19 +1,23 @@
 
 'use client';
 import { Link } from '@/components/ui/link';
-import { Mountain } from 'lucide-react';
+import { Mountain, Mail, Phone, MapPin, Twitter, Instagram, Facebook } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 
 export function Footer() {
   const { profile } = useSiteProfile();
   
   const tagline = profile?.footerTagline || 'Your gateway to Himalayan adventures.';
+  const address = profile?.address || 'Thamel, Kathmandu, Nepal';
+  const phone = profile?.phone || '+977 984-3725521';
+  const email = profile?.contactEmail || 'info@happymountainnepal.com';
+  const socials = profile?.socials;
 
   return (
     <footer className="border-t bg-footer-background">
       <div className="container mx-auto py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
+          <div className="space-y-4 md:col-span-2">
             <Link href="/" className="flex items-center gap-2">
               <Mountain className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold font-headline">Happy Mountain Nepal</span>
@@ -21,6 +25,34 @@ export function Footer() {
             <p className="text-sm text-muted-foreground">
               {tagline}
             </p>
+            <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 shrink-0" /> <span>{address}</span>
+                </div>
+                 <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 shrink-0" /> <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a>
+                </div>
+                 <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 shrink-0" /> <a href={`mailto:${email}`} className="hover:text-primary">{email}</a>
+                </div>
+            </div>
+             <div className="flex items-center gap-4 pt-2">
+                {socials?.facebook && (
+                    <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                        <Facebook className="h-5 w-5" />
+                    </a>
+                )}
+                {socials?.instagram && (
+                    <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                        <Instagram className="h-5 w-5" />
+                    </a>
+                )}
+                {socials?.twitter && (
+                    <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                        <Twitter className="h-5 w-5" />
+                    </a>
+                )}
+            </div>
           </div>
           <div>
             <h3 className="font-semibold tracking-wider uppercase">Tours</h3>
@@ -37,16 +69,9 @@ export function Footer() {
               <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary">About Us</Link></li>
               <li><Link href="/about/teams" className="text-sm text-muted-foreground hover:text-primary">Our Team</Link></li>
               <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
-              <li><Link href="/reviews" className="text-sm text-muted-foreground hover:text-primary">Reviews</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">Contact</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold tracking-wider uppercase">Legal</h3>
-            <ul className="mt-4 space-y-2">
               <li><Link href="/legal/privacy" className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</Link></li>
               <li><Link href="/legal/terms" className="text-sm text-muted-foreground hover:text-primary">Terms of Service</Link></li>
-              <li><Link href="/legal/documents" className="text-sm text-muted-foreground hover:text-primary">Legal Documents</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">Contact</Link></li>
             </ul>
           </div>
         </div>

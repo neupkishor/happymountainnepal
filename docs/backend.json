@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Account": {
@@ -67,6 +68,24 @@
         "heroImage": {
           "type": "string",
           "description": "The background image URL for the homepage hero section."
+        },
+        "socials": {
+          "type": "object",
+          "description": "An object containing URLs for social media profiles.",
+          "properties": {
+            "facebook": {
+              "type": "string",
+              "format": "uri"
+            },
+            "instagram": {
+              "type": "string",
+              "format": "uri"
+            },
+            "twitter": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
         }
       }
     }
