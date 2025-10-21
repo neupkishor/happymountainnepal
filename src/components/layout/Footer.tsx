@@ -1,8 +1,9 @@
 
 'use client';
 import { Link } from '@/components/ui/link';
-import { Mountain, Mail, Phone, MapPin, Twitter, Instagram, Facebook } from 'lucide-react';
+import { Mail, Phone, MapPin, Twitter, Instagram, Facebook } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
+import Image from 'next/image';
 
 export function Footer() {
   const { profile } = useSiteProfile();
@@ -19,7 +20,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4 md:col-span-2">
             <Link href="/" className="flex items-center gap-2">
-              <Mountain className="h-8 w-8 text-primary" />
+              <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
               <span className="text-xl font-bold font-headline">Happy Mountain Nepal</span>
             </Link>
             <p className="text-sm text-muted-foreground">
