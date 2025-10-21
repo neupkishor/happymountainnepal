@@ -4,7 +4,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orde
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -852,5 +852,25 @@ export async function getAllTourNamesMap(): Promise<Map<string, string>> {
         console.error("Error fetching all tour names map:", error);
         await logError({ message: `Failed to fetch all tour names map: ${error.message}`, stack: error.stack, pathname: '/' });
         return new Map();
+    }
+}
+
+// Site Profile Functions
+const SITE_PROFILE_ID = "happymountainnepal";
+
+export async function getSiteProfile(): Promise<SiteProfile | null> {
+    return getDocById<SiteProfile>('profile', SITE_PROFILE_ID);
+}
+
+export async function updateSiteProfile(data: Partial<Omit<SiteProfile, 'id'>>) {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'profile', SITE_PROFILE_ID);
+        // Use setDoc with merge: true to create the document if it doesn't exist, or update it if it does.
+        await setDoc(docRef, data, { merge: true });
+    } catch (error: any) {
+        console.error("Error updating site profile: ", error);
+        await logError({ message: `Failed to update site profile: ${error.message}`, stack: error.stack, pathname: `/manage/profile`, context: { data } });
+        throw new Error("Could not update site profile.");
     }
 }

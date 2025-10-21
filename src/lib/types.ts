@@ -138,3 +138,12 @@ export interface OffSiteReview extends BaseReview {
 }
 
 export type ManagedReview = OnSiteReview | OffSiteReview;
+
+
+export interface SiteProfile {
+  id: string;
+  reviewCount?: number;
+  contactEmail?: string;
+  phone?: string;
+  address?: string;
+}

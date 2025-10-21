@@ -29,6 +29,30 @@
         "fullName",
         "email"
       ]
+    },
+    "SiteProfile": {
+      "title": "Site Profile",
+      "type": "object",
+      "description": "Stores site-wide company profile information.",
+      "properties": {
+        "reviewCount": {
+          "type": "number",
+          "description": "Total number of reviews."
+        },
+        "contactEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Primary contact email address."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Primary contact phone number."
+        },
+        "address": {
+          "type": "string",
+          "description": "Company's physical address."
+        }
+      }
     }
   },
   "auth": {
@@ -42,6 +66,12 @@
         "$ref": "#/entities/Account"
       },
       "description": "Stores user account information, where the document ID matches the Firebase Auth UID."
+    },
+    "/profile/{siteId}": {
+      "schema": {
+        "$ref": "#/entities/SiteProfile"
+      },
+      "description": "Stores the site-wide company profile. The document ID should be a unique site identifier, e.g., 'happymountainnepal'."
     }
   }
 }
