@@ -1,3 +1,4 @@
+
 import { FeaturedTours } from "@/components/FeaturedTours";
 import { HeroSection } from "@/components/HeroSection";
 import { PopularPackages } from "@/components/PopularPackages";
@@ -11,7 +12,7 @@ import { ContactSection } from "@/components/ContactSection";
 
 export default function Home() {
   return (
-    <div className="homepage-sections-wrapper">
+    <div className="homepage-sections-wrapper flex flex-col">
       <HeroSection />
       <FavoriteDestinations />
       <FeaturedTours />
