@@ -1,7 +1,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarProvider, SidebarMenuItem } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2 } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
@@ -83,6 +83,12 @@ export default function ManageLayout({
                                       <span>Reviews</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
+                              <SidebarMenuItem>
+                                <SidebarMenuButton href="/manage/legal" isActive={pathname.startsWith('/manage/legal')} tooltip="Legal">
+                                    <Landmark />
+                                    <span>Legal</span>
+                                </SidebarMenuButton>
+                               </SidebarMenuItem>
                               <SidebarMenuItem>
                                 <SidebarMenuButton href="/manage/site/errors" isActive={pathname.startsWith('/manage/site/errors')} tooltip="Site Errors">
                                     <ShieldAlert />

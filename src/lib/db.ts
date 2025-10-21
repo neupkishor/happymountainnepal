@@ -6,7 +6,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orde
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -873,5 +873,25 @@ export async function updateSiteProfile(data: Partial<Omit<SiteProfile, 'id'>>) 
         console.error("Error updating site profile: ", error);
         await logError({ message: `Failed to update site profile: ${error.message}`, stack: error.stack, pathname: `/manage/profile`, context: { data } });
         throw new Error("Could not update site profile.");
+    }
+}
+
+// Legal Content Functions
+export async function getLegalContent(id: 'privacy-policy' | 'terms-of-service'): Promise<LegalContent | null> {
+    return getDocById<LegalContent>('legal', id);
+}
+
+export async function updateLegalContent(id: 'privacy-policy' | 'terms-of-service', content: string): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'legal', id);
+        await setDoc(docRef, { 
+            content: content, 
+            lastUpdated: serverTimestamp() 
+        }, { merge: true });
+    } catch (error: any) {
+        console.error(`Error updating legal content for ${id}:`, error);
+        await logError({ message: `Failed to update legal content for ${id}: ${error.message}`, stack: error.stack, pathname: `/manage/legal/${id}` });
+        throw new Error("Could not update legal content.");
     }
 }

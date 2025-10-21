@@ -117,7 +117,7 @@ export type ReviewType = 'onSite' | 'offSite';
 export interface BaseReview {
   id: string;
   type: ReviewType;
-  reviewedOn: Timestamp; // Date of the review
+  reviewedOn: Timestamp | Date | string; // Allow Date and string for client-side flexibility
   userName: string;
   userRole?: string; // Added: Optional role/title of the reviewer
   reviewFor?: string | null; // packageId if applicable, can be null
@@ -150,4 +150,18 @@ export interface SiteProfile {
   heroDescription?: string;
   footerTagline?: string;
   heroImage?: string; // New field for hero image
+}
+
+export interface LegalDocument {
+    id: string;
+    name: string;
+    url: string;
+    type: 'image' | 'pdf';
+    uploadedAt: Timestamp;
+}
+
+export interface LegalContent {
+    id: 'privacy-policy' | 'terms-of-service';
+    content: string;
+    lastUpdated: Timestamp;
 }
