@@ -146,4 +146,7 @@ export interface SiteProfile {
   contactEmail?: string;
   phone?: string;
   address?: string;
+  heroTitle?: string;
+  heroDescription?: string;
+  footerTagline?: string;
 }

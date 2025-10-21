@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { type SiteProfile } from '@/lib/types';
 import { getSiteProfile, updateSiteProfile, logError } from '@/lib/db';
 import { useTransition, useState, useEffect } from 'react';
@@ -21,12 +21,17 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   reviewCount: z.coerce.number().int().min(0, "Review count cannot be negative.").optional(),
   contactEmail: z.string().email({ message: "Please enter a valid email." }).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
+  heroTitle: z.string().optional(),
+  heroDescription: z.string().optional(),
+  footerTagline: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -44,6 +49,9 @@ export function ProfileForm() {
       contactEmail: '',
       phone: '',
       address: '',
+      heroTitle: 'Discover Your Next Adventure',
+      heroDescription: 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
+      footerTagline: 'Your gateway to Himalayan adventures.',
     },
   });
 
@@ -58,6 +66,9 @@ export function ProfileForm() {
             contactEmail: profileData.contactEmail || '',
             phone: profileData.phone || '',
             address: profileData.address || '',
+            heroTitle: profileData.heroTitle || 'Discover Your Next Adventure',
+            heroDescription: profileData.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
+            footerTagline: profileData.footerTagline || 'Your gateway to Himalayan adventures.',
           });
         }
       } catch (error: any) {
@@ -106,71 +117,122 @@ export function ProfileForm() {
 
   return (
     <FormProvider {...form}>
-      <Card>
-        <CardContent className="p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="reviewCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Review Count</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g., 250" {...field} disabled={isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="contactEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="info@example.com" {...field} disabled={isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+1 555-123-4567" {...field} disabled={isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="123 Mountain Rd, Kathmandu, Nepal" {...field} disabled={isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Homepage Content</CardTitle>
+                    <CardDescription>Manage the main text content for your homepage.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="heroTitle"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Homepage Hero Title</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Discover Your Next Adventure" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="heroDescription"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Homepage Hero Description</FormLabel>
+                            <FormControl>
+                            <Textarea placeholder="Explore breathtaking treks..." {...field} disabled={isPending} rows={3}/>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="footerTagline"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Footer Tagline</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Your gateway to Himalayan adventures." {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
 
-              <Button type="submit" disabled={isPending}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Company Information</CardTitle>
+                    <CardDescription>Manage public company stats and contact details.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="reviewCount"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Total Review Count</FormLabel>
+                            <FormControl>
+                            <Input type="number" placeholder="e.g., 250" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="contactEmail"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contact Email</FormLabel>
+                            <FormControl>
+                            <Input type="email" placeholder="info@example.com" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                            <Input placeholder="+1 555-123-4567" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Company Address</FormLabel>
+                            <FormControl>
+                            <Input placeholder="123 Mountain Rd, Kathmandu, Nepal" {...field} disabled={isPending} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
+            <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Profile
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </Button>
+        </form>
+        </Form>
     </FormProvider>
   );
 }

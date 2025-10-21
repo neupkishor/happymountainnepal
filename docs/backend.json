@@ -51,6 +51,18 @@
         "address": {
           "type": "string",
           "description": "Company's physical address."
+        },
+        "heroTitle": {
+          "type": "string",
+          "description": "The main title for the homepage hero section."
+        },
+        "heroDescription": {
+          "type": "string",
+          "description": "The main description for the homepage hero section."
+        },
+        "footerTagline": {
+          "type": "string",
+          "description": "The company tagline displayed in the footer."
         }
       }
     }

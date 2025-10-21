@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Search } from 'lucide-react';
+import { getSiteProfile } from '@/lib/db';
+import { Skeleton } from './ui/skeleton';
 
 export function HeroSection() {
   const router = useRouter();
@@ -14,6 +16,30 @@ export function HeroSection() {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [heroContent, setHeroContent] = useState({
+    title: 'Discover Your Next Adventure',
+    description: 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.'
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchContent() {
+      try {
+        const profile = await getSiteProfile();
+        if (profile) {
+          setHeroContent({
+            title: profile.heroTitle || 'Discover Your Next Adventure',
+            description: profile.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.'
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch hero content:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchContent();
+  }, []);
 
   useEffect(() => {
     if (isSearchActive) {
@@ -67,12 +93,22 @@ export function HeroSection() {
       />
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative z-10 p-4 max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold !font-headline mb-4 animate-fade-in-down">
-          Discover Your Next Adventure
-        </h1>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 animate-fade-in-up">
-          Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.
-        </p>
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-16 w-3/4 mx-auto" />
+            <Skeleton className="h-6 w-full max-w-2xl mx-auto" />
+            <Skeleton className="h-6 w-2/3 max-w-xl mx-auto" />
+          </div>
+        ) : (
+          <>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold !font-headline mb-4 animate-fade-in-down">
+              {heroContent.title}
+            </h1>
+            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 animate-fade-in-up">
+              {heroContent.description}
+            </p>
+          </>
+        )}
 
         <div ref={searchContainerRef}>
           {isSearchActive ? (

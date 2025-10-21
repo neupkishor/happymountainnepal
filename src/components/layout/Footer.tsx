@@ -1,7 +1,27 @@
+
+'use client';
 import { Link } from '@/components/ui/link';
 import { Mountain } from 'lucide-react';
+import { getSiteProfile } from '@/lib/db';
+import { useState, useEffect } from 'react';
 
 export function Footer() {
+  const [tagline, setTagline] = useState('Your gateway to Himalayan adventures.');
+  
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const profile = await getSiteProfile();
+        if (profile?.footerTagline) {
+          setTagline(profile.footerTagline);
+        }
+      } catch (error) {
+        console.error("Failed to fetch site profile for footer:", error);
+      }
+    }
+    fetchProfile();
+  }, []);
+
   return (
     <footer className="border-t bg-footer-background">
       <div className="container mx-auto py-12">
@@ -12,7 +32,7 @@ export function Footer() {
               <span className="text-xl font-bold font-headline">Happy Mountain Nepal</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Your gateway to Himalayan adventures.
+              {tagline}
             </p>
           </div>
           <div>
