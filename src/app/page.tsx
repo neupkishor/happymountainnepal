@@ -7,6 +7,7 @@ import { RecentBlogs } from "@/components/RecentBlogs";
 import { CustomizeTrip } from "@/components/CustomizeTrip";
 import { FavoriteDestinations } from "@/components/FavoriteDestinations";
 import { OurPartners } from "@/components/OurPartners";
+import { ContactSection } from "@/components/ContactSection";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
       <RecentBlogs />
       <OurPartners />
       <CustomizeTrip />
+      <ContactSection />
     </div>
   );
 }
