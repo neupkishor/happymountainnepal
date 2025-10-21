@@ -28,18 +28,16 @@ export function ReviewCarouselItem({ review }: ReviewCarouselItemProps) {
   return (
     <Card className="flex flex-col shadow-lg">
       <CardContent className="p-8 flex-grow">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.userName}`} />
-              <AvatarFallback>{review.userName.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-semibold text-lg">{review.userName}</p>
-              {review.userRole && <p className="text-sm text-muted-foreground">{review.userRole}</p>}
-            </div>
+        <div className="flex items-start gap-4 mb-4">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.userName}`} />
+            <AvatarFallback>{review.userName.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex-grow">
+            <p className="font-semibold text-lg">{review.userName}</p>
+            {review.userRole && <p className="text-sm text-muted-foreground -mt-1">{review.userRole}</p>}
+            <ReviewStars rating={review.stars} className="h-5 w-5 mt-2" />
           </div>
-          <ReviewStars rating={review.stars} className="h-5 w-5" />
         </div>
         <p className="text-muted-foreground italic mt-4 text-base">
           &quot;{displayedReviewBody}&quot;
