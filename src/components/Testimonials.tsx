@@ -106,8 +106,8 @@ export function Testimonials() {
                   ))}
                 </CarouselContent>
                 <div className="mt-4 flex justify-end gap-2">
-                    <CarouselPrevious />
-                    <CarouselNext />
+                    <CarouselPrevious className="relative -left-0 -top-0 -translate-y-0" />
+                    <CarouselNext className="relative -right-0 -top-0 -translate-y-0" />
                 </div>
               </Carousel>
             )}
