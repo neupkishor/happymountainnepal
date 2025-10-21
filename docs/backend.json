@@ -86,8 +86,56 @@
               "format": "uri"
             }
           }
+        },
+        "whyUs": {
+          "type": "array",
+          "description": "List of reasons to choose the company, featured on the homepage.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "icon": {
+                "type": "string",
+                "description": "URL of the icon for the feature."
+              },
+              "title": {
+                "type": "string",
+                "description": "Title of the feature."
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the feature."
+              }
+            },
+            "required": ["icon", "title", "description"]
+          }
         }
       }
+    },
+    "LegalDocument": {
+      "title": "Legal Document",
+      "type": "object",
+      "description": "Represents a legal document like a license or certificate.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The official title of the document."
+        },
+        "description": {
+          "type": "string",
+          "description": "An optional description of the document."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL to the uploaded document file."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the document was added."
+        }
+      },
+      "required": ["title", "url", "createdAt"]
     }
   },
   "auth": {
@@ -107,6 +155,12 @@
         "$ref": "#/entities/SiteProfile"
       },
       "description": "Stores the site-wide company profile. The document ID should be a unique site identifier, e.g., 'happymountainnepal'."
+    },
+    "/legalDocuments/{documentId}": {
+      "schema": {
+        "$ref": "#/entities/LegalDocument"
+      },
+      "description": "Stores references to legal documents."
     }
   }
 }

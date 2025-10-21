@@ -1,12 +1,13 @@
 
 
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -454,18 +455,13 @@ export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt'>)
   }
 }
 
-export async function getFileUploads(options?: { limit?: number; search?: string }): Promise<FileUpload[]> {
+export async function getFileUploads(options?: { limit?: number; category?: UploadCategory }): Promise<FileUpload[]> {
     if (!firestore) return [];
     try {
-        const uploadsRef = collection(firestore, 'uploads');
-        let q = query(uploadsRef, orderBy('uploadedAt', 'desc'));
+        let q = query(collection(firestore, 'uploads'), orderBy('uploadedAt', 'desc'));
 
-        if (options?.search) {
-            // This is a basic client-side search. For more robust search,
-            // a dedicated search service (like Algolia or a Firestore extension)
-            // would be needed for server-side filtering.
-            // For now, we'll fetch all and filter client-side if search is used without limit.
-            // If limit is also present, we'll apply it after client-side filtering.
+        if (options?.category) {
+            q = query(q, where('category', '==', options.category));
         }
 
         if (options?.limit) {
@@ -473,7 +469,7 @@ export async function getFileUploads(options?: { limit?: number; search?: string
         }
         
         const querySnapshot = await getDocs(q);
-        let results = querySnapshot.docs.map(doc => {
+        return querySnapshot.docs.map(doc => {
             const data = doc.data();
             return { 
                 id: doc.id, 
@@ -482,21 +478,13 @@ export async function getFileUploads(options?: { limit?: number; search?: string
             } as FileUpload;
         });
 
-        if (options?.search) {
-            const searchTermLower = options.search.toLowerCase();
-            results = results.filter(file => 
-                file.fileName.toLowerCase().includes(searchTermLower) ||
-                file.fileType?.toLowerCase().includes(searchTermLower)
-            );
-        }
-
-        return results;
     } catch (error: any) {
         console.error("Error fetching file uploads:", error);
         await logError({ message: `Failed to fetch file uploads: ${error.message}`, stack: error.stack, pathname: '/manage/uploads', context: { options } });
         throw new Error("Could not fetch file uploads from the database.");
     }
 }
+
 
 export async function getTourById(id: string): Promise<Tour | null> {
     return getDocById<Tour>('packages', id);
@@ -893,5 +881,43 @@ export async function updateLegalContent(id: 'privacy-policy' | 'terms-of-servic
         console.error(`Error updating legal content for ${id}:`, error);
         await logError({ message: `Failed to update legal content for ${id}: ${error.message}`, stack: error.stack, pathname: `/manage/legal/${id}` });
         throw new Error("Could not update legal content.");
+    }
+}
+
+// New Legal Document Functions
+export async function getLegalDocuments(): Promise<LegalDocument[]> {
+    if (!firestore) return [];
+    try {
+        const docsRef = collection(firestore, 'legalDocuments');
+        const q = query(docsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LegalDocument));
+    } catch (error: any) {
+        console.error("Error fetching legal documents:", error);
+        throw new Error("Could not fetch legal documents.");
+    }
+}
+
+export async function addLegalDocument(data: Omit<LegalDocument, 'id' | 'createdAt'>): Promise<string> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = await addDoc(collection(firestore, 'legalDocuments'), {
+            ...data,
+            createdAt: serverTimestamp(),
+        });
+        return docRef.id;
+    } catch (error: any) {
+        console.error("Error adding legal document:", error);
+        throw new Error("Could not add legal document.");
+    }
+}
+
+export async function deleteLegalDocument(id: string): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await deleteDoc(doc(firestore, 'legalDocuments', id));
+    } catch (error: any) {
+        console.error("Error deleting legal document:", error);
+        throw new Error("Could not delete legal document.");
     }
 }

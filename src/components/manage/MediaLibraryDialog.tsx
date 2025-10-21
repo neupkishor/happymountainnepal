@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,33 +12,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { getFileUploads } from '@/lib/db';
-import type { FileUpload } from '@/lib/types';
+import type { FileUpload, UploadCategory } from '@/lib/types';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { FileUploadInput } from './FileUploadInput';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface MediaLibraryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (urls: string[]) => void;
   initialSelectedUrls?: string[];
+  defaultCategory?: UploadCategory;
 }
 
-export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = [] }: MediaLibraryDialogProps) {
+const categories: UploadCategory[] = ['general', 'trip', 'document', 'background', 'feature-icon', 'user-photo', 'blog', 'logo', 'author'];
+
+export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = [], defaultCategory = 'general' }: MediaLibraryDialogProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentSelection, setCurrentSelection] = useState<string[]>(initialSelectedUrls);
   const [isUploading, setIsUploading] = useState(false);
-  const [skipCompression, setSkipCompression] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<UploadCategory | 'all'>('all');
+
   const { toast } = useToast();
 
-  const fetchUploads = async () => {
+  const fetchUploads = async (category?: UploadCategory | 'all') => {
     setIsLoading(true);
     try {
-      const fetchedUploads = await getFileUploads();
+      const fetchedUploads = await getFileUploads({
+        category: category === 'all' ? undefined : category,
+      });
       setUploads(fetchedUploads);
     } catch (error: any) {
       console.error('Failed to fetch uploads:', error);
@@ -53,14 +61,21 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
 
   useEffect(() => {
     if (isOpen) {
-      fetchUploads();
+      setSelectedCategory(defaultCategory || 'all');
+      fetchUploads(defaultCategory || 'all');
       setCurrentSelection(initialSelectedUrls);
     }
-  }, [isOpen, initialSelectedUrls]);
+  }, [isOpen, initialSelectedUrls, defaultCategory]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchUploads(selectedCategory);
+    }
+  }, [selectedCategory, isOpen]);
+
 
   const filteredUploads = uploads.filter((upload) =>
-    upload.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    upload.fileType?.toLowerCase().includes(searchTerm.toLowerCase())
+    upload.fileName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleImageClick = (url: string) => {
@@ -75,7 +90,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
 
   const handleFileUploadSuccess = (url: string) => {
     toast({ title: 'Upload Successful', description: 'File added to library.' });
-    fetchUploads(); // Refresh library
+    fetchUploads(selectedCategory); // Refresh library for current category
     setCurrentSelection(prev => [...prev, url]);
   };
 
@@ -94,34 +109,38 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
         <div className="flex-grow flex flex-col gap-4 overflow-hidden">
           {/* Upload Area */}
           <div className="border border-dashed p-4 rounded-lg space-y-4">
-              <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-lg">Upload New File</h3>
-                  <Button
-                    variant={skipCompression ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => setSkipCompression(!skipCompression)}
-                    >
-                    {skipCompression ? 'Uncompressed' : 'Compressed'}
-                  </Button>
-              </div>
+              <h3 className="font-semibold text-lg">Upload New File</h3>
               <FileUploadInput 
                 name="media-library-upload"
                 onUploadSuccess={handleFileUploadSuccess}
                 onUploadingChange={setIsUploading}
-                skipCompression={skipCompression}
+                category={defaultCategory} // Pass down the category for new uploads
               />
           </div>
 
           {/* Library Browser */}
           <div className="flex-grow flex flex-col gap-4 overflow-hidden">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search files..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search files..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as UploadCategory | 'all')}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {isLoading ? (
@@ -132,7 +151,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
             ) : filteredUploads.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-grow text-muted-foreground">
                 <ImageIcon className="h-12 w-12 mb-4" />
-                <p>No files found. Try uploading some!</p>
+                <p>No files found in this category.</p>
               </div>
             ) : (
               <ScrollArea className="flex-grow -mr-4 pr-4">
@@ -146,12 +165,18 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                       )}
                       onClick={() => handleImageClick(file.url)}
                     >
-                      <Image
-                        src={file.url}
-                        alt={file.fileName}
-                        fill
-                        className="object-cover"
-                      />
+                      {file.fileType?.startsWith('image/') ? (
+                          <Image
+                            src={file.url}
+                            alt={file.fileName}
+                            fill
+                            className="object-cover"
+                          />
+                      ) : (
+                         <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
+                            <FileText className="h-8 w-8" />
+                         </div>
+                      )}
                       {currentSelection.includes(file.url) && (
                         <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
                           <CheckCircle2 className="h-8 w-8 text-primary-foreground" />

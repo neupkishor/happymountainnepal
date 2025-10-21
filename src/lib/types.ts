@@ -6,7 +6,7 @@ export interface Tour {
   slug: string;
   name: string;
   description: string;
-  region: string;
+  region: string[]; // Changed to array
   type: 'Trek' | 'Tour' | 'Peak Climbing';
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';
   duration: number; // in days
@@ -163,12 +163,13 @@ export interface SiteProfile {
 }
 
 export interface LegalDocument {
-    id: string;
-    name: string;
-    url: string;
-    type: 'image' | 'pdf';
-    uploadedAt: Timestamp;
+  id: string;
+  title: string;
+  description?: string;
+  url: string;
+  createdAt: Timestamp;
 }
+
 
 export interface LegalContent {
     id: 'privacy-policy' | 'terms-of-service';
