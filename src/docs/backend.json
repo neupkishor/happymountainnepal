@@ -1,0 +1,135 @@
+
+{
+  "entities": {
+    "Account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Account",
+      "type": "object",
+      "description": "Represents a user account for the Trek Explorer application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Account entity, matching the Firebase Auth UID."
+        },
+        "fullName": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "The user's phone number (optional)."
+        }
+      },
+      "required": [
+        "id",
+        "fullName",
+        "email"
+      ]
+    },
+    "SiteProfile": {
+      "title": "Site Profile",
+      "type": "object",
+      "description": "Stores site-wide company profile information.",
+      "properties": {
+        "reviewCount": {
+          "type": "number",
+          "description": "Total number of reviews."
+        },
+        "contactEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Primary contact email address."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Primary contact phone number."
+        },
+        "address": {
+          "type": "string",
+          "description": "Company's physical address."
+        },
+        "heroTitle": {
+          "type": "string",
+          "description": "The main title for the homepage hero section."
+        },
+        "heroDescription": {
+          "type": "string",
+          "description": "The main description for the homepage hero section."
+        },
+        "footerTagline": {
+          "type": "string",
+          "description": "The company tagline displayed in the footer."
+        },
+        "heroImage": {
+          "type": "string",
+          "description": "The background image URL for the homepage hero section."
+        },
+        "socials": {
+          "type": "object",
+          "description": "An object containing URLs for social media profiles.",
+          "properties": {
+            "facebook": {
+              "type": "string",
+              "format": "uri"
+            },
+            "instagram": {
+              "type": "string",
+              "format": "uri"
+            },
+            "twitter": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "whyUs": {
+          "type": "array",
+          "description": "A list of features for the 'Why Us' section.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "icon": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL for the feature icon (SVG or PNG)."
+              },
+              "title": {
+                "type": "string",
+                "description": "The title of the feature."
+              },
+              "description": {
+                "type": "string",
+                "description": "A short description of the feature."
+              }
+            },
+            "required": ["icon", "title", "description"]
+          }
+        }
+      }
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "/accounts/{accountId}": {
+      "schema": {
+        "$ref": "#/entities/Account"
+      },
+      "description": "Stores user account information, where the document ID matches the Firebase Auth UID."
+    },
+    "/profile/{siteId}": {
+      "schema": {
+        "$ref": "#/entities/SiteProfile"
+      },
+      "description": "Stores the site-wide company profile. The document ID should be a unique site identifier, e.g., 'happymountainnepal'."
+    }
+  }
+}

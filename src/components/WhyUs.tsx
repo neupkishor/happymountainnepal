@@ -1,30 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Shield, Leaf, Star } from "lucide-react"
 
-const features = [
-  {
-    icon: Users,
-    title: "Experienced Local Guides",
-    description: "Our guides are certified, experienced locals who know the mountains like the back of their hand.",
-  },
-  {
-    icon: Shield,
-    title: "Safety First",
-    description: "We prioritize your safety with the highest standards, including regular equipment checks and emergency protocols.",
-  },
-  {
-    icon: Leaf,
-    title: "Sustainable & Responsible",
-    description: "We are committed to eco-friendly practices that protect our beautiful environment and support local communities.",
-  },
-  {
-    icon: Star,
-    title: "Tailor-Made Itineraries",
-    description: "Your dream adventure is unique. We specialize in creating personalized trips that match your interests and fitness level.",
-  },
-]
+'use client';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "./ui/skeleton";
+import { useSiteProfile } from "@/hooks/use-site-profile";
+import Image from "next/image";
 
 export function WhyUs() {
+  const { profile, isLoading } = useSiteProfile();
+  const features = profile?.whyUs || [];
+
   return (
     <section className="py-16 lg:py-24">
       <div className="container mx-auto">
@@ -34,22 +18,44 @@ export function WhyUs() {
             Creating unforgettable Himalayan experiences with a personal touch.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="text-center bg-card">
-              <CardHeader className="items-center">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <feature.icon className="h-8 w-8 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-xl mb-2 !font-headline">{feature.title}</CardTitle>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[...Array(4)].map((_, index) => (
+              <Card key={index} className="text-center bg-card">
+                <CardHeader className="items-center">
+                  <Skeleton className="h-14 w-14 rounded-full" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-6 w-3/4 mx-auto mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6 mx-auto mt-1" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="text-center bg-card">
+                <CardHeader className="items-center">
+                  <div className="bg-primary/10 p-3 rounded-full relative h-14 w-14">
+                    <Image
+                      src={feature.icon}
+                      alt={`${feature.title} icon`}
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardTitle className="text-xl mb-2 !font-headline">{feature.title}</CardTitle>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
-  )
+  );
 }

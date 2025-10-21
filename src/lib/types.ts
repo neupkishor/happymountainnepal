@@ -1,3 +1,4 @@
+
 import { Timestamp } from "firebase/firestore";
 
 export interface Tour {
@@ -155,6 +156,11 @@ export interface SiteProfile {
     instagram?: string;
     twitter?: string;
   };
+  whyUs?: {
+    icon: string;
+    title: string;
+    description: string;
+  }[];
 }
 
 export interface LegalDocument {

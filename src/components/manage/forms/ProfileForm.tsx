@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -17,13 +17,19 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { updateSiteProfile, logError } from '@/lib/db';
 import { useTransition, useEffect } from 'react';
-import { Facebook, Instagram, Loader2, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Loader2, Twitter, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { MediaPicker } from '../MediaPicker';
+
+const whyUsSchema = z.object({
+  icon: z.string().url("Please provide an icon URL."),
+  title: z.string().min(3, "Title must be at least 3 characters."),
+  description: z.string().min(10, "Description must be at least 10 characters."),
+});
 
 const formSchema = z.object({
   reviewCount: z.coerce.number().int().min(0, "Review count cannot be negative.").optional(),
@@ -39,6 +45,7 @@ const formSchema = z.object({
     instagram: z.string().url().or(z.literal('')).optional(),
     twitter: z.string().url().or(z.literal('')).optional(),
   }).optional(),
+  whyUs: z.array(whyUsSchema).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -64,8 +71,14 @@ export function ProfileForm() {
         facebook: '',
         instagram: '',
         twitter: '',
-      }
+      },
+      whyUs: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "whyUs",
   });
 
   useEffect(() => {
@@ -83,7 +96,8 @@ export function ProfileForm() {
           facebook: profile.socials?.facebook || '',
           instagram: profile.socials?.instagram || '',
           twitter: profile.socials?.twitter || '',
-        }
+        },
+        whyUs: profile.whyUs || [],
       });
     }
   }, [profile, form]);
@@ -170,6 +184,55 @@ export function ProfileForm() {
                         </FormItem>
                         )}
                     />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>"Why Trek With Us" Section</CardTitle>
+                    <CardDescription>Manage the features displayed on your homepage.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2"
+                                onClick={() => remove(index)}
+                                disabled={isPending}
+                            >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                            <MediaPicker name={`whyUs.${index}.icon`} label="Icon (SVG, PNG)" />
+                            <FormField
+                                control={form.control}
+                                name={`whyUs.${index}.title`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Title</FormLabel>
+                                        <FormControl><Input {...field} placeholder="Feature Title" /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`whyUs.${index}.description`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Description</FormLabel>
+                                        <FormControl><Textarea {...field} placeholder="Feature Description" /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    ))}
+                    <Button type="button" variant="outline" onClick={() => append({ icon: '', title: '', description: '' })}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Feature
+                    </Button>
                 </CardContent>
             </Card>
 
