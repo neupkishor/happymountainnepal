@@ -29,6 +29,17 @@ export default function AboutPage() {
   const founder = useMemo(() => teamMembers?.find(m => m.role.includes('Founder')), [teamMembers]);
   const otherMembers = useMemo(() => teamMembers?.filter(m => !m.role.includes('Founder')), [teamMembers]);
 
+  const jsonLdSchema = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Happy Mountain Nepal",
+      "description": "We are a team of passionate mountaineers, seasoned guides, and travel experts dedicated to providing you with an unforgettable Himalayan experience."
+    }
+  };
+
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-16">
@@ -58,6 +69,10 @@ export default function AboutPage() {
 
   return (
     <div className="bg-background">
+       <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
+      />
       <div className="container mx-auto py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold !font-headline">Meet the Team</h1>

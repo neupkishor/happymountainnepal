@@ -9,8 +9,18 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import 'quill/dist/quill.snow.css'; // Import Quill's CSS
 
 export const metadata: Metadata = {
-  title: 'Happy Mountain Nepal',
+  title: {
+    default: 'Happy Mountain Nepal',
+    template: '%s | Happy Mountain Nepal',
+  },
   description: 'Explore the best treks and tours in the Himalayas.',
+  alternates: {
+    canonical: 'https://happymountainnepal.com',
+    languages: {
+      'en': 'https://happymountainnepal.com',
+      'x-default': 'https://happymountainnepal.com',
+    },
+  },
 };
 
 export default function RootLayout({
@@ -19,9 +29,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Happy Mountain Nepal",
+    "url": "https://happymountainnepal.com",
+    "logo": "https://neupgroup.com/content/p3happymountainnepal/logo.png",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+977-984-3725521",
+      "contactType": "customer service"
+    }
+  };
+
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />

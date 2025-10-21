@@ -2,8 +2,33 @@ import { ContactForm } from '@/components/ContactForm';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function ContactPage() {
+    const jsonLdSchema = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Happy Mountain Nepal",
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "telephone": "+977-984-3725521",
+          "contactType": "customer service"
+        },
+        {
+          "@type": "ContactPoint",
+          "email": "info@happymountainnepal.com",
+          "contactType": "customer service"
+        }
+      ]
+    }
+  };
+
   return (
     <div className="bg-background">
+       <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
+      />
       <div className="container mx-auto py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold !font-headline">Get In Touch</h1>

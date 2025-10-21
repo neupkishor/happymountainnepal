@@ -2,6 +2,7 @@ import { getBlogPostBySlug } from '@/lib/db';
 import BlogPostClient from './blog-post-client';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next'; // Import Metadata type
+import { Timestamp } from 'firebase/firestore';
 
 type BlogDetailPageProps = {
   params: {
@@ -19,35 +20,43 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
       description: 'The requested blog post could not be found.',
     };
   }
+  
+  const serializablePost = {
+    ...post,
+    date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
+  };
+
 
   return {
-    title: post.title,
-    description: post.excerpt,
+    title: serializablePost.title,
+    description: serializablePost.excerpt,
     alternates: {
-      canonical: `https://happymountainnepal.com/blog/${post.slug}`, // Replace with your actual domain
+      canonical: `https://happymountainnepal.com/blog/${serializablePost.slug}`, // Replace with your actual domain
       languages: {
-        'en': `https://happymountainnepal.com/blog/${post.slug}`,
-        'x-default': `https://happymountainnepal.com/blog/${post.slug}`,
+        'en': `https://happymountainnepal.com/blog/${serializablePost.slug}`,
+        'x-default': `https://happymountainnepal.com/blog/${serializablePost.slug}`,
       },
     },
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      url: `https://happymountainnepal.com/blog/${post.slug}`,
+      title: serializablePost.title,
+      description: serializablePost.excerpt,
+      url: `https://happymountainnepal.com/blog/${serializablePost.slug}`,
       images: [
         {
-          url: post.image,
-          alt: post.title,
+          url: serializablePost.image,
+          alt: serializablePost.title,
         },
       ],
       type: 'article',
       siteName: 'Happy Mountain Nepal',
+      publishedTime: new Date(serializablePost.date).toISOString(),
+      authors: [serializablePost.author],
     },
     twitter: {
       card: 'summary_large_image',
-      title: post.title,
-      description: post.excerpt,
-      images: [post.image],
+      title: serializablePost.title,
+      description: serializablePost.excerpt,
+      images: [serializablePost.image],
     },
   };
 }
@@ -58,6 +67,12 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   if (!post) {
     notFound();
   }
+  
+  // Convert timestamp for client component
+  const serializablePost = {
+      ...post,
+      date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
+  };
 
-  return <BlogPostClient post={post} />;
+  return <BlogPostClient post={serializablePost} />;
 }

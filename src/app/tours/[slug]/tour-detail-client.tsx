@@ -18,15 +18,13 @@ import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore';
 
-const REVIEWS_PER_FETCH = 5;
-
 interface TourDetailClientProps {
   tour: Tour;
 }
 
 export default function TourDetailClient({ tour }: TourDetailClientProps) {
   const [displayedReviews, setDisplayedReviews] = useState<ManagedReview[]>([]);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [hasMoreReviews, setHasMoreReviews] = useState(true);
   const [lastReviewDocId, setLastReviewDocId] = useState<string | null>(null);
   const [allToursMap, setAllToursMap] = useState<Map<string, string>>(new Map());
@@ -61,17 +59,12 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
     setHasMoreReviews(true);
     fetchReviews(true);
 
-    // Fetch all tour names for the reviews map
     const fetchAllTourNames = async () => {
       const map = await getAllTourNamesMap();
       setAllToursMap(map);
     };
     fetchAllTourNames();
-  }, [tour.id, fetchReviews]);
-
-  const handleLoadMore = () => {
-    fetchReviews();
-  };
+  }, [tour.id]);
 
   const averageRating = displayedReviews.length > 0 
     ? (displayedReviews.reduce((acc, review) => acc + review.stars, 0) / displayedReviews.length) 
@@ -79,32 +72,28 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
 
   const jsonLdSchema = {
     "@context": "https://schema.org",
-    "@type": "Trip",
+    "@type": "Product",
     "name": tour.name,
     "description": tour.description,
     "image": tour.mainImage,
-    "url": `https://happymountainnepal.com/tours/${tour.slug}`, // Replace with your actual domain
+    "url": `https://happymountainnepal.com/tours/${tour.slug}`,
+    "brand": {
+      "@type": "Brand",
+      "name": "Happy Mountain Nepal"
+    },
+    ...(tour.reviews.length > 0 && {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": averageRating.toFixed(1),
+        "reviewCount": tour.reviews.length
+      }
+    }),
     "offers": {
       "@type": "Offer",
-      "priceCurrency": "USD",
       "price": tour.price,
+      "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "url": `https://happymountainnepal.com/tours/${tour.slug}` // Replace with your actual domain
-    },
-    "itinerary": tour.itinerary.map(item => ({
-      "@type": "CreativeWork",
-      "name": `Day ${item.day}: ${item.title}`,
-      "description": item.description
-    })),
-    "aggregateRating": displayedReviews.length > 0 ? {
-      "@type": "AggregateRating",
-      "ratingValue": averageRating.toFixed(1),
-      "reviewCount": displayedReviews.length
-    } : undefined,
-    "provider": {
-      "@type": "Organization",
-      "name": "Happy Mountain Nepal",
-      "url": "https://happymountainnepal.com" // Replace with your actual domain
+      "url": `https://happymountainnepal.com/tours/${tour.slug}`
     }
   };
 
@@ -121,14 +110,12 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       <div className="container mx-auto py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
           
-          {/* Main content */}
           <div className="lg:col-span-2 space-y-12">
             <header>
               <h1 className="text-4xl md:text-5xl font-bold !font-headline text-primary">{tour.name}</h1>
               <p className="mt-4 text-lg text-muted-foreground">{tour.description}</p>
             </header>
 
-            {/* Booking Widget for mobile */}
             <div className="lg:hidden my-8">
               <BookingWidget tour={tour} />
             </div>
@@ -185,14 +172,13 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
                 />
             </section>
 
-            {tour.additionalInfoSections && tour.additionalInfoSections.length > 0 && ( // Conditionally render Additional Info section
+            {tour.additionalInfoSections && tour.additionalInfoSections.length > 0 && (
               <section id="additional-info" className="scroll-m-32">
                 <AdditionalInfoSection sections={tour.additionalInfoSections} />
               </section>
             )}
           </div>
 
-          {/* Sidebar for Desktop */}
           <aside className="lg:col-span-1 mt-12 lg:mt-0 hidden lg:block">
             <div className="sticky top-28">
               <BookingWidget tour={tour} />

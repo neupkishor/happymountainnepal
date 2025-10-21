@@ -10,7 +10,7 @@ interface BlogPostClientProps {
 }
 
 export default function BlogPostClient({ post }: BlogPostClientProps) {
-  const displayDate = post.date instanceof Timestamp ? post.date.toDate().toLocaleDateString() : post.date;
+  const displayDate = post.date instanceof Timestamp ? post.date.toDate().toLocaleDateString() : new Date(post.date).toLocaleDateString();
   const isoDatePublished = post.date instanceof Timestamp ? post.date.toDate().toISOString() : new Date(post.date).toISOString();
   const isoDateModified = isoDatePublished; // Assuming no separate modified date for now
 
@@ -25,22 +25,20 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
       "@type": "Person",
       "name": post.author,
       "image": post.authorPhoto || undefined,
-      // "url": "https://happymountainnepal.com/about/teams/author-slug" // Optional: if author has a profile page
     },
     "publisher": {
       "@type": "Organization",
       "name": "Happy Mountain Nepal",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://neupgroup.com/content/p3happymountainnepal/logo.png" // Replace with your actual logo URL
-      },
-      "url": "https://happymountainnepal.com" // Replace with your actual domain
+        "url": "https://neupgroup.com/content/p3happymountainnepal/logo.png" 
+      }
     },
     "description": post.excerpt,
     "articleBody": post.content,
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://happymountainnepal.com/blog/${post.slug}` // Replace with your actual domain
+      "@id": `https://happymountainnepal.com/blog/${post.slug}`
     }
   };
 
@@ -71,7 +69,7 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
               <span>{post.author}</span>
             </div>
             <span>&bull;</span>
-            <time dateTime={new Date(displayDate).toISOString()}>{displayDate}</time>
+            <time dateTime={isoDatePublished}>{displayDate}</time>
           </div>
         </div>
       </header>
