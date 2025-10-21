@@ -76,12 +76,18 @@ export function HeroSection() {
         data-ai-hint="mountain sunrise"
       />
       <div className="absolute inset-0 bg-black/50" />
-      <div className="relative z-10 p-4 max-w-4xl mx-auto">
+      <div className="relative z-10 p-4 max-w-4xl mx-auto w-full">
         {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-16 w-3/4 mx-auto" />
-            <Skeleton className="h-6 w-full max-w-2xl mx-auto" />
-            <Skeleton className="h-6 w-2/3 max-w-xl mx-auto" />
+          <div className="flex flex-col items-center w-full">
+            <div className="space-y-4 w-full max-w-2xl">
+              <Skeleton className="h-16 w-3/4 mx-auto" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-2/3 mx-auto" />
+            </div>
+            <div className="mt-8 flex gap-4 justify-center">
+                <Skeleton className="h-12 w-32" />
+                <Skeleton className="h-12 w-48" />
+            </div>
           </div>
         ) : (
           <>
@@ -94,6 +100,7 @@ export function HeroSection() {
           </>
         )}
 
+        {!isLoading && (
         <div ref={searchContainerRef}>
           {isSearchActive ? (
             <form onSubmit={handleSearch} className="max-w-lg mx-auto animate-fade-in-up relative">
@@ -128,6 +135,7 @@ export function HeroSection() {
             </div>
           )}
         </div>
+        )}
       </div>
     </section>
   );
