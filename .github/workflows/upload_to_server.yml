@@ -1,0 +1,66 @@
+name: Upload App to Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      OVERRIDE_NEXT_CONFIG:
+        description: 'Type "yes" to overwrite next.config.ts on server if it exists'
+        required: false
+        default: 'no'
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Upload App to Server (with smart overwrite logic)
+        run: |
+          # Default exclude patterns
+          EXCLUDES="--exclude 'node_modules' --exclude '.pm2' --exclude '.ssh' --exclude 'keys' --exclude '.next' --exclude 'dist'"
+
+          echo "🚀 Starting upload to ${{ secrets.SSH_HOST }}"
+
+          # Handle next.config.ts logic
+          if ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "test -f '${{ secrets.DEPLOY_PATH }}/next.config.ts'"; then
+            echo "⚠️ next.config.ts exists on server."
+            if [ "${{ github.event.inputs.OVERRIDE_NEXT_CONFIG }}" = "yes" ]; then
+              echo "✅ Overwriting next.config.ts as requested."
+              rsync -avz $GITHUB_WORKSPACE/next.config.ts ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+            else
+              echo "⛔ Keeping existing next.config.ts on server."
+              EXCLUDES="$EXCLUDES --exclude 'next.config.ts'"
+            fi
+          else
+            echo "✅ No next.config.ts found on server. Uploading new file."
+            rsync -avz $GITHUB_WORKSPACE/next.config.ts ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+          fi
+
+          # Handle .env logic
+          if ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "test -f '${{ secrets.DEPLOY_PATH }}/.env'"; then
+            echo "⚠️ .env exists on server. Keeping existing file."
+            EXCLUDES="$EXCLUDES --exclude '.env'"
+          else
+            echo "✅ No .env found on server. Uploading new file if exists locally."
+            if [ -f "$GITHUB_WORKSPACE/.env" ]; then
+              rsync -avz $GITHUB_WORKSPACE/.env ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+            fi
+          fi
+
+          # Final rsync for all other project files
+          echo "📦 Syncing remaining project files..."
+          rsync -avz --delete $EXCLUDES $GITHUB_WORKSPACE/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+
+          echo "🎯 Upload complete!"
