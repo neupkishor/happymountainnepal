@@ -53,7 +53,7 @@ export function Reviews({ reviews, tourId, isLoading, hasMore, onLoadMore, allTo
         </CardHeader>
         <CardContent className="space-y-6">
           {reviews.map((review) => {
-            const dateObject = review.reviewedOn instanceof Timestamp ? review.reviewedOn.toDate() : new Date(review.reviewedOn);
+            const dateObject = new Date(review.reviewedOn as string);
             const displayDate = format(dateObject, 'PPP');
             
             let reviewTag = null;

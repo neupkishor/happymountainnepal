@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
@@ -660,7 +661,14 @@ export async function getAllReviews(): Promise<ManagedReview[]> {
         const reviewsRef = collection(firestore, 'reviews');
         const q = query(reviewsRef, orderBy('reviewedOn', 'desc'));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagedReview));
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data() as ManagedReview;
+            return {
+                ...data,
+                id: doc.id,
+                reviewedOn: (data.reviewedOn as Timestamp).toDate().toISOString()
+            } as ManagedReview;
+        });
     } catch (error: any) {
         console.error("Error fetching all reviews:", error);
         await logError({ message: `Failed to fetch all reviews: ${error.message}`, stack: error.stack, pathname: '/manage/reviews' });
@@ -686,7 +694,14 @@ export async function getFiveStarReviews(): Promise<ManagedReview[]> {
             firestoreLimit(10)
         );
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagedReview));
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data() as ManagedReview;
+            return {
+                ...data,
+                id: doc.id,
+                reviewedOn: (data.reviewedOn as Timestamp).toDate().toISOString()
+            } as ManagedReview;
+        });
     } catch (error: any) {
         console.error("Error fetching 5-star reviews:", error);
         await logError({ message: `Failed to fetch 5-star reviews: ${error.message}`, stack: error.stack, pathname: '/' });
@@ -744,7 +759,14 @@ export async function getReviewsForPackage(packageId: string, lastDocId?: string
         }
 
         const querySnapshot = await getDocs(q);
-        const fetchedReviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagedReview));
+        const fetchedReviews = querySnapshot.docs.map(doc => {
+            const data = doc.data() as ManagedReview;
+            return {
+                ...data,
+                id: doc.id,
+                reviewedOn: (data.reviewedOn as Timestamp).toDate().toISOString()
+            } as ManagedReview;
+        });
 
         const hasMore = fetchedReviews.length > REVIEWS_PER_PAGE;
         const reviewsToReturn = hasMore ? fetchedReviews.slice(0, REVIEWS_PER_PAGE) : fetchedReviews;

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns'; // Import format from date-fns
 import { useFirestore } from '@/firebase';
+import { getAllReviews } from '@/lib/db';
 
 
 export default function ReviewsPage() {
@@ -17,18 +18,19 @@ export default function ReviewsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!firestore) return;
     const fetchReviews = async () => {
       setIsLoading(true);
-      // Query the top-level 'reviews' collection, ordered by reviewedOn
-      const reviewsQuery = query(collection(firestore, 'reviews'), orderBy('reviewedOn', 'desc'));
-      const querySnapshot = await getDocs(reviewsQuery);
-      const reviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ManagedReview)); // Changed type
-      setAllReviews(reviews);
-      setIsLoading(false);
+      try {
+        const reviews = await getAllReviews();
+        setAllReviews(reviews);
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchReviews();
-  }, [firestore]);
+  }, []);
 
 
   return (
@@ -60,9 +62,7 @@ export default function ReviewsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {allReviews?.map((review, index) => {
                 // Safely get the date object, handling both Timestamp and Date types
-                const dateObject = review.reviewedOn instanceof Timestamp 
-                    ? review.reviewedOn.toDate() 
-                    : (review.reviewedOn instanceof Date ? review.reviewedOn : null);
+                const dateObject = new Date(review.reviewedOn as string);
                 const displayDate = dateObject ? format(dateObject, 'PPP') : 'N/A';
 
                 return (
