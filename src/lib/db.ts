@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
@@ -664,28 +665,6 @@ export async function getAllReviews(): Promise<ManagedReview[]> {
         console.error("Error fetching all reviews:", error);
         await logError({ message: `Failed to fetch all reviews: ${error.message}`, stack: error.stack, pathname: '/manage/reviews' });
         throw new Error("Could not fetch all reviews from the database.");
-    }
-}
-
-/**
- * Efficiently gets the total count of reviews in the 'reviews' collection.
- * @returns A promise that resolves to the total number of reviews.
- */
-export async function getReviewCount(): Promise<number> {
-    if (!firestore) {
-        console.error("Firestore is not initialized. Cannot get review count.");
-        return 0;
-    }
-    try {
-        const reviewsRef = collection(firestore, 'reviews');
-        const snapshot = await aggregate(reviewsRef, {
-            count: count(),
-        });
-        return snapshot.data().count;
-    } catch (error: any) {
-        console.error("Error getting review count:", error);
-        await logError({ message: `Failed to get review count: ${error.message}`, stack: error.stack, pathname: '/' });
-        throw new Error("Could not get review count from the database.");
     }
 }
 
