@@ -10,6 +10,7 @@ import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useSiteProfile } from '@/hooks/use-site-profile';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function HeroSection() {
   const router = useRouter();
@@ -19,9 +20,10 @@ export function HeroSection() {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   
   const { profile, isLoading } = useSiteProfile();
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // Use a variable for the image to make the logic clearer
-  const heroImageSrc = profile?.heroImage || 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg';
+  const heroImageSrc = profile?.heroImage;
 
   const heroContent = {
     title: profile?.heroTitle || 'Discover Your Next Adventure',
@@ -69,15 +71,27 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative w-full h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white">
-      <Image
-        src={heroImageSrc}
-        alt="Majestic mountain range at sunrise"
-        fill
-        className="object-cover"
-        priority
-        data-ai-hint="mountain sunrise"
-      />
+    <section className="relative w-full h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white bg-black">
+      <AnimatePresence>
+        {heroImageSrc && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isImageLoaded ? 1 : 0 }}
+            transition={{ duration: 1.0, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full"
+          >
+            <Image
+              src={heroImageSrc}
+              alt="Majestic mountain range at sunrise"
+              fill
+              className="object-cover"
+              priority
+              data-ai-hint="mountain sunrise"
+              onLoad={() => setIsImageLoaded(true)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative z-10 p-4 max-w-4xl mx-auto w-full">
         {isLoading ? (
@@ -143,4 +157,3 @@ export function HeroSection() {
     </section>
   );
 }
-
