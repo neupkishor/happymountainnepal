@@ -86,29 +86,6 @@
               "format": "uri"
             }
           }
-        },
-        "whyUs": {
-          "type": "array",
-          "description": "A list of features for the 'Why Us' section.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "icon": {
-                "type": "string",
-                "format": "uri",
-                "description": "URL for the feature icon (SVG or PNG)."
-              },
-              "title": {
-                "type": "string",
-                "description": "The title of the feature."
-              },
-              "description": {
-                "type": "string",
-                "description": "A short description of the feature."
-              }
-            },
-            "required": ["icon", "title", "description"]
-          }
         }
       }
     }
