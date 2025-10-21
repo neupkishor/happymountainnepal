@@ -101,7 +101,9 @@ export interface SiteError {
     context?: Record<string, any>;
 }
 
-export interface FileUpload { // Renamed from MediaUpload
+export type UploadCategory = 'general' | 'trip' | 'document' | 'background' | 'feature-icon' | 'user-photo' | 'blog' | 'logo' | 'author';
+
+export interface FileUpload {
   id: string;
   fileName: string;
   url: string;
@@ -109,6 +111,7 @@ export interface FileUpload { // Renamed from MediaUpload
   uploadedAt: string; // Changed from Timestamp to string
   fileSize?: number; // Added: Size of the uploaded file in bytes
   fileType?: string; // Added: MIME type of the uploaded file
+  category: UploadCategory; // The "for" field, e.g., 'trip', 'document', 'feature-icon'
   metaInformation?: Record<string, any>; // Added: Any additional metadata
 }
 
@@ -156,6 +159,7 @@ export interface SiteProfile {
     instagram?: string;
     twitter?: string;
   };
+  whyUs?: { icon: string; title: string; description: string; }[];
 }
 
 export interface LegalDocument {

@@ -8,7 +8,6 @@ import {
   Form,
   FormField,
   FormItem,
-  FormLabel,
   FormControl,
   FormMessage,
 } from '@/components/ui/form';
@@ -85,7 +84,7 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
               
               <div>
                 <h3 className="text-lg font-medium mb-2">Main Image</h3>
-                <MediaPicker name="mainImage" />
+                <MediaPicker name="mainImage" category="trip" />
                 <FormMessage>{form.formState.errors.mainImage?.message}</FormMessage>
               </div>
               

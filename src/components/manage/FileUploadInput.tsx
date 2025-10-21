@@ -10,6 +10,7 @@ import imageCompression from 'browser-image-compression';
 import { logError, logFileUpload } from '@/lib/db';
 import { usePathname } from 'next/navigation';
 import { slugify } from '@/lib/utils';
+import type { UploadCategory } from '@/lib/types';
 
 interface FileUploadInputProps {
   name: string;
@@ -18,6 +19,7 @@ interface FileUploadInputProps {
   onUploadingChange?: (isUploading: boolean) => void;
   customFileName?: string;
   skipCompression?: boolean;
+  category?: UploadCategory;
 }
 
 export function FileUploadInput({
@@ -27,6 +29,7 @@ export function FileUploadInput({
   onUploadingChange,
   customFileName,
   skipCompression = false,
+  category = 'general',
 }: FileUploadInputProps) {
   const { control, setValue } = useFormContext();
   const { field } = useController({ name, control });
@@ -121,6 +124,7 @@ export function FileUploadInput({
           userId: userId,
           fileSize: correctedFile.size,
           fileType: correctedFile.type,
+          category: category, // Add category to the log
         });
 
         onUploadSuccess?.(fullUrl);

@@ -22,12 +22,8 @@ export default function LegalDocumentsPage() {
   const fetchDocuments = async () => {
     setIsLoading(true);
     try {
-      const allUploads = await getFileUploads();
-      // A simple way to filter for "legal" documents could be by uploader/context,
-      // but for now we will assume all PDFs/images in a certain context are legal docs.
-      // We will filter by file type for this example.
-      const legalDocs = allUploads.filter(u => u.fileType?.startsWith('image/') || u.fileType === 'application/pdf');
-      setUploads(legalDocs);
+      const allUploads = await getFileUploads({ category: 'document' });
+      setUploads(allUploads);
     } catch (error) {
       console.error("Failed to load documents", error);
       toast({ variant: "destructive", title: "Error", description: "Could not load legal documents." });
@@ -59,7 +55,7 @@ export default function LegalDocumentsPage() {
           <CardHeader>
             <CardTitle>Upload New Document</CardTitle>
             <CardDescription>
-              Accepted file types: Images (JPG, PNG, WebP) and PDF.
+              Accepted file types: Images (JPG, PNG, WebP) and PDF. Files will be categorized as "document".
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -67,7 +63,8 @@ export default function LegalDocumentsPage() {
               name="legal-document-upload"
               onUploadingChange={setIsUploading}
               onUploadSuccess={handleUploadSuccess}
-              skipCompression={true} // It's better not to compress legal docs
+              skipCompression={true}
+              category="document"
             >
               <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
                 <p>Click or drag file to this area to upload</p>

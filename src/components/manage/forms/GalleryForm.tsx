@@ -47,6 +47,7 @@ const getFileNameFromUrl = (url: string): string => {
 
 export function GalleryForm({ tour }: GalleryFormProps) {
   const [isPending, startTransition] = useTransition();
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const { toast } = useToast();
   const pathname = usePathname();
 
@@ -61,6 +62,7 @@ export function GalleryForm({ tour }: GalleryFormProps) {
 
   const handleSelectImages = (urls: string[]) => {
     form.setValue('images', urls, { shouldValidate: true, shouldDirty: true });
+    setIsLibraryOpen(false);
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
@@ -131,12 +133,10 @@ export function GalleryForm({ tour }: GalleryFormProps) {
                     </div>
                 )}
 
-                <MediaLibraryDialog onSelect={handleSelectImages} initialSelectedUrls={currentImages}>
-                    <Button type="button" variant="outline" className="w-full" disabled={isPending}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Select Images from Library
-                    </Button>
-                </MediaLibraryDialog>
+                <Button type="button" variant="outline" className="w-full" disabled={isPending} onClick={() => setIsLibraryOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Select Images from Library
+                </Button>
                 <FormMessage>{form.formState.errors.images?.message}</FormMessage>
               </div>
 
@@ -148,6 +148,13 @@ export function GalleryForm({ tour }: GalleryFormProps) {
           </Form>
         </CardContent>
       </Card>
+      <MediaLibraryDialog
+        isOpen={isLibraryOpen}
+        onClose={() => setIsLibraryOpen(false)}
+        onSelect={handleSelectImages}
+        initialSelectedUrls={currentImages}
+        defaultCategory="trip"
+      />
     </FormProvider>
   );
 }

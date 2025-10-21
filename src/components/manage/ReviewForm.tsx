@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { type ManagedReview } from '@/lib/types';
+import { type ManagedReview, OnSiteReview, OffSiteReview } from '@/lib/types';
 import { addReview, updateReview, logError, getAllToursForSelect } from '@/lib/db';
 import { useTransition, useState, useEffect } from 'react';
 import { Loader2, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
@@ -94,7 +94,7 @@ export function ReviewForm({ review }: ReviewFormProps) {
       type: review?.type || 'onSite',
       userName: review?.userName || '',
       userRole: review?.userRole || '', // Set default value for userRole
-      reviewedOn: review?.reviewedOn?.toDate() || new Date(),
+      reviewedOn: review?.reviewedOn ? new Date(review.reviewedOn as any) : new Date(),
       reviewFor: review?.reviewFor || null,
       reviewBody: review?.reviewBody || '',
       reviewMedia: review?.reviewMedia || [],
@@ -129,7 +129,7 @@ export function ReviewForm({ review }: ReviewFormProps) {
       }
     };
     fetchTours();
-  }, []);
+  }, [toast]);
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
@@ -377,7 +377,7 @@ export function ReviewForm({ review }: ReviewFormProps) {
                 {mediaFields.map((field, index) => (
                    <div key={field.id} className="flex items-center gap-2 p-4 border rounded-lg">
                      <div className="w-full">
-                        <MediaPicker name={`reviewMedia.${index}`} />
+                        <MediaPicker name={`reviewMedia.${index}`} category="trip" />
                         <FormMessage>{form.formState.errors.reviewMedia?.[index]?.message}</FormMessage>
                      </div>
                      <Button type="button" variant="ghost" size="icon" onClick={() => removeMedia(index)} disabled={isPending}>
