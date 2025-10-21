@@ -36,7 +36,7 @@ export function ReviewCarouselItem({ review }: ReviewCarouselItemProps) {
           <div className="flex-grow">
             <p className="font-semibold text-lg">{review.userName}</p>
             {review.userRole && <p className="text-sm text-muted-foreground -mt-1">{review.userRole}</p>}
-            <ReviewStars rating={review.stars} className="h-5 w-5 mt-2" />
+            <ReviewStars rating={review.stars} className="mt-2" />
           </div>
         </div>
         <p className="text-muted-foreground italic mt-4 text-base">
