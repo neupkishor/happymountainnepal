@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -221,7 +222,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     <FormItem>
                     <FormLabel>Region (comma-separated)</FormLabel>
                     <FormControl>
-                        <Textarea placeholder="e.g., Everest, Annapurna" {...field} disabled={isPending} rows={3} /> {/* Changed to Textarea */}
+                        <Input placeholder="e.g., Everest, Annapurna" {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
