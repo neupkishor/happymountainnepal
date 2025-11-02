@@ -66,6 +66,12 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
     fetchAllTourNames();
   }, [tour.id]);
 
+  const handleLoadMore = () => {
+    if (hasMoreReviews && !isLoadingReviews) {
+      fetchReviews();
+    }
+  };
+
   const averageRating = displayedReviews.length > 0 
     ? (displayedReviews.reduce((acc, review) => acc + review.stars, 0) / displayedReviews.length) 
     : 0;
