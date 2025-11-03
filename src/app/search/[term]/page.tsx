@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useFirestore } from '@/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore'; // Added where
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
 import { TourCard } from '@/components/TourCard';
 import { CardsGrid } from '@/components/CardsGrid';
@@ -11,13 +11,25 @@ import { Mountain, Search as SearchIcon, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-function SearchComponent() {
+const hardshipToDifficulties: Record<string, string[]> = {
+  low: ['Easy'],
+  mid: ['Moderate'],
+  high: ['Strenuous', 'Challenging'],
+};
+
+function SearchComponent({ term }: { term: string }) {
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
-  
-  const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [submittedTerm, setSubmittedTerm] = useState(initialQuery);
-  
+  const initialRegion = searchParams.get('region') || '';
+  const initialHardshipParam = searchParams.get('hardship') || '';
+  const initialHardship = initialHardshipParam
+    ? initialHardshipParam.split(',').map(h => h.trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  const [searchTerm, setSearchTerm] = useState(term || '');
+  const [submittedTerm, setSubmittedTerm] = useState(term || '');
+  const [region, setRegion] = useState(initialRegion);
+  const [hardship, setHardship] = useState<string[]>(initialHardship);
+
   const firestore = useFirestore();
   const [allTours, setAllTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +38,7 @@ function SearchComponent() {
     if (!firestore) return;
     const fetchTours = async () => {
       setLoading(true);
-      const q = query(collection(firestore, 'packages'), where('status', '==', 'published')); // Filter by published status
+      const q = query(collection(firestore, 'packages'), where('status', '==', 'published'));
       const querySnapshot = await getDocs(q);
       const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
       setAllTours(tours);
@@ -36,16 +48,22 @@ function SearchComponent() {
   }, [firestore]);
 
   useEffect(() => {
-    setSearchTerm(initialQuery);
-    setSubmittedTerm(initialQuery);
-  }, [initialQuery]);
+    setRegion(initialRegion);
+    setHardship(initialHardship);
+    setSearchTerm(term || '');
+    setSubmittedTerm(term || '');
+  }, [initialRegion, initialHardshipParam, term]);
 
   const filteredTours = useMemo(() => {
     if (!submittedTerm || !allTours) return [];
+    const selectedDifficulties = hardship.flatMap(h => hardshipToDifficulties[h] || []);
     return allTours.filter((tour: Tour) => {
-      return tour.name.toLowerCase().includes(submittedTerm.toLowerCase());
+      const matchesName = tour.name.toLowerCase().includes(submittedTerm.toLowerCase());
+      const matchesRegion = region === '' || (Array.isArray(tour.region) && tour.region.includes(region));
+      const matchesHardship = hardship.length === 0 || selectedDifficulties.includes(tour.difficulty);
+      return matchesName && matchesRegion && matchesHardship;
     });
-  }, [submittedTerm, allTours]);
+  }, [submittedTerm, allTours, region, hardship]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +95,6 @@ function SearchComponent() {
             </Button>
         </form>
       </div>
-      
       {loading ? (
         <div className="text-center py-16">
           <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin" />
@@ -99,7 +116,7 @@ function SearchComponent() {
                 <Mountain className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-semibold">No Tours Found</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    We couldn't find any tours matching your search. Please try a different term.
+                    We couldn't find any tours matching your search and filters.
                 </p>
                 </div>
             )}
@@ -109,11 +126,10 @@ function SearchComponent() {
   );
 }
 
-
-export default function SearchPage() {
+export default function SearchPage({ params }: { params: { term: string } }) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <SearchComponent />
+      <SearchComponent term={decodeURIComponent(params.term)} />
     </Suspense>
   )
 }

@@ -17,7 +17,7 @@ const hardshipToDifficulties: Record<string, string[]> = {
   high: ['Strenuous', 'Challenging'],
 };
 
-function ToursPageContent() { // Renamed to ToursPageContent
+function TripsPageContent() {
   const searchParams = useSearchParams();
   const initialRegion = searchParams.get('region') || '';
   const initialSearch = searchParams.get('search') || '';
@@ -25,7 +25,7 @@ function ToursPageContent() { // Renamed to ToursPageContent
   const initialHardship = initialHardshipParam
     ? initialHardshipParam.split(',').map(h => h.trim().toLowerCase()).filter(Boolean)
     : [];
-  
+
   const firestore = useFirestore();
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +40,7 @@ function ToursPageContent() { // Renamed to ToursPageContent
     if (!firestore) return;
     const fetchTours = async () => {
       setLoading(true);
-      const q = query(collection(firestore, 'packages'), where('status', '==', 'published')); // Filter by published status
+      const q = query(collection(firestore, 'packages'), where('status', '==', 'published'));
       const querySnapshot = await getDocs(q);
       const fetchedTours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
       setTours(fetchedTours);
@@ -57,7 +57,7 @@ function ToursPageContent() { // Renamed to ToursPageContent
       hardship: initialHardship,
     }));
   }, [initialRegion, initialSearch, initialHardshipParam]);
-  
+
   const allRegions = useMemo(() => {
     if (!tours) return [];
     const regionsSet = new Set<string>();
@@ -83,8 +83,8 @@ function ToursPageContent() { // Renamed to ToursPageContent
   return (
     <div className="container mx-auto py-10">
       <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold !font-headline tracking-tight">Explore Himalayan Treks</h1>
-        <p className="mt-3 max-w-2xl mx-auto text-muted-foreground">Minimal, elegant listings to help you find the right adventure.</p>
+        <h1 className="text-3xl md:text-4xl font-bold !font-headline tracking-tight">Explore Trips</h1>
+        <p className="mt-3 max-w-2xl mx-auto text-muted-foreground">Browse popular packages with the same polished card design as the homepage.</p>
       </div>
 
       <MinimalTourFilters 
@@ -116,7 +116,7 @@ function ToursPageContent() { // Renamed to ToursPageContent
       ) : (
         <div className="text-center py-16 bg-card rounded-lg">
           <Mountain className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold">No Tours Found</h3>
+          <h3 className="mt-4 text-lg font-semibold">No Trips Found</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Try adjusting your filters or search terms.
           </p>
@@ -126,10 +126,10 @@ function ToursPageContent() { // Renamed to ToursPageContent
   );
 }
 
-export default function ToursPage() {
+export default function TripsPage() {
   return (
-    <Suspense fallback={<div>Loading tours...</div>}>
-      <ToursPageContent />
+    <Suspense fallback={<div>Loading trips...</div>}>
+      <TripsPageContent />
     </Suspense>
   )
 }
