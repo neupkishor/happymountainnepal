@@ -42,42 +42,50 @@ export function PackageTableRow({ tour }: PackageTableRowProps) {
 
   return (
     <TableRow>
-      <TableCell>
-        <div className="font-medium break-words">{tour.name}</div>
-        <div className="text-xs text-muted-foreground break-all">{tour.id}</div>
-      </TableCell>
-      <TableCell>{tour.region}</TableCell>
-      <TableCell>{tour.duration} days</TableCell>
-      <TableCell>
-        <Badge variant={getStatusVariant(displayStatus)}>
-          {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/tours/${tour.slug}`} target="_blank">View Public Page</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>Edit</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DeletePackageDialog tour={tour}>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DeletePackageDialog>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
+      {[
+        (
+          <TableCell key="name">
+            <div className="font-medium break-words">{tour.name}</div>
+            <div className="text-xs text-muted-foreground break-all">{tour.id}</div>
+          </TableCell>
+        ),
+        <TableCell key="region">{Array.isArray(tour.region) ? tour.region.join(', ') : tour.region}</TableCell>,
+        <TableCell key="duration">{tour.duration} days</TableCell>,
+        (
+          <TableCell key="status">
+            <Badge variant={getStatusVariant(displayStatus)}>
+              {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+            </Badge>
+          </TableCell>
+        ),
+        (
+          <TableCell key="actions" className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/tours/${tour.slug}`} target="_blank">View Public Page</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>Edit</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DeletePackageDialog tour={tour}>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DeletePackageDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        ),
+      ]}
     </TableRow>
   );
 }

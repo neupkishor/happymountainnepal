@@ -65,11 +65,13 @@ export default function PackagesListPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Package Name</TableHead>
-                <TableHead>Region</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead> {/* Added Status column */}
-                <TableHead className="text-right">Actions</TableHead>
+                {[
+                  <TableHead key="name">Package Name</TableHead>,
+                  <TableHead key="region">Region</TableHead>,
+                  <TableHead key="duration">Duration</TableHead>,
+                  <TableHead key="status">Status</TableHead>,
+                  <TableHead key="actions" className="text-right">Actions</TableHead>,
+                ]}
               </TableRow>
             </TableHeader>
             <TableBody>
