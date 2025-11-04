@@ -1,0 +1,278 @@
+"use client";
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { useTransition, useState, useEffect } from 'react';
+import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePathname, useRouter } from 'next/navigation';
+import { slugify } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
+import { checkSlugAvailability, createTourWithBasicInfo, logError } from '@/lib/db';
+
+const formSchema = z.object({
+  name: z.string().min(5, { message: "Name must be at least 5 characters." }),
+  slug: z.string().min(3, { message: "Slug must be at least 3 characters." }).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, alphanumeric, and use hyphens for spaces."),
+  region: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)).refine(val => val.length > 0, { message: "At least one region is required." }),
+  type: z.enum(['Trek', 'Tour', 'Peak Climbing']),
+  difficulty: z.enum(['Easy', 'Moderate', 'Strenuous', 'Challenging']),
+  duration: z.coerce.number().int().min(1, { message: "Duration must be at least 1 day." }),
+  description: z.string().min(20, { message: "Description must be at least 20 characters." }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+export function CreatePackageForm() {
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      slug: '',
+      region: [],
+      type: 'Trek',
+      difficulty: 'Moderate',
+      duration: 1,
+      description: '',
+    } as any,
+  });
+
+  const name = form.watch('name');
+  const currentSlug = form.watch('slug');
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+  const [isSlugChecking, setIsSlugChecking] = useState(false);
+  const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
+
+  const debouncedSlug = useDebounce(currentSlug, 500);
+
+  // Auto-generate slug from name if not manually edited
+  useEffect(() => {
+    if (!isSlugManuallyEdited && name) {
+      form.setValue('slug', slugify(name), { shouldValidate: true });
+    }
+  }, [name, isSlugManuallyEdited, form]);
+
+  // Check slug availability
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!debouncedSlug || form.formState.errors.slug?.message) {
+        setIsSlugAvailable(null);
+        return;
+      }
+      setIsSlugChecking(true);
+      try {
+        const available = await checkSlugAvailability(debouncedSlug);
+        setIsSlugAvailable(available);
+      } catch (e) {
+        setIsSlugAvailable(null);
+      } finally {
+        setIsSlugChecking(false);
+      }
+    };
+    checkAvailability();
+  }, [debouncedSlug, form, form.formState.errors.slug?.message]);
+
+  const onSubmit = (values: FormValues) => {
+    startTransition(async () => {
+      try {
+        const newId = await createTourWithBasicInfo({
+          name: values.name,
+          slug: values.slug,
+          description: values.description,
+          region: Array.isArray(values.region) ? values.region : [],
+          type: values.type,
+          difficulty: values.difficulty,
+          duration: values.duration,
+        });
+
+        if (!newId) throw new Error('Failed to create package');
+
+        toast({ title: 'Success', description: 'Package created.' });
+        router.push(`/manage/packages/${newId}/edit/basic-info`);
+      } catch (error: any) {
+        console.error("Failed to create package:", error);
+        await logError({ message: `Failed to create package: ${error.message}`, stack: error.stack, pathname, context: { values } });
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not create package. Please try again.',
+        });
+      }
+    });
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Package Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Everest Base Camp Trek" {...field} disabled={isPending} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL Slug</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., everest-base-camp-trek"
+                        {...field}
+                        disabled={isPending || isSlugChecking}
+                        onChange={(e) => {
+                          field.onChange(slugify(e.target.value));
+                          setIsSlugManuallyEdited(true);
+                          setIsSlugAvailable(null);
+                        }}
+                      />
+                    </FormControl>
+                    {isSlugChecking && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
+                    )}
+                    {!isSlugChecking && isSlugAvailable !== null && (
+                      isSlugAvailable ? (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
+                      ) : (
+                        <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                      )
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Short Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="A brief overview of the trek or tour..."
+                      {...field}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="region"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Region (comma-separated)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Everest, Khumbu"
+                        {...field as any}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Activity Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an activity type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Trek">Trek</SelectItem>
+                        <SelectItem value="Tour">Tour</SelectItem>
+                        <SelectItem value="Peak Climbing">Peak Climbing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="difficulty"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Difficulty Level</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a difficulty level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Easy">Easy</SelectItem>
+                        <SelectItem value="Moderate">Moderate</SelectItem>
+                        <SelectItem value="Strenuous">Strenuous</SelectItem>
+                        <SelectItem value="Challenging">Challenging</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duration (days)</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={1} {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Button type="submit" disabled={isPending || isSlugChecking || !isSlugAvailable}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Package
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}

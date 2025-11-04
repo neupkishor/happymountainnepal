@@ -152,6 +152,62 @@ export async function createTour(): Promise<string | null> {
     }
 }
 
+// Create a new tour with provided basic info
+export async function createTourWithBasicInfo(data: {
+    name: string;
+    slug: string;
+    description: string;
+    region: string[];
+    type: 'Trek' | 'Tour' | 'Peak Climbing';
+    difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';
+    duration: number;
+}): Promise<string | null> {
+    if (!firestore) {
+        console.error("Firestore is not initialized.");
+        return null;
+    }
+
+    try {
+        // Ensure slug is unique
+        const isAvailable = await checkSlugAvailability(data.slug);
+        if (!isAvailable) {
+            throw new Error(`Slug '${data.slug}' is already in use.`);
+        }
+
+        const newTourData = {
+            name: data.name || 'New Untitled Package',
+            slug: slugify(data.slug || data.name || 'new-package'),
+            description: data.description || '',
+            region: Array.isArray(data.region) ? data.region : [],
+            type: data.type || 'Trek',
+            difficulty: data.difficulty || 'Moderate',
+            duration: typeof data.duration === 'number' ? data.duration : 0,
+            price: 0,
+            mainImage: '',
+            images: [],
+            itinerary: [],
+            inclusions: [],
+            exclusions: [],
+            departureDates: [],
+            anyDateAvailable: false,
+            map: 'https://www.google.com/maps/d/u/0/viewer?mid=1OXiIBghnVbSBVV-aRCScumjB9yz1woY&femb=1&ll=28.371376049324283%2C83.8769916&z=11',
+            reviews: [],
+            status: 'draft',
+            faq: [],
+            additionalInfoSections: [],
+            bookingType: 'internal',
+            externalBookingUrl: '',
+        };
+
+        const docRef = await addDoc(collection(firestore, 'packages'), newTourData);
+        return docRef.id;
+    } catch (error: any) {
+        console.error("Error creating tour with basic info: ", error);
+        await logError({ message: `Failed to create tour with basic info: ${error.message}`, stack: error.stack, pathname: '/manage/packages/create', context: { data } });
+        return null;
+    }
+}
+
 export async function updateTour(id: string, data: Partial<Omit<Tour, 'id'>>) {
     if (!firestore) throw new Error("Database not available.");
     try {
