@@ -1,4 +1,3 @@
-
 import { Timestamp } from "firebase/firestore";
 
 export interface Tour {
@@ -182,4 +181,16 @@ export interface LegalContent {
     id: 'privacy-policy' | 'terms-of-service';
     content: string;
     lastUpdated: Timestamp;
+}
+
+// New type for AI import
+export interface ImportedTourData {
+  name: string;
+  description: string;
+  duration: number;
+  difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';
+  region: string[];
+  itinerary: { day: number; title: string; description: string }[];
+  inclusions: string[];
+  exclusions: string[];
 }
