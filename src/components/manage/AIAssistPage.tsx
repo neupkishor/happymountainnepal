@@ -15,6 +15,7 @@ import { importTourData } from '@/ai/flows/import-tour-data-flow';
 import type { Tour, ImportedTourData } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 
 const formSchema = z.object({
   source: z.string().min(10, { message: "Please enter a URL or paste at least 10 characters of text." }),
@@ -152,18 +153,33 @@ export function AIAssistPageComponent({ tour }: AIAssistPageComponentProps) {
           <CardDescription>Paste a URL or raw text content to extract tour details from.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(handleFetchData)} className="space-y-4">
-            <Textarea
-              placeholder="https://example.com/tour-details or paste raw text here..."
-              {...form.register('source')}
-              disabled={isFetching}
-              rows={8}
-            />
-            <Button type="submit" disabled={isFetching} className="w-full sm:w-auto">
-              {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-              Fetch & Analyze
-            </Button>
-          </form>
+            <FormProvider {...form}>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleFetchData)} className="space-y-4">
+                        <FormField
+                        control={form.control}
+                        name="source"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormControl>
+                                <Textarea
+                                placeholder="https://example.com/tour-details or paste raw text here..."
+                                {...field}
+                                disabled={isFetching}
+                                rows={8}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <Button type="submit" disabled={isFetching} className="w-full sm:w-auto">
+                        {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                        Fetch & Analyze
+                        </Button>
+                    </form>
+                </Form>
+            </FormProvider>
         </CardContent>
       </Card>
 
