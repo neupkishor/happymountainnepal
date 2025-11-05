@@ -13,26 +13,34 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Wand2, Link as LinkIcon, Pilcrow } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Loader2, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { logError } from '@/lib/db';
 import { importTourData } from '@/ai/flows/import-tour-data-flow';
 import type { ImportedTourData } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+// Schema now accepts a single text field which can be a URL or raw text
 const formSchema = z.object({
-  url: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
-  text: z.string().optional(),
+  source: z.string().min(10, { message: "Please enter a URL or paste at least 10 characters of text." }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface ImportTourFormProps {
   setImportedData: (data: ImportedTourData | null) => void;
+}
+
+// Simple URL validation
+const isUrl = (text: string) => {
+  try {
+    new URL(text);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
@@ -42,18 +50,15 @@ export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { url: '', text: '' },
+    defaultValues: { source: '' },
   });
 
-  const handleImport = async (values: FormValues, type: 'url' | 'text') => {
+  const handleImport = async (values: FormValues) => {
     setIsImporting(true);
+    const sourceIsUrl = isUrl(values.source);
+    
     try {
-      const inputData = type === 'url' ? { url: values.url } : { text: values.text };
-      
-      if ((type === 'url' && !values.url) || (type === 'text' && !values.text)) {
-          throw new Error("Input is required.");
-      }
-
+      const inputData = sourceIsUrl ? { url: values.source } : { text: values.source };
       const importedData = await importTourData(inputData);
       setImportedData(importedData);
       
@@ -65,7 +70,7 @@ export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
     } catch (error: any) {
       console.error("Import failed:", error);
       logError({ 
-        message: `Failed to import from ${type}: ${error.message}`, 
+        message: `Failed to import from ${sourceIsUrl ? 'URL' : 'Text'}: ${error.message}`, 
         stack: error.stack, 
         pathname, 
         context: { values } 
@@ -83,66 +88,39 @@ export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+            <Wand2 className="h-6 w-6 text-primary" />
+            AI-Powered Import
+        </CardTitle>
+        <CardDescription>
+            Paste a URL or tour details below to automatically populate the form.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <Form {...form}>
-          <form className="space-y-6">
-            <Tabs defaultValue="url">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="url">
-                  <LinkIcon className="mr-2 h-4 w-4" /> From URL
-                </TabsTrigger>
-                <TabsTrigger value="text">
-                  <Pilcrow className="mr-2 h-4 w-4" /> From Text
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="url">
-                <FormField
-                  control={form.control}
-                  name="url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tour Page URL</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="https://example-tour-company.com/everest-trek"
-                          {...field}
-                          disabled={isImporting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <Button onClick={form.handleSubmit((v) => handleImport(v, 'url'))} disabled={isImporting} className="mt-4">
-                  {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                  Import from URL
-                </Button>
-              </TabsContent>
-              <TabsContent value="text">
-                 <FormField
-                  control={form.control}
-                  name="text"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pasted Text</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Paste all the tour details here, including itinerary, price, inclusions, etc."
-                          {...field}
-                          disabled={isImporting}
-                          rows={15}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <Button onClick={form.handleSubmit((v) => handleImport(v, 'text'))} disabled={isImporting} className="mt-4">
-                  {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                  Import from Text
-                </Button>
-              </TabsContent>
-            </Tabs>
+          <form onSubmit={form.handleSubmit(handleImport)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="source"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea
+                      placeholder="https://example-tour-company.com/everest-trek&#10;...or paste your tour details here."
+                      {...field}
+                      disabled={isImporting}
+                      rows={8}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" disabled={isImporting} className="w-full">
+              {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+              Import Details
+            </Button>
           </form>
         </Form>
       </CardContent>
