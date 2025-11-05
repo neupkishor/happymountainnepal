@@ -1,13 +1,11 @@
 
-
-
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -153,48 +151,41 @@ export async function createTour(): Promise<string | null> {
 }
 
 // Create a new tour with provided basic info
-export async function createTourWithBasicInfo(data: {
-    name: string;
-    slug: string;
-    description: string;
-    region: string[];
-    type: 'Trek' | 'Tour' | 'Peak Climbing';
-    difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';
-    duration: number;
-}): Promise<string | null> {
+export async function createTourWithBasicInfo(data: Partial<ImportedTourData>): Promise<string | null> {
     if (!firestore) {
         console.error("Firestore is not initialized.");
         return null;
     }
 
     try {
+        const slug = slugify(data.slug || data.name || 'new-package');
         // Ensure slug is unique
-        const isAvailable = await checkSlugAvailability(data.slug);
+        const isAvailable = await checkSlugAvailability(slug);
         if (!isAvailable) {
-            throw new Error(`Slug '${data.slug}' is already in use.`);
+            throw new Error(`Slug '${slug}' is already in use.`);
         }
 
         const newTourData = {
             name: data.name || 'New Untitled Package',
-            slug: slugify(data.slug || data.name || 'new-package'),
+            slug: slug,
             description: data.description || '',
             region: Array.isArray(data.region) ? data.region : [],
             type: data.type || 'Trek',
             difficulty: data.difficulty || 'Moderate',
             duration: typeof data.duration === 'number' ? data.duration : 0,
-            price: 0,
+            price: data.price || 0,
             mainImage: '',
             images: [],
-            itinerary: [],
-            inclusions: [],
-            exclusions: [],
+            itinerary: data.itinerary || [],
+            inclusions: data.inclusions || [],
+            exclusions: data.exclusions || [],
             departureDates: [],
             anyDateAvailable: false,
             map: 'https://www.google.com/maps/d/u/0/viewer?mid=1OXiIBghnVbSBVV-aRCScumjB9yz1woY&femb=1&ll=28.371376049324283%2C83.8769916&z=11',
             reviews: [],
             status: 'draft',
-            faq: [],
-            additionalInfoSections: [],
+            faq: data.faq || [],
+            additionalInfoSections: data.additionalInfoSections || [],
             bookingType: 'internal',
             externalBookingUrl: '',
         };
@@ -975,5 +966,137 @@ export async function deleteLegalDocument(id: string): Promise<void> {
     } catch (error: any) {
         console.error("Error deleting legal document:", error);
         throw new Error("Could not delete legal document.");
+    }
+}
+
+// New paginated tours function
+interface PaginatedToursResult {
+    tours: Tour[];
+    lastDocId: string | null;
+    hasMore: boolean;
+}
+
+export async function getPaginatedTours({ limit, lastDocId }: { limit: number, lastDocId: string | null }): Promise<PaginatedToursResult> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        let q = query(
+            collection(firestore, 'packages'),
+            where('status', '==', 'published'),
+            orderBy('name'),
+            firestoreLimit(limit + 1)
+        );
+
+        if (lastDocId) {
+            const lastVisible = await getDoc(doc(firestore, "packages", lastDocId));
+            if (lastVisible.exists()) {
+                q = query(
+                    collection(firestore, 'packages'),
+                    where('status', '==', 'published'),
+                    orderBy('name'),
+                    startAfter(lastVisible),
+                    firestoreLimit(limit + 1)
+                );
+            }
+        }
+
+        const querySnapshot = await getDocs(q);
+        const fetchedTours = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as Tour));
+
+        const hasMore = fetchedTours.length > limit;
+        const toursToReturn = hasMore ? fetchedTours.slice(0, limit) : fetchedTours;
+        const newLastDocId = toursToReturn.length > 0 ? toursToReturn[toursToReturn.length - 1].id : null;
+
+        return {
+            tours: toursToReturn,
+            lastDocId: newLastDocId,
+            hasMore,
+        };
+    } catch (error: any) {
+        console.error("Error fetching paginated tours:", error);
+        await logError({
+            message: `Failed to fetch paginated tours: ${error.message}`,
+            stack: error.stack,
+            pathname: '/tours'
+        });
+        throw new Error("Could not fetch tours from the database.");
+    }
+}
+
+export async function getAllTourRegions(): Promise<string[]> {
+    if (!firestore) return [];
+    try {
+        const querySnapshot = await getDocs(query(collection(firestore, 'packages'), where('status', '==', 'published')));
+        const regionsSet = new Set<string>();
+        querySnapshot.forEach(doc => {
+            const tour = doc.data() as Tour;
+            if (Array.isArray(tour.region)) {
+                tour.region.forEach(r => regionsSet.add(r));
+            }
+        });
+        return Array.from(regionsSet).sort();
+    } catch (error) {
+        console.error("Error fetching all tour regions:", error);
+        return [];
+    }
+}
+
+export async function updateTourWithAiData(tourId: string, data: Partial<ImportedTourData>): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    
+    try {
+        const docRef = doc(firestore, 'packages', tourId);
+        const tourDoc = await getDoc(docRef);
+
+        if (!tourDoc.exists()) {
+            throw new Error("Tour not found.");
+        }
+
+        const existingData = tourDoc.data() as Tour;
+        const updateData: Partial<Tour> = {};
+        
+        // Simple fields (overwrite)
+        if (data.name) updateData.name = data.name;
+        if (data.description) updateData.description = data.description;
+        if (data.duration) updateData.duration = data.duration;
+        if (data.price) updateData.price = data.price;
+        if (data.difficulty) updateData.difficulty = data.difficulty;
+        if (data.region) updateData.region = [...new Set([...(existingData.region || []), ...data.region])];
+
+        // Array fields (append unique)
+        if (data.itinerary) {
+            const existingDays = new Set(existingData.itinerary?.map(i => i.day));
+            const newItems = data.itinerary.filter(i => !existingDays.has(i.day));
+            updateData.itinerary = [...(existingData.itinerary || []), ...newItems];
+        }
+        if (data.inclusions) {
+            updateData.inclusions = [...new Set([...(existingData.inclusions || []), ...data.inclusions])];
+        }
+        if (data.exclusions) {
+            updateData.exclusions = [...new Set([...(existingData.exclusions || []), ...data.exclusions])];
+        }
+        if (data.faq) {
+             const existingQuestions = new Set(existingData.faq?.map(f => f.question));
+             const newFaqs = data.faq.filter(f => !existingQuestions.has(f.question));
+             updateData.faq = [...(existingData.faq || []), ...newFaqs];
+        }
+        if (data.additionalInfoSections) {
+            const existingTitles = new Set(existingData.additionalInfoSections?.map(s => s.title));
+            const newSections = data.additionalInfoSections.filter(s => !existingTitles.has(s.title));
+            updateData.additionalInfoSections = [...(existingData.additionalInfoSections || []), ...newSections];
+        }
+
+        await updateDoc(docRef, updateData);
+    } catch (error: any) {
+        console.error("Error updating tour with AI data: ", error);
+        await logError({
+            message: `Failed to update tour ${tourId} with AI data: ${error.message}`,
+            stack: error.stack,
+            pathname: `/manage/packages/${tourId}/edit/assist`,
+            context: { tourId, data }
+        });
+        throw new Error("Could not update tour with imported data.");
     }
 }

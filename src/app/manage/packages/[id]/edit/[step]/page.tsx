@@ -9,8 +9,8 @@ import { GalleryForm } from '@/components/manage/forms/GalleryForm';
 import { PricingForm } from '@/components/manage/forms/PricingForm';
 import { FaqForm } from '@/components/manage/forms/FaqForm';
 import { AdditionalInfoForm } from '@/components/manage/forms/AdditionalInfoForm';
-import { BookingForm } from '@/components/manage/forms/BookingForm'; // Added this import
-
+import { BookingForm } from '@/components/manage/forms/BookingForm'; 
+import { AIAssistPageComponent } from '@/components/manage/AIAssistPage';
 
 type EditPackagePageProps = {
   params: {
@@ -32,7 +32,7 @@ export default async function EditPackagePage({ params }: EditPackagePageProps) 
     switch(step) {
       case 'basic-info':
         return <BasicInfoForm tour={tour} />;
-      case 'booking': // New case for Booking form
+      case 'booking':
         return <BookingForm tour={tour} />;
       case 'itinerary':
         return <ItineraryForm tour={tour} />;
@@ -42,12 +42,14 @@ export default async function EditPackagePage({ params }: EditPackagePageProps) 
           return <BasicMediaForm tour={tour} />;
       case 'gallery':
           return <GalleryForm tour={tour} />;
-      case 'pricing':
-          return <PricingForm tour={tour} />;
       case 'faq':
           return <FaqForm tour={tour} />;
       case 'info':
           return <AdditionalInfoForm tour={tour} />;
+      case 'pricing':
+          return <PricingForm tour={tour} />;
+      case 'assist':
+          return <AIAssistPageComponent tour={tour} />;
       default:
         notFound();
     }

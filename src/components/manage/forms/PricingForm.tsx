@@ -14,9 +14,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { type Tour, type ImportedTourData } from '@/lib/types';
+import { type Tour } from '@/lib/types';
 import { updateTour, logError } from '@/lib/db';
-import { useTransition, useState } from 'react';
+import { useTransition } from 'react';
 import { Loader2, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,7 +26,6 @@ import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Timestamp } from 'firebase/firestore';
 import { usePathname } from 'next/navigation';
-import { AIAssist } from '../AIAssist';
 
 const departureDateSchema = z.object({
     date: z.date({ required_error: "A date is required."}),
@@ -50,7 +49,6 @@ export function PricingForm({ tour }: PricingFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const pathname = usePathname();
-  const [importedData, setImportedData] = useState<ImportedTourData | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -70,15 +68,6 @@ export function PricingForm({ tour }: PricingFormProps) {
   });
 
   const anyDateAvailable = form.watch('anyDateAvailable');
-  
-  const handleApplyImportedPrice = () => {
-    if (importedData?.price) {
-        form.setValue('price', importedData.price, { shouldValidate: true });
-        toast({ title: 'Success', description: 'Imported price has been applied.' });
-    } else {
-        toast({ variant: 'destructive', title: 'Error', description: 'No price found in the imported data.' });
-    }
-  };
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
@@ -105,177 +94,159 @@ export function PricingForm({ tour }: PricingFormProps) {
 
   return (
     <FormProvider {...form}>
-      <div className="space-y-6">
-        <AIAssist onDataImported={setImportedData} tourId={tour.id} />
-
-        {importedData && (
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-2">Apply Imported Data</h3>
-              {importedData.price > 0 && (
-                <div className="flex items-center justify-between p-2 border rounded-md">
-                  <p>Found Price: <span className="font-bold">${importedData.price}</span></p>
-                  <Button type="button" size="sm" onClick={handleApplyImportedPrice}>Apply</Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardContent className="p-6">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
+      <Card>
+        <CardContent className="p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Base Price (USD)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 1500" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
                   control={form.control}
-                  name="price"
+                  name="anyDateAvailable"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Base Price (USD)</FormLabel>
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 1500" {...field} disabled={isPending} />
+                          <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isPending}
+                          />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                      <div className="space-y-1 leading-none">
+                          <FormLabel>
+                          Any Date Available
+                          </FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                              Check this if the tour can be booked on any date, regardless of specific departure dates below.
+                          </p>
+                      </div>
+                      </FormItem>
                   )}
-                />
-                <FormField
-                    control={form.control}
-                    name="anyDateAvailable"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                            <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled={isPending}
-                            />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                            <FormLabel>
-                            Any Date Available
-                            </FormLabel>
-                            <p className="text-sm text-muted-foreground">
-                                Check this if the tour can be booked on any date, regardless of specific departure dates below.
-                            </p>
-                        </div>
-                        </FormItem>
-                    )}
-                />
+              />
 
-                <div className={cn("space-y-4", anyDateAvailable && "opacity-50 pointer-events-none")}>
-                  <h3 className="text-lg font-medium">Departure Dates</h3>
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="p-4 border rounded-md space-y-4">
-                      <div className="flex justify-end">
-                         <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            disabled={isPending || anyDateAvailable}
-                            >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name={`departureDates.${index}.date`}
-                          render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                              <FormLabel>Date</FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                      disabled={isPending || anyDateAvailable}
-                                    >
-                                      {field.value ? (
-                                        format(field.value, "PPP")
-                                      ) : (
-                                        <span>Pick a date</span>
-                                      )}
-                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) => date < new Date("1900-01-01") || isPending || anyDateAvailable}
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                         <FormField
-                          control={form.control}
-                          name={`departureDates.${index}.price`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Price Override (USD)</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} placeholder={`Base: $${tour.price}`} disabled={isPending || anyDateAvailable} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                       <FormField
-                            control={form.control}
-                            name={`departureDates.${index}.guaranteed`}
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    disabled={isPending || anyDateAvailable}
-                                    />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel>
-                                    Guaranteed Departure
-                                    </FormLabel>
-                                </div>
-                                </FormItem>
-                            )}
-                            />
+              <div className={cn("space-y-4", anyDateAvailable && "opacity-50 pointer-events-none")}>
+                <h3 className="text-lg font-medium">Departure Dates</h3>
+                {fields.map((field, index) => (
+                  <div key={field.id} className="p-4 border rounded-md space-y-4">
+                    <div className="flex justify-end">
+                       <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(index)}
+                          disabled={isPending || anyDateAvailable}
+                          >
+                          <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => append({ date: new Date(), price: tour.price, guaranteed: false })}
-                    disabled={isPending || anyDateAvailable}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Departure Date
-                  </Button>
-                </div>
-                
-                <Button type="submit" disabled={isPending}>
-                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Pricing
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name={`departureDates.${index}.date`}
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                    disabled={isPending || anyDateAvailable}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) => date < new Date("1900-01-01") || isPending || anyDateAvailable}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name={`departureDates.${index}.price`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Price Override (USD)</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} placeholder={`Base: $${tour.price}`} disabled={isPending || anyDateAvailable} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                     <FormField
+                          control={form.control}
+                          name={`departureDates.${index}.guaranteed`}
+                          render={({ field }) => (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                  <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={isPending || anyDateAvailable}
+                                  />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                  <FormLabel>
+                                  Guaranteed Departure
+                                  </FormLabel>
+                              </div>
+                              </FormItem>
+                          )}
+                          />
+                  </div>
+                ))}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => append({ date: new Date(), price: tour.price, guaranteed: false })}
+                  disabled={isPending || anyDateAvailable}
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Departure Date
                 </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+              
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Pricing
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </FormProvider>
   );
 }

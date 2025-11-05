@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/select";
 
 const formSchema = z.object({
-  price: z.coerce.number().positive({ message: "Base price must be positive." }),
   bookingType: z.enum(['internal', 'external'], { required_error: "Booking type is required." }),
   externalBookingUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 }).superRefine((data, ctx) => {
@@ -56,7 +55,6 @@ export function BookingForm({ tour }: BookingFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      price: tour.price || 0,
       bookingType: tour.bookingType || 'internal',
       externalBookingUrl: tour.externalBookingUrl || '',
     },
@@ -85,20 +83,6 @@ export function BookingForm({ tour }: BookingFormProps) {
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Base Price (USD)</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 1500" {...field} disabled={isPending} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="bookingType"

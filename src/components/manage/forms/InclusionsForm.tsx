@@ -13,14 +13,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { type Tour, type ImportedTourData } from '@/lib/types';
+import { type Tour } from '@/lib/types';
 import { updateTour, logError } from '@/lib/db';
-import { useTransition, useState } from 'react';
+import { useTransition } from 'react';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
-import { AIAssist } from '../AIAssist';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface InclusionsFormValues {
   inclusions: string[];
@@ -40,7 +38,6 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const pathname = usePathname();
-  const [importedData, setImportedData] = useState<ImportedTourData | null>(null);
 
   const form = useForm<InclusionsFormValues>({
     resolver: zodResolver(formSchema),
@@ -60,16 +57,6 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
     name: "exclusions",
   });
 
-  const handleApplyImport = (section: 'inclusions' | 'exclusions', selectedItems: string[]) => {
-    const appendFn = section === 'inclusions' ? appendInclusion : appendExclusion;
-    const currentItems = section === 'inclusions' ? inclusionFields : exclusionFields;
-    
-    // @ts-ignore
-    const newItems = selectedItems.filter(item => !currentItems.some(field => field.value === item));
-    appendFn(newItems);
-    toast({ title: 'Success', description: `${newItems.length} new ${section} applied.` });
-  };
-  
   const onSubmit = (values: InclusionsFormValues) => {
     startTransition(async () => {
       try {
@@ -88,56 +75,6 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
 
   return (
     <FormProvider {...form}>
-      <div className="space-y-6">
-        <AIAssist onDataImported={setImportedData} tourId={tour.id} />
-        
-        {importedData && (importedData.inclusions.length > 0 || importedData.exclusions.length > 0) && (
-             <Card>
-                <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {importedData.inclusions.length > 0 && (
-                        <div>
-                            <h3 className="font-semibold text-lg mb-4">Apply Imported Inclusions</h3>
-                            {importedData.inclusions.map((item, index) => (
-                                <div key={`inc-${index}`} className="flex items-center space-x-2 my-1">
-                                    <Checkbox
-                                        id={`import-inc-${index}`}
-                                        onCheckedChange={(checked) => {
-                                            if (checked) appendInclusion(item);
-                                            else {
-                                                const fieldIndex = inclusionFields.findIndex(field => (field as any).value === item);
-                                                if(fieldIndex > -1) removeInclusion(fieldIndex);
-                                            }
-                                        }}
-                                    />
-                                    <label htmlFor={`import-inc-${index}`} className="text-sm font-medium">{item}</label>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    {importedData.exclusions.length > 0 && (
-                        <div>
-                            <h3 className="font-semibold text-lg mb-4">Apply Imported Exclusions</h3>
-                            {importedData.exclusions.map((item, index) => (
-                                <div key={`exc-${index}`} className="flex items-center space-x-2 my-1">
-                                    <Checkbox
-                                        id={`import-exc-${index}`}
-                                        onCheckedChange={(checked) => {
-                                            if (checked) appendExclusion(item);
-                                            else {
-                                                const fieldIndex = exclusionFields.findIndex(field => (field as any).value === item);
-                                                if(fieldIndex > -1) removeExclusion(fieldIndex);
-                                            }
-                                        }}
-                                    />
-                                    <label htmlFor={`import-exc-${index}`} className="text-sm font-medium">{item}</label>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        )}
-
         <Card>
           <CardContent className="p-6">
             <Form {...form}>
@@ -208,7 +145,6 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
             </Form>
           </CardContent>
         </Card>
-      </div>
     </FormProvider>
   );
 }
