@@ -188,9 +188,12 @@ export interface ImportedTourData {
   name: string;
   description: string;
   duration: number;
+  price: number;
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';
   region: string[];
   itinerary: { day: number; title: string; description: string }[];
   inclusions: string[];
   exclusions: string[];
+  faq: { question: string; answer: string }[];
+  additionalInfoSections: { title: string; content: string }[];
 }

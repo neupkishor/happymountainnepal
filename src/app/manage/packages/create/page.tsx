@@ -1,25 +1,26 @@
 'use client';
 
 import { CreatePackageForm } from '@/components/manage/forms/CreatePackageForm';
-import { ImportTourForm } from '@/components/manage/forms/ImportTourForm';
+import { AIAssist } from '@/components/manage/AIAssist'; // Updated import
 import { useState } from 'react';
+import type { ImportedTourData } from '@/lib/types'; // Import the type
 
 export default function CreatePackagePage() {
-  const [importedData, setImportedData] = useState(null);
+  const [importedData, setImportedData] = useState<ImportedTourData | null>(null);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold !font-headline">Create New Package</h1>
         <p className="text-muted-foreground mt-2">
-          Use the AI importer to automatically fill in the details, or create a package manually below.
+          Use the AI assistant to import details from a URL or text, or create a package manually below.
         </p>
       </div>
 
-      {/* AI Importer Section */}
-      <ImportTourForm setImportedData={setImportedData} />
+      {/* AI Assistant Section */}
+      <AIAssist onDataImported={setImportedData} />
       
-      {/* Divider and Manual Form */}
+      {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />

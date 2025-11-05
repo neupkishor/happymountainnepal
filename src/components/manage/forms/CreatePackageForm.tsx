@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTransition, useState, useEffect } from 'react';
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePathname, useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ import { slugify } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
 import { checkSlugAvailability, createTourWithBasicInfo, logError } from '@/lib/db';
 import type { ImportedTourData } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const formSchema = z.object({
   name: z.string().min(5, { message: "Name must be at least 5 characters." }),
@@ -41,11 +42,22 @@ interface CreatePackageFormProps {
   importedData: ImportedTourData | null;
 }
 
+const ImportSelector = ({ sectionName, onToggle, isSelected }: { sectionName: string, onToggle: (checked: boolean) => void, isSelected: boolean }) => (
+    <div className="flex items-center space-x-2 my-2">
+        <Checkbox id={`import-${sectionName}`} checked={isSelected} onCheckedChange={onToggle} />
+        <label htmlFor={`import-${sectionName}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Apply imported <span className="font-bold">{sectionName}</span>
+        </label>
+    </div>
+);
+
 export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
+
+  const [selectedImports, setSelectedImports] = useState<Record<string, boolean>>({});
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,17 +74,37 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
   
   useEffect(() => {
     if (importedData) {
-      form.reset({
-        name: importedData.name || '',
-        slug: importedData.name ? slugify(importedData.name) : '',
-        description: importedData.description || '',
-        duration: importedData.duration || 1,
-        difficulty: importedData.difficulty || 'Moderate',
-        region: Array.isArray(importedData.region) ? importedData.region.join(', ') : '',
-        type: 'Trek'
-      });
+      const initialSelections: Record<string, boolean> = {};
+      const resetValues: Partial<FormValues> = {};
+
+      if (importedData.name) {
+          initialSelections.basic = true;
+          resetValues.name = importedData.name;
+          resetValues.slug = slugify(importedData.name);
+          resetValues.description = importedData.description;
+          resetValues.duration = importedData.duration;
+          resetValues.difficulty = importedData.difficulty;
+          resetValues.region = Array.isArray(importedData.region) ? importedData.region.join(', ') : '';
+      }
+      
+      form.reset(resetValues);
+      setSelectedImports(initialSelections);
     }
   }, [importedData, form]);
+
+  const handleToggleImport = (section: string, isSelected: boolean) => {
+    setSelectedImports(prev => ({...prev, [section]: isSelected}));
+    if (isSelected && importedData) {
+       if (section === 'basic') {
+            form.setValue('name', importedData.name);
+            form.setValue('slug', slugify(importedData.name));
+            form.setValue('description', importedData.description);
+            form.setValue('duration', importedData.duration);
+            form.setValue('difficulty', importedData.difficulty);
+            form.setValue('region', Array.isArray(importedData.region) ? importedData.region.join(', ') : '');
+       }
+    }
+  };
 
   const name = form.watch('name');
   const currentSlug = form.watch('slug');
@@ -110,10 +142,20 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        const newId = await createTourWithBasicInfo({
+        const finalData = {
           ...values,
-          region: Array.isArray(values.region) ? values.region : [],
-        });
+          region: Array.isArray(values.region) ? values.region : (values.region as unknown as string).split(',').map(s => s.trim()).filter(Boolean),
+          // Add other sections if they are selected for import
+          ...(selectedImports.itinerary && importedData?.itinerary && { itinerary: importedData.itinerary }),
+          ...(selectedImports.inclusions && importedData?.inclusions && { inclusions: importedData.inclusions }),
+          ...(selectedImports.exclusions && importedData?.exclusions && { exclusions: importedData.exclusions }),
+          ...(selectedImports.faq && importedData?.faq && { faq: importedData.faq }),
+          ...(selectedImports.price && importedData?.price && { price: importedData.price }),
+          ...(selectedImports.additionalInfo && importedData?.additionalInfoSections && { additionalInfoSections: importedData.additionalInfoSections }),
+        };
+
+        // @ts-ignore
+        const newId = await createTourWithBasicInfo(finalData);
 
         if (!newId) throw new Error('Failed to create package');
 
@@ -136,6 +178,20 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {importedData && (
+                <div className="p-4 border rounded-md bg-secondary/50 space-y-2">
+                    <h3 className="font-semibold text-lg">Apply Imported Data</h3>
+                    <p className="text-sm text-muted-foreground">Select which sections to apply from the imported content.</p>
+                    <ImportSelector sectionName="basic" onToggle={(c) => handleToggleImport('basic', c)} isSelected={!!selectedImports.basic} />
+                    <ImportSelector sectionName="itinerary" onToggle={(c) => handleToggleImport('itinerary', c)} isSelected={!!selectedImports.itinerary} />
+                    <ImportSelector sectionName="price" onToggle={(c) => handleToggleImport('price', c)} isSelected={!!selectedImports.price} />
+                    <ImportSelector sectionName="inclusions" onToggle={(c) => handleToggleImport('inclusions', c)} isSelected={!!selectedImports.inclusions} />
+                    <ImportSelector sectionName="exclusions" onToggle={(c) => handleToggleImport('exclusions', c)} isSelected={!!selectedImports.exclusions} />
+                    <ImportSelector sectionName="faq" onToggle={(c) => handleToggleImport('faq', c)} isSelected={!!selectedImports.faq} />
+                    <ImportSelector sectionName="additionalInfo" onToggle={(c) => handleToggleImport('additionalInfo', c)} isSelected={!!selectedImports.additionalInfo} />
+                </div>
+            )}
+            
             <FormField
               control={form.control}
               name="name"
@@ -173,7 +229,7 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
                     )}
                     {!isSlugChecking && isSlugAvailable !== null && (
                       isSlugAvailable ? (
-                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
+                        <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
                       ) : (
                         <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
                       )
@@ -278,7 +334,7 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
               />
             </div>
 
-            <Button type="submit" disabled={isPending || isSlugChecking || !isSlugAvailable}>
+            <Button type="submit" disabled={isPending || isSlugChecking || (debouncedSlug && !isSlugAvailable)}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Package & Continue Editing
             </Button>

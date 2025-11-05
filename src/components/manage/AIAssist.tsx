@@ -22,18 +22,17 @@ import { logError } from '@/lib/db';
 import { importTourData } from '@/ai/flows/import-tour-data-flow';
 import type { ImportedTourData } from '@/lib/types';
 
-// Schema now accepts a single text field which can be a URL or raw text
 const formSchema = z.object({
   source: z.string().min(10, { message: "Please enter a URL or paste at least 10 characters of text." }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface ImportTourFormProps {
-  setImportedData: (data: ImportedTourData | null) => void;
+interface AIAssistProps {
+  onDataImported: (data: ImportedTourData | null) => void;
+  tourId?: string; // Optional tourId for edit context
 }
 
-// Simple URL validation
 const isUrl = (text: string) => {
   try {
     new URL(text);
@@ -43,7 +42,7 @@ const isUrl = (text: string) => {
   }
 }
 
-export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
+export function AIAssist({ onDataImported, tourId }: AIAssistProps) {
   const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
   const pathname = usePathname();
@@ -60,11 +59,11 @@ export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
     try {
       const inputData = sourceIsUrl ? { url: values.source } : { text: values.source };
       const importedData = await importTourData(inputData);
-      setImportedData(importedData);
+      onDataImported(importedData);
       
       toast({ 
         title: 'Import Successful', 
-        description: 'Manual entry form has been populated. Please review and save.'
+        description: tourId ? 'Data sections below can be updated.' : 'Manual entry form has been populated. Please review and save.'
       });
 
     } catch (error: any) {
@@ -73,14 +72,14 @@ export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
         message: `Failed to import from ${sourceIsUrl ? 'URL' : 'Text'}: ${error.message}`, 
         stack: error.stack, 
         pathname, 
-        context: { values } 
+        context: { values, tourId } 
       });
       toast({ 
         variant: 'destructive', 
         title: 'Import Failed', 
         description: error.message || 'Could not fetch or parse data.' 
       });
-      setImportedData(null);
+      onDataImported(null);
     } finally {
       setIsImporting(false);
     }
@@ -91,10 +90,10 @@ export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
             <Wand2 className="h-6 w-6 text-primary" />
-            AI-Powered Import
+            AI Assist
         </CardTitle>
         <CardDescription>
-            Paste a URL or tour details below to automatically populate the form.
+            Paste a URL or raw text to automatically extract and fill in tour details.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -117,9 +116,9 @@ export function ImportTourForm({ setImportedData }: ImportTourFormProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isImporting} className="w-full">
+            <Button type="submit" disabled={isImporting} className="w-full sm:w-auto">
               {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-              Import Details
+              {tourId ? 'Fetch Data to Update' : 'Import Details'}
             </Button>
           </form>
         </Form>
