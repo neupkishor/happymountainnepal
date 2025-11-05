@@ -9,7 +9,7 @@ const ImportTourInputSchema = z.object({
 });
 
 const ItineraryItemSchema = z.object({
-  day: z.number().int().positive(),
+  day: z.number().int(),
   title: z.string(),
   description: z.string(),
 });
@@ -17,7 +17,7 @@ const ItineraryItemSchema = z.object({
 const ImportTourOutputSchema = z.object({
   name: z.string().describe('The main name or title of the tour package.'),
   description: z.string().describe('A brief, engaging summary of the tour, typically one or two paragraphs.'),
-  duration: z.number().int().positive().describe('The total duration of the tour in days.'),
+  duration: z.number().int().describe('The total duration of the tour in days.'),
   difficulty: z.enum(['Easy', 'Moderate', 'Strenuous', 'Challenging']).describe('The difficulty rating of the tour.'),
   region: z.array(z.string()).describe('The primary geographical region(s) of the tour, e.g., ["Everest", "Khumbu"].'),
   itinerary: z.array(ItineraryItemSchema).describe('A day-by-day plan for the tour.'),
