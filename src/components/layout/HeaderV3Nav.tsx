@@ -6,12 +6,15 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react'; // Import LucideIcon type
 
 export interface NavLink {
   title: string;
   href?: string;
   description?: string;
   children?: NavLink[];
+  icon?: LucideIcon; // Add icon property
+  target?: string; // Add target property
 }
 
 interface HeaderV3NavProps {

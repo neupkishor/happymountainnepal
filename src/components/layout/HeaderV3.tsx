@@ -3,13 +3,14 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Added Image import
-import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight, LogIn } from 'lucide-react';
+import Image from 'next/image';
+import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight, LogIn, Phone, Mail, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeaderV3Nav, type NavLink } from './HeaderV3Nav';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUser } from '@/firebase';
+import { useSiteProfile } from '@/hooks/use-site-profile'; // Import the hook
 
 // This data would likely come from a CMS or a shared data file in a real app
 const navLinks: NavLink[] = [
@@ -185,6 +186,7 @@ export function HeaderV3() {
   const [isMenuOpen, setMenuOpen] = React.useState(false);
   const [activeSubMenu, setActiveSubMenu] = React.useState<NavLink | null>(null);
   const { user, isUserLoading } = useUser();
+  const { profile } = useSiteProfile(); // Fetch site profile
 
   React.useEffect(() => {
     if (isMenuOpen) {
@@ -209,6 +211,39 @@ export function HeaderV3() {
     setActiveSubMenu(null);
   };
   
+  // Dynamically create the contact info column
+  const contactColumn: NavLink = {
+    title: 'Get In Touch',
+    description: 'We are here to help you plan your adventure.',
+    children: [
+        {
+            title: 'Call Us',
+            href: `tel:${profile?.phone || ''}`,
+            description: profile?.phone || 'Loading...',
+            icon: Phone
+        },
+        {
+            title: 'Email Us',
+            href: `mailto:${profile?.contactEmail || ''}`,
+            description: profile?.contactEmail || 'Loading...',
+            icon: Mail
+        },
+        {
+            title: 'Find Us',
+            href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(profile?.address || '')}`,
+            description: profile?.address || 'Loading...',
+            icon: MapPin,
+            target: '_blank'
+        },
+    ]
+  };
+
+  const aboutMenu = navLinks.find(link => link.title === 'About');
+  const aboutMenuWithContact = aboutMenu ? {
+      ...aboutMenu,
+      children: [...(aboutMenu.children || []), contactColumn]
+  } : null;
+
   return (
     <>
       <header 
@@ -286,7 +321,7 @@ export function HeaderV3() {
                                 exit={{ opacity: 0, x: 10 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                {activeSubMenu.children?.map(child => (
+                                {(activeSubMenu.title === 'About' && aboutMenuWithContact ? aboutMenuWithContact.children : activeSubMenu.children)?.map(child => (
                                     <div key={child.title}>
                                         {hasChildren(child) ? (
                                             <>
@@ -294,9 +329,10 @@ export function HeaderV3() {
                                                 <ul className="space-y-2">
                                                     {child.children?.map(subItem => (
                                                         <li key={subItem.title}>
-                                                            <Link href={subItem.href || '#'} className="group flex items-center gap-2 text-foreground/80 hover:text-primary transition-colors">
+                                                            <Link href={subItem.href || '#'} target={subItem.target} className="group flex items-center gap-2 text-foreground/80 hover:text-primary transition-colors">
+                                                                {subItem.icon && <subItem.icon className="h-4 w-4 shrink-0" />}
                                                                 <span>{subItem.title}</span>
-                                                                <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                {subItem.target !== '_blank' && <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />}
                                                             </Link>
                                                         </li>
                                                     ))}
