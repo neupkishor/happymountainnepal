@@ -24,6 +24,7 @@ export interface Tour {
   additionalInfoSections?: { title: string; content: string }[]; // New field for additional info sections
   bookingType: 'internal' | 'external'; // New: How the tour is booked
   externalBookingUrl?: string; // New: URL for external booking if bookingType is 'external'
+  searchKeywords?: string[]; // New field for searching
 }
 
 // Existing Review interface (for embedded reviews)
@@ -196,4 +197,5 @@ export interface ImportedTourData {
   exclusions: string[];
   faq: { question: string; answer: string }[];
   additionalInfoSections: { title: string; content: string }[];
+  type?: 'Trek' | 'Tour' | 'Peak Climbing';
 }
