@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
@@ -10,6 +11,7 @@ import { CardsGrid } from '@/components/CardsGrid';
 import { Mountain, Search as SearchIcon, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { RecommendedTours } from '@/components/RecommendedTours'; // Import the new component
 
 function SearchComponent() {
   const searchParams = useSearchParams();
@@ -83,7 +85,7 @@ function SearchComponent() {
           <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin" />
           <p className="mt-4 text-muted-foreground">Loading tours...</p>
         </div>
-      ) : submittedTerm && (
+      ) : submittedTerm ? (
         <div>
             <h2 className="text-2xl font-bold !font-headline mb-8">
                 Results for &quot;{submittedTerm}&quot; ({filteredTours.length})
@@ -104,6 +106,8 @@ function SearchComponent() {
                 </div>
             )}
         </div>
+      ) : (
+        <RecommendedTours />
       )}
     </div>
   );
