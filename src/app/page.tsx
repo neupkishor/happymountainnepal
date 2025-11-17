@@ -7,6 +7,7 @@ import { Testimonials } from "@/components/Testimonials";
 import { RecentBlogs } from "@/components/RecentBlogs";
 import { CustomizeTrip } from "@/components/CustomizeTrip";
 import { FavoriteDestinations } from "@/components/FavoriteDestinations";
+import { RecommendedTours } from "@/components/RecommendedTours"; // New import
 import { OurPartners } from "@/components/OurPartners";
 import { ContactSection } from "@/components/ContactSection";
 
@@ -15,6 +16,7 @@ export default function Home() {
     <div className="homepage-sections-wrapper flex flex-col">
       <HeroSection />
       <FavoriteDestinations />
+      <RecommendedTours />
       <FeaturedTours />
       <PopularPackages />
       <WhyUs />

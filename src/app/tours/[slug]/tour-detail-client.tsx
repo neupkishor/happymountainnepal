@@ -22,6 +22,9 @@ interface TourDetailClientProps {
   tour: Tour;
 }
 
+const RECENTLY_VIEWED_KEY = 'happy-mountain-recent-tours';
+const MAX_RECENTLY_VIEWED = 10;
+
 export default function TourDetailClient({ tour }: TourDetailClientProps) {
   const [displayedReviews, setDisplayedReviews] = useState<ManagedReview[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
@@ -30,6 +33,27 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
   const [allToursMap, setAllToursMap] = useState<Map<string, string>>(new Map());
   const { toast } = useToast();
   const pathname = usePathname();
+
+  // Log recently viewed tour
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RECENTLY_VIEWED_KEY);
+      let recentlyViewed: string[] = stored ? JSON.parse(stored) : [];
+      
+      // Remove the current tour if it already exists to move it to the front
+      recentlyViewed = recentlyViewed.filter(id => id !== tour.id);
+      
+      // Add the current tour to the beginning of the array
+      recentlyViewed.unshift(tour.id);
+      
+      // Limit the array to the max size
+      const updatedRecentlyViewed = recentlyViewed.slice(0, MAX_RECENTLY_VIEWED);
+      
+      localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updatedRecentlyViewed));
+    } catch (error) {
+      console.error("Failed to update recently viewed tours in localStorage", error);
+    }
+  }, [tour.id]);
 
   const fetchReviews = useCallback(async (isInitialLoad: boolean = false) => {
     setIsLoadingReviews(true);
@@ -64,7 +88,7 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       setAllToursMap(map);
     };
     fetchAllTourNames();
-  }, [tour.id]);
+  }, [tour.id, fetchReviews]); // Added fetchReviews to dependency array
 
   const handleLoadMore = () => {
     if (hasMoreReviews && !isLoadingReviews) {
@@ -75,8 +99,24 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
   const averageRating = displayedReviews.length > 0 
     ? (displayedReviews.reduce((acc, review) => acc + review.stars, 0) / displayedReviews.length) 
     : 0;
+    
+  const itineraryItems = tour.itinerary?.map(item => ({
+    "@type": "ListItem",
+    "position": item.day,
+    "name": item.title,
+    "description": item.description,
+  }));
+  
+  const faqItems = tour.faq?.map(item => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+          "@type": "Answer",
+          "text": item.answer
+      }
+  }));
 
-  const jsonLdSchema = {
+  const jsonLdSchema = [{
     "@context": "https://schema.org",
     "@type": "Product",
     "name": tour.name,
@@ -87,11 +127,11 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       "@type": "Brand",
       "name": "Happy Mountain Nepal"
     },
-    ...(tour.reviews.length > 0 && {
+    ...(averageRating > 0 && {
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": averageRating.toFixed(1),
-        "reviewCount": tour.reviews.length
+        "reviewCount": displayedReviews.length
       }
     }),
     "offers": {
@@ -100,8 +140,20 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
       "url": `https://happymountainnepal.com/tours/${tour.slug}`
-    }
-  };
+    },
+    ...(itineraryItems && itineraryItems.length > 0 && {
+        "itinerary": {
+            "@type": "ItemList",
+            "itemListElement": itineraryItems
+        }
+    }),
+  },
+  ...(faqItems && faqItems.length > 0 && [{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqItems
+  }])
+];
 
   return (
     <div className="bg-background">
