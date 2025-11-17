@@ -26,13 +26,10 @@
         command = [
           "npm"
           "run"
-          "start"
+          "dev"
           "--"
           "--port"
           "$PORT"
-          "--host"
-                    "0.0.0.0"
-                              "--disable-host-check"
         ];
         manager = "web";
         # Optionally, specify a directory that contains your web app
