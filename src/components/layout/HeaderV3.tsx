@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -12,93 +13,103 @@ import { useUser } from '@/firebase';
 
 // This data would likely come from a CMS or a shared data file in a real app
 const navLinks: NavLink[] = [
-  { href: '/tours', title: 'Tours' },
-  {
-    title: 'Destinations',
-    children: [
-      {
-        title: 'Everest',
-        href: '/tours?region=Everest',
-        description: "Home to the world's highest peak.",
-      },
-      {
-        title: 'Annapurna',
-        href: '/tours?region=Annapurna',
-        description: 'Diverse treks with stunning views.',
-      },
-      {
-        title: 'Langtang',
-        href: '/tours?region=Langtang',
-        description: 'Accessible treks near Kathmandu.',
-      },
-       {
-        title: 'Manaslu',
-        href: '/tours?region=Manaslu',
-        description: 'A less-crowded alternative to Annapurna.',
-      },
-    ],
-  },
-  {
-    title: 'About',
-    children: [
-      {
-        title: 'Company',
-        description: 'Our story and team.',
-        children: [
-          {
-            title: 'About Us',
-            href: '/about',
-            description: 'Learn about our mission and values.',
-          },
-          {
-            title: 'Our Team',
-            href: '/about/teams',
-            description: 'Meet the experts behind your adventure.',
-          },
-        ],
-      },
-      {
-        title: 'Community',
-        description: 'Stories and feedback.',
-        children: [
-          {
-            title: 'Reviews',
-            href: '/reviews',
-            description: 'Read stories from our happy travelers.',
-          },
-          {
-            title: 'Blog',
-            href: '/blog',
-            description: 'Guides, stories, and advice.',
-          },
-        ],
-      },
-       {
-        title: 'Legal',
-        description: 'Policies and documents.',
-        children: [
+    {
+      title: 'Activities',
+      children: [
+        { title: 'Trek', href: '/tours?type=trek', description: 'Journey through stunning mountain trails.' },
+        { title: 'Tour', href: '/tours?type=tour', description: 'Explore cultural and natural heritage sites.' },
+        { title: 'Expedition', href: '/tours?type=expedition', description: 'Challenge yourself with peak climbing adventures.' },
+        { title: 'Safari', href: '/tours?type=safari', description: 'Discover wildlife in lush national parks.' },
+        { title: 'Adventure Sports', href: '/tours?type=adventure', description: 'Get your adrenaline pumping with thrilling activities.' },
+      ],
+    },
+    {
+      title: 'Destinations',
+      children: [
+        {
+          title: 'Nepal',
+          href: '/tours?region=Nepal',
+          description: "Home to the world's highest peak.",
+        },
+        {
+          title: 'Tibet',
+          href: '/tours?region=Tibet',
+          description: 'The roof of the world.',
+        },
+        {
+          title: 'Bhutan',
+          href: '/tours?region=Bhutan',
+          description: 'The last Himalayan kingdom.',
+        },
+        {
+          title: 'India',
+          href: '/tours?region=India',
+          description: 'Diverse landscapes from Himalayas to the sea.',
+        },
+      ],
+    },
+    {
+      title: 'About',
+      children: [
+        {
+          title: 'Company',
+          description: 'Our story and team.',
+          children: [
             {
-                title: 'Documents',
-                href: '/legal/documents',
-                description: "View our company's legal licenses."
+              title: 'About Us',
+              href: '/about',
+              description: 'Learn about our mission and values.',
             },
             {
-                title: 'Terms & Conditions',
-                href: '/legal/terms',
-                description: 'Read our terms and conditions.'
+              title: 'Our Team',
+              href: '/about/teams',
+              description: 'Meet the experts behind your adventure.',
+            },
+          ],
+        },
+        {
+          title: 'Community',
+          description: 'Stories and feedback.',
+          children: [
+            {
+              title: 'Reviews',
+              href: '/reviews',
+              description: 'Read stories from our happy travelers.',
             },
             {
-                title: 'Privacy Policy',
-                href: '/legal/privacy',
-                description: 'Our commitment to your privacy.'
-            }
-        ]
-      },
-    ],
-  },
-  { href: '/contact', title: 'Contact' },
-  { href: '/search', title: 'Search' },
-];
+              title: 'Blog',
+              href: '/blog',
+              description: 'Guides, stories, and advice.',
+            },
+          ],
+        },
+        {
+          title: 'Legal',
+          description: 'Policies and documents.',
+          children: [
+              {
+                  title: 'Documents',
+                  href: '/legal/documents',
+                  description: "View our company's legal licenses."
+              },
+              {
+                  title: 'Terms & Conditions',
+                  href: '/legal/terms',
+                  description: 'Read our terms and conditions.'
+              },
+              {
+                  title: 'Privacy Policy',
+                  href: '/legal/privacy',
+                  description: 'Our commitment to your privacy.'
+              }
+          ]
+        },
+      ],
+    },
+    { href: '/contact', title: 'Contact' },
+    { href: '/search', title: 'Search' },
+  ];
+  
 
 function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
     const [openSubMenu, setOpenSubMenu] = React.useState<string | null>(null);
