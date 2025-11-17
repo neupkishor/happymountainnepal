@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow for searching tours and generating contextual information.
@@ -22,6 +23,7 @@ export async function searchToursAndGenerateContext(term: string): Promise<z.inf
 const contextPrompt = ai.definePrompt({
   name: 'generateSearchContextPrompt',
   input: { schema: z.object({ term: z.string() }) },
+  output: { schema: z.string() }, // The output is just a string of markdown
   prompt: `You are a helpful travel guide assistant for a Himalayan trekking company. The user has searched for "{{term}}".
 
 Provide a helpful, engaging, and informative overview about this topic in markdown format.
@@ -61,7 +63,7 @@ const searchToursFlow = ai.defineFlow(
       // Task 2: Generate Context with AI
       (async () => {
         const llmResponse = await contextPrompt({ term });
-        return llmResponse.output() || `Information about ${term} is not available at the moment.`;
+        return llmResponse.output || `Information about ${term} is not available at the moment.`;
       })()
     ]);
 

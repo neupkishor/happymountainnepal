@@ -5,6 +5,7 @@ import { CardsGrid } from '@/components/CardsGrid';
 import { Mountain } from 'lucide-react';
 import { RecommendedTours } from '@/components/RecommendedTours';
 import { searchToursAndGenerateContext } from '@/ai/flows/search-tours-flow';
+import { SearchForm } from '@/components/SearchForm';
 
 async function SearchResults({ term }: { term: string }) {
   const decodedTerm = decodeURIComponent(term);
@@ -12,9 +13,12 @@ async function SearchResults({ term }: { term: string }) {
 
   return (
     <div className="container mx-auto py-12">
-      <h1 className="text-3xl md:text-4xl font-bold !font-headline mb-8">
-        Results for &quot;{decodedTerm}&quot;
-      </h1>
+      <div className="max-w-3xl mx-auto mb-12">
+        <h1 className="text-3xl md:text-4xl font-bold !font-headline text-center mb-6">
+            Search Results for &quot;{decodedTerm}&quot;
+        </h1>
+        <SearchForm initialTerm={decodedTerm} />
+      </div>
       
       {tours.length > 0 ? (
         <CardsGrid>
@@ -51,7 +55,7 @@ async function SearchResults({ term }: { term: string }) {
   );
 }
 
-export default function SearchPage({ params }: { params: { term: string } }) {
+export default function SearchTermPage({ params }: { params: { term: string } }) {
   return (
     <Suspense fallback={<div className="container mx-auto py-12">Loading search results...</div>}>
       <SearchResults term={params.term} />
