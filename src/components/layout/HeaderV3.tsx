@@ -212,7 +212,7 @@ export function HeaderV3() {
   return (
     <>
       <header 
-        className="sticky top-0 z-40 w-full border-b bg-background/90 backdrop-blur-sm shadow-xl"
+        className="sticky top-0 z-40 w-full border-b bg-background shadow-xl"
         onMouseLeave={handleMouseLeave}
       >
         <div className="container flex h-16 items-center">
@@ -269,7 +269,7 @@ export function HeaderV3() {
          <AnimatePresence>
             {activeSubMenu && (
                 <motion.div
-                    className="fixed top-16 w-screen bg-background/95 backdrop-blur-lg shadow-lg border-t left-0"
+                    className="fixed top-16 w-screen bg-background shadow-lg border-t left-0"
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
