@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Input } from "@/components/ui/input";
@@ -18,44 +19,6 @@ interface TourFiltersProps {
 export function MinimalTourFilters({ filters, setFilters, regions }: TourFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
-
-  const updateQuery = (next: Partial<TourFiltersProps["filters"]>) => {
-    const merged = { ...filters, ...next };
-    const params = new URLSearchParams();
-    if (merged.search) params.set("search", merged.search);
-    if (merged.region) params.set("region", merged.region);
-    if (merged.hardship && merged.hardship.length > 0) params.set("hardship", merged.hardship.join(","));
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname);
-  };
-
-  const handleReset = () => {
-    const reset = { search: "", region: "", hardship: [] as string[] };
-    setFilters(reset);
-    router.replace(pathname);
-  };
-
-  const isFiltered = !!filters.search || !!filters.region || (filters.hardship && filters.hardship.length > 0);
-
-  const toggleRegion = (region: string) => {
-    const nextRegion = filters.region === region ? "" : region;
-    const next = { ...filters, region: nextRegion };
-    setFilters(next);
-    updateQuery({ region: nextRegion });
-  };
-
-  const toggleHardship = (level: "low" | "mid" | "high") => {
-    const set = new Set(filters.hardship);
-    if (set.has(level)) {
-      set.delete(level);
-    } else {
-      set.add(level);
-    }
-    const nextHardship = Array.from(set);
-    const next = { ...filters, hardship: nextHardship };
-    setFilters(next);
-    updateQuery({ hardship: nextHardship });
-  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,45 +54,6 @@ export function MinimalTourFilters({ filters, setFilters, regions }: TourFilters
           <span className="sr-only">Search</span>
         </Button>
       </form>
-
-      {/* Tags on the same line */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        {(["low", "mid", "high"] as const).map((lvl) => {
-          const selected = filters.hardship.includes(lvl);
-          return (
-            <Button
-              key={lvl}
-              type="button"
-              variant={selected ? "default" : "outline"}
-              className={`rounded-full px-4 py-2 ${selected ? "bg-primary text-primary-foreground border-primary" : ""}`}
-              onClick={() => toggleHardship(lvl)}
-            >
-              {lvl === "low" ? "Low" : lvl === "mid" ? "Mid" : "High"}
-            </Button>
-          );
-        })}
-
-        {regions.map((region) => {
-          const selected = filters.region === region;
-          return (
-            <Button
-              key={region}
-              type="button"
-              variant={selected ? "default" : "outline"}
-              className={`rounded-full px-4 py-2 ${selected ? "bg-primary text-primary-foreground border-primary" : ""}`}
-              onClick={() => toggleRegion(region)}
-            >
-              {region}
-            </Button>
-          );
-        })}
-
-        {isFiltered && (
-          <Button variant="ghost" onClick={handleReset} className="h-10 px-4 rounded-xl hover:bg-muted/50">
-            <X className="mr-2 h-4 w-4" /> Reset
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
