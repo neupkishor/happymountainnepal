@@ -60,67 +60,62 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </Button>
       </div>
 
-       <Card>
-        <CardHeader>
-          <CardTitle>Image Gallery</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {allImages.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                 {allImages.map((src, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
-                        <Image src={src} alt={`Gallery image ${index + 1}`} fill className="object-cover" />
-                        {index === 0 && <Badge variant="secondary" className="absolute top-2 left-2">Main Image</Badge>}
-                    </div>
-                ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground">No images have been set for this package.</p>
-          )}
-        </CardContent>
-      </Card>
+       <div>
+        {allImages.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {allImages.map((src, index) => (
+                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
+                      <Image src={src} alt={`Gallery image ${index + 1}`} fill className="object-cover" />
+                      {index === 0 && <Badge variant="secondary" className="absolute top-2 left-2">Main Image</Badge>}
+                  </div>
+              ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-center py-8">No images have been set for this package.</p>
+        )}
+      </div>
       
       <KeyFacts tour={tour} />
 
-      <Card>
-          <CardHeader>
-              <CardTitle>Booking & Pricing</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex justify-between items-center border-b pb-2">
-                  <span className="text-muted-foreground">Base Price</span>
-                  <span className="font-semibold">${tour.price} USD</span>
-              </div>
-               <div className="flex justify-between items-center border-b pb-2">
-                  <span className="text-muted-foreground">Booking Type</span>
-                  <Badge variant="outline">{tour.bookingType}</Badge>
-              </div>
-              {tour.bookingType === 'external' && tour.externalBookingUrl && (
-                 <div className="flex justify-between items-center border-b pb-2">
+      <div>
+        <h2 className="text-2xl font-bold !font-headline mb-4">Booking & Pricing</h2>
+        <Card>
+            <CardContent className="p-6 space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                    <span className="text-muted-foreground">Base Price</span>
+                    <span className="font-semibold">${tour.price} USD</span>
+                </div>
+                <div className="flex justify-between items-center border-b pb-2">
+                    <span className="text-muted-foreground">Booking Type</span>
+                    <Badge variant="outline">{tour.bookingType}</Badge>
+                </div>
+                {tour.bookingType === 'external' && tour.externalBookingUrl && (
+                    <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-muted-foreground">External URL</span>
                     <a href={tour.externalBookingUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-xs">{tour.externalBookingUrl}</a>
                 </div>
-              )}
-              <div>
-                  <h4 className="font-semibold mb-2">Departure Dates</h4>
-                  {tour.departureDates && tour.departureDates.length > 0 ? (
-                      <ul className="space-y-1">
-                          {tour.departureDates.map((d, i) => {
-                              const date = d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date);
-                              return (
+                )}
+                <div>
+                    <h4 className="font-semibold mb-2">Departure Dates</h4>
+                    {tour.departureDates && tour.departureDates.length > 0 ? (
+                        <ul className="space-y-1">
+                            {tour.departureDates.map((d, i) => {
+                                const date = d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date);
+                                return (
                                 <li key={i} className="flex justify-between text-sm">
                                     <span>{format(date, 'PPP')}</span>
                                     <span>${d.price} {d.guaranteed && <Badge variant="default" className="ml-2">Guaranteed</Badge>}</span>
                                 </li>
-                              )
-                          })}
-                      </ul>
-                  ) : (
-                      <p className="text-sm text-muted-foreground">{tour.anyDateAvailable ? "Available any date." : "No specific departure dates."}</p>
-                  )}
-              </div>
-          </CardContent>
-      </Card>
+                                )
+                            })}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">{tour.anyDateAvailable ? "Available any date." : "No specific departure dates."}</p>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+      </div>
 
       <Itinerary items={tour.itinerary} />
       <InclusionsExclusions tour={tour} />
@@ -129,7 +124,7 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         <Card>
             <CardHeader><CardTitle>Map</CardTitle></CardHeader>
             <CardContent>
-                 <div className="aspect-video">
+                  <div className="aspect-video">
                   <iframe
                     src={tour.map}
                     width="100%"
