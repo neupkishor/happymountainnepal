@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { PenSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
+import type { Tour } from '@/lib/types';
 
 type PackageDetailPageProps = {
   params: {
@@ -27,6 +28,8 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
   if (!tour) {
     notFound();
   }
+  
+  const allImages = [tour.mainImage, ...(tour.images || [])].filter(Boolean);
 
   const getStatusVariant = (status: Tour['status']) => {
     switch (status) {
@@ -57,17 +60,22 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </Button>
       </div>
 
-      <Card>
+       <Card>
         <CardHeader>
-          <CardTitle>Main Image</CardTitle>
+          <CardTitle>Image Gallery</CardTitle>
         </CardHeader>
         <CardContent>
-          {tour.mainImage ? (
-            <div className="relative aspect-video rounded-lg overflow-hidden">
-              <Image src={tour.mainImage} alt={tour.name} fill className="object-cover" />
+          {allImages.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                 {allImages.map((src, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
+                        <Image src={src} alt={`Gallery image ${index + 1}`} fill className="object-cover" />
+                        {index === 0 && <Badge variant="secondary" className="absolute top-2 left-2">Main Image</Badge>}
+                    </div>
+                ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">No main image set.</p>
+            <p className="text-muted-foreground">No images have been set for this package.</p>
           )}
         </CardContent>
       </Card>
@@ -137,19 +145,6 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
             </CardContent>
         </Card>
       )}
-      
-       {tour.images && tour.images.length > 0 && (
-         <Card>
-            <CardHeader><CardTitle>Gallery</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                 {tour.images.map((src, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
-                        <Image src={src} alt={`Gallery image ${index + 1}`} fill className="object-cover" />
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-       )}
        
        <FaqSection faq={tour.faq} />
        <AdditionalInfoSection sections={tour.additionalInfoSections} />
