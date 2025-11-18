@@ -1,24 +1,35 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import type { Tour, ManagedReview } from '@/lib/types';
 
-const navItems = [
-  { href: '#key-facts', label: 'Key Facts' },
-  { href: '#itinerary', label: 'Itinerary' },
-  { href: '#inclusions', label: 'Inclusions' },
-  { href: '#map', label: 'Map' },
-  { href: '#gallery', label: 'Gallery' },
-  { href: '#faq', label: 'FAQ' },
-  { href: '#additional-info', label: 'More Info' }, // New navigation item
-  { href: '#reviews', label: 'Reviews' },
+interface TourNavProps {
+    tour: Tour;
+    reviews: ManagedReview[];
+}
+
+const allNavItems = [
+  { href: '#key-facts', label: 'Key Facts', isVisible: (tour: Tour) => true },
+  { href: '#itinerary', label: 'Itinerary', isVisible: (tour: Tour) => tour.itinerary && tour.itinerary.length > 0 },
+  { href: '#inclusions', label: 'Inclusions', isVisible: (tour: Tour) => tour.inclusions && tour.inclusions.length > 0 },
+  { href: '#map', label: 'Map', isVisible: (tour: Tour) => !!tour.map },
+  { href: '#gallery', label: 'Gallery', isVisible: (tour: Tour) => tour.images && tour.images.length > 0 },
+  { href: '#faq', label: 'FAQ', isVisible: (tour: Tour) => tour.faq && tour.faq.length > 0 },
+  { href: '#additional-info', label: 'More Info', isVisible: (tour: Tour) => tour.additionalInfoSections && tour.additionalInfoSections.length > 0 },
+  { href: '#reviews', label: 'Reviews', isVisible: (tour: Tour, reviews: ManagedReview[]) => reviews && reviews.length > 0 },
 ];
 
-export function TourNav() {
+export function TourNav({ tour, reviews }: TourNavProps) {
   const [isSticky, setIsSticky] = useState(false);
   const [activeSection, setActiveSection] = useState('');
+  
+  const navItems = useMemo(() => {
+    return allNavItems.filter(item => item.isVisible(tour, reviews));
+  }, [tour, reviews]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,14 +44,16 @@ export function TourNav() {
       const sections = navItems.map(item => document.getElementById(item.href.substring(1)));
       let currentSection = '';
       
-      sections.forEach(section => {
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
         if (section) {
           const sectionTop = section.offsetTop - 150; // Offset for better accuracy
           if (window.scrollY >= sectionTop) {
             currentSection = section.id;
+            break;
           }
         }
-      });
+      }
       setActiveSection(currentSection);
     };
 
@@ -48,7 +61,7 @@ export function TourNav() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [navItems]);
 
   return (
     <div className={cn(

@@ -8,7 +8,7 @@ import { Reviews } from '@/components/tour-details/Reviews';
 import { InclusionsExclusions } from '@/components/tour-details/InclusionsExclusions';
 import { TourGallery } from '@/components/tour-details/TourGallery';
 import { FaqSection } from '@/components/tour-details/FaqSection';
-import { AdditionalInfoSection } from '@/components/tour-details/AdditionalInfoSection'; // New import
+import { AdditionalInfoSection } from '@/components/tour-details/AdditionalInfoSection';
 import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
 import type { Tour, ManagedReview } from '@/lib/types';
@@ -166,7 +166,7 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       />
       <ImageGallery images={tour.images} mainImage={tour.mainImage} tourName={tour.name} />
       
-      <TourNav />
+      <TourNav tour={tour} reviews={displayedReviews} />
 
       <div className="container mx-auto py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
