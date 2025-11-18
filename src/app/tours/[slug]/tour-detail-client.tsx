@@ -1,3 +1,4 @@
+
 'use client';
 import { ImageGallery } from '@/components/tour-details/ImageGallery';
 import { KeyFacts } from '@/components/tour-details/KeyFacts';
@@ -116,7 +117,7 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       }
   }));
 
-  const jsonLdSchema = [{
+  const jsonLdSchema: any[] = [{
     "@context": "https://schema.org",
     "@type": "Product",
     "name": tour.name,
@@ -147,13 +148,15 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
             "itemListElement": itineraryItems
         }
     }),
-  },
-  ...(faqItems && faqItems.length > 0 && [{
+  }];
+
+  if (faqItems && faqItems.length > 0) {
+    jsonLdSchema.push({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       "mainEntity": faqItems
-  }])
-];
+    });
+  }
 
   return (
     <div className="bg-background">
