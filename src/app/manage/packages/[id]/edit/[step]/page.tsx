@@ -1,3 +1,4 @@
+
 import { getTourById } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { EditPackageNav } from '@/components/manage/EditPackageNav';
@@ -57,7 +58,6 @@ export default async function EditPackagePage({ params }: EditPackagePageProps) 
 
   return (
     <div className="max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold !font-headline mb-2">Edit Package</h1>
       <p className="text-muted-foreground mb-8">Editing "{tour.name || 'New Package'}"</p>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
