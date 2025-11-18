@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -22,7 +23,7 @@ export function BookingWidget({ tour }: BookingWidgetProps) {
   const departureDays = tour.departureDates.map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
   const guaranteedDays = tour.departureDates.filter(d => d.guaranteed).map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
   
-  const [date, setDate] = useState<Date | undefined>(departureDays.length > 0 ? departureDays[0] : undefined); // Default to undefined if no dates
+  const [date, setDate] = useState<Date | undefined>(departureDays.length > 0 ? departureDays[0] : new Date()); // Default to undefined if no dates
   const { toast } = useToast();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const isWishlisted = isInWishlist(tour.id);
@@ -68,39 +69,39 @@ export function BookingWidget({ tour }: BookingWidgetProps) {
         {tour.bookingType === 'internal' ? (
           <div>
             <h4 className="font-semibold mb-2">Select Departure Date</h4>
-            {tour.anyDateAvailable ? (
-              <div className="p-4 border rounded-md bg-secondary text-center text-muted-foreground">
-                This tour is available on any date.
-              </div>
-            ) : (
-              <>
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  className="rounded-md border"
-                  modifiers={{
-                    departure: departureDays,
-                    guaranteed: guaranteedDays
-                  }}
-                  modifiersStyles={{
-                    departure: {
-                      border: '2px solid hsl(var(--primary))',
-                      color: 'hsl(var(--primary))',
-                      fontWeight: 'bold',
-                    },
-                    guaranteed: {
-                      fontWeight: 'bold',
-                      backgroundColor: 'hsl(var(--primary))',
-                      color: 'hsl(var(--primary-foreground))',
-                    }
-                  }}
-                />
+            <>
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                className="rounded-md border"
+                modifiers={{
+                  departure: departureDays,
+                  guaranteed: guaranteedDays
+                }}
+                modifiersStyles={{
+                  departure: {
+                    border: '2px solid hsl(var(--primary))',
+                    color: 'hsl(var(--primary))',
+                    fontWeight: 'bold',
+                  },
+                  guaranteed: {
+                    fontWeight: 'bold',
+                    backgroundColor: 'hsl(var(--primary))',
+                    color: 'hsl(var(--primary-foreground))',
+                  }
+                }}
+              />
+              {tour.anyDateAvailable ? (
+                <p className="text-xs text-muted-foreground mt-2">
+                  This tour is available on any date. Fixed departures are highlighted.
+                </p>
+              ) : (
                 <p className="text-xs text-muted-foreground mt-2">
                   Dates in green are guaranteed departures.
                 </p>
-              </>
-            )}
+              )}
+            </>
             <Button onClick={handleInternalBooking} className="w-full text-lg h-12 mt-4">
               Book Now
             </Button>
