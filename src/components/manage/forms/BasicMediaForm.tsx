@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,18 +14,18 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { type Tour } from '@/lib/types';
-import { updateTour, logError } from '@/lib/db';
-import { useTransition, useState } from 'react';
-import { Loader2, PlusCircle, Trash2, Image as ImageIcon } from 'lucide-react';
+import { type Tour, type FileUpload } from '@/lib/types';
+import { updateTour, logError, getFileUploads } from '@/lib/db';
+import { useTransition, useState, useEffect } from 'react';
+import { Loader2, CheckCircle2, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MediaPicker } from '../MediaPicker';
 import { usePathname } from 'next/navigation';
-import { MediaLibraryDialog } from '../MediaLibraryDialog';
-import { getFileNameFromUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 const extractIframeSrc = (input: string): string => {
+  if (!input) return '';
   const iframeRegex = /<iframe.*?src="(.*?)"[^>]*><\/iframe>/;
   const match = input.match(iframeRegex);
   return match ? match[1] : input;
@@ -47,9 +47,11 @@ interface BasicMediaFormProps {
 
 export function BasicMediaForm({ tour }: BasicMediaFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const { toast } = useToast();
   const pathname = usePathname();
+
+  const [allUploads, setAllUploads] = useState<FileUpload[]>([]);
+  const [isLoadingUploads, setIsLoadingUploads] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,16 +64,33 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
 
   const currentImages = form.watch('images');
 
-  const handleSelectImages = (urls: string[]) => {
-    form.setValue('images', urls, { shouldValidate: true, shouldDirty: true });
-    setIsLibraryOpen(false);
-  };
+  useEffect(() => {
+    const fetchUploads = async () => {
+      setIsLoadingUploads(true);
+      try {
+        const uploads = await getFileUploads({ category: 'trip' });
+        setAllUploads(uploads);
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not load media library.',
+        });
+      } finally {
+        setIsLoadingUploads(false);
+      }
+    };
+    fetchUploads();
+  }, [toast]);
 
-  const handleRemoveImage = (indexToRemove: number) => {
-    const updatedImages = currentImages.filter((_, index) => index !== indexToRemove);
-    form.setValue('images', updatedImages, { shouldValidate: true, shouldDirty: true });
+  const toggleImageSelection = (url: string) => {
+    const currentSelection = form.getValues('images');
+    const newSelection = currentSelection.includes(url)
+      ? currentSelection.filter(u => u !== url)
+      : [...currentSelection, url];
+    form.setValue('images', newSelection, { shouldDirty: true, shouldValidate: true });
   };
-
+  
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
@@ -124,48 +143,44 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
 
           <Card>
             <CardContent className="p-6 space-y-4">
-              <FormLabel>Additional Gallery Images</FormLabel>
-              <p className="text-sm text-muted-foreground">These images will be displayed in the tour's photo gallery.</p>
+              <FormLabel>Gallery Images</FormLabel>
+              <p className="text-sm text-muted-foreground">Click on any image below to add or remove it from the tour's gallery.</p>
               
-              {currentImages.length === 0 ? (
+              {isLoadingUploads ? (
+                <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : allUploads.length === 0 ? (
                   <div className="border border-dashed rounded-lg p-8 text-center text-muted-foreground">
                       <ImageIcon className="mx-auto h-12 w-12 mb-4" />
-                      <p>No additional images selected.</p>
+                      <p>No trip images found in your library. Upload some using the Main Image picker.</p>
                   </div>
               ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {currentImages.map((imageUrl, index) => (
-                          <div key={imageUrl + index} className="relative group rounded-lg overflow-hidden border">
-                              <Image
-                                  src={imageUrl}
-                                  alt={getFileNameFromUrl(imageUrl)}
-                                  width={200}
-                                  height={150}
-                                  className="w-full h-32 object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button
-                                      type="button"
-                                      variant="destructive"
-                                      size="icon"
-                                      onClick={() => handleRemoveImage(index)}
-                                      disabled={isPending}
-                                  >
-                                      <Trash2 className="h-4 w-4" />
-                                  </Button>
-                              </div>
-                              <p className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2 truncate">
-                                  {getFileNameFromUrl(imageUrl)}
-                              </p>
+                      {allUploads.map((file) => (
+                          <div
+                            key={file.id}
+                            className={cn(
+                              'relative aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
+                              currentImages.includes(file.url) ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                            )}
+                            onClick={() => toggleImageSelection(file.url)}
+                          >
+                            <Image
+                                src={file.url}
+                                alt={file.fileName}
+                                fill
+                                className="object-cover"
+                            />
+                             {currentImages.includes(file.url) && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity">
+                                    <CheckCircle2 className="h-8 w-8 text-white" />
+                                </div>
+                             )}
                           </div>
                       ))}
                   </div>
               )}
-
-              <Button type="button" variant="outline" className="w-full" disabled={isPending} onClick={() => setIsLibraryOpen(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Select Gallery Images
-              </Button>
               <FormMessage>{form.formState.errors.images?.message}</FormMessage>
             </CardContent>
           </Card>
@@ -176,13 +191,6 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
           </Button>
         </form>
       </Form>
-      <MediaLibraryDialog
-        isOpen={isLibraryOpen}
-        onClose={() => setIsLibraryOpen(false)}
-        onSelect={handleSelectImages}
-        initialSelectedUrls={currentImages}
-        defaultCategory="trip"
-      />
     </FormProvider>
   );
 }
