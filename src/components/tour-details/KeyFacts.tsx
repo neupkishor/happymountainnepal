@@ -1,3 +1,4 @@
+
 import type { Tour } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, BarChart, Globe, Mountain } from 'lucide-react';
@@ -10,13 +11,12 @@ export function KeyFacts({ tour }: KeyFactsProps) {
   const facts = [
     { icon: Clock, label: 'Duration', value: `${tour.duration} days` },
     { icon: BarChart, label: 'Difficulty', value: tour.difficulty },
-    { icon: Globe, label: 'Region', value: tour.region },
+    { icon: Globe, label: 'Region', value: Array.isArray(tour.region) ? tour.region.join(', ') : tour.region },
     { icon: Mountain, label: 'Activity', value: tour.type },
   ];
 
   return (
     <div>
-      <h2 className="text-3xl font-bold !font-headline mb-6">Key Facts</h2>
       <Card className="bg-card">
         <CardContent className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">

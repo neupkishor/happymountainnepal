@@ -1,3 +1,4 @@
+
 import type { Tour } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, XCircle } from 'lucide-react';
@@ -8,8 +9,6 @@ interface InclusionsExclusionsProps {
 
 export function InclusionsExclusions({ tour }: InclusionsExclusionsProps) {
   return (
-    <div>
-      <h2 className="text-3xl font-bold !font-headline mb-6">What's Included</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card className="bg-green-50/30">
           <CardHeader>
@@ -48,6 +47,5 @@ export function InclusionsExclusions({ tour }: InclusionsExclusionsProps) {
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 }

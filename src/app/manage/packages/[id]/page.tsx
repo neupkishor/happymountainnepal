@@ -57,9 +57,6 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold !font-headline">{tour.name}</h1>
-            <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>
-              <PenSquare className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" />
-            </Link>
           </div>
           <div className="flex items-center gap-2 mt-2">
             <Badge variant={getStatusVariant(tour.status)}>
@@ -70,8 +67,7 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </div>
       </div>
 
-       <div>
-        {allImages.length > 0 ? (
+       {allImages.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {allImages.map((src, index) => (
                   <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
@@ -80,15 +76,7 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
                   </div>
               ))}
           </div>
-        ) : (
-          <div className="text-center py-8 bg-muted/50 rounded-lg">
-            <p className="text-muted-foreground">No images have been set for this package.</p>
-            <Button variant="outline" size="sm" className="mt-2" asChild>
-                <Link href={`/manage/packages/${tour.id}/edit/media`}>Add Images</Link>
-            </Button>
-          </div>
         )}
-      </div>
       
       <div>
         <SectionTitle title="Key Facts" editHref={`/manage/packages/${tour.id}/edit/basic-info`} />
@@ -96,7 +84,7 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
       </div>
 
       <div>
-        <SectionTitle title="Booking & Pricing" editHref={`/manage/packages/${tour.id}/edit/booking`} />
+        <SectionTitle title="Booking &amp; Pricing" editHref={`/manage/packages/${tour.id}/edit/booking`} />
         <Card>
             <CardContent className="p-6 space-y-4">
                 <div className="flex justify-between items-center border-b pb-2">
@@ -135,15 +123,19 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </Card>
       </div>
 
-      <div>
-        <SectionTitle title="Daily Itinerary" editHref={`/manage/packages/${tour.id}/edit/itinerary`} />
-        <Itinerary items={tour.itinerary} />
-      </div>
+      {tour.itinerary && tour.itinerary.length > 0 && (
+        <div>
+          <SectionTitle title="Daily Itinerary" editHref={`/manage/packages/${tour.id}/edit/itinerary`} />
+          <Itinerary items={tour.itinerary} />
+        </div>
+      )}
 
-      <div>
-        <SectionTitle title="Inclusions & Exclusions" editHref={`/manage/packages/${tour.id}/edit/inclusions`} />
-        <InclusionsExclusions tour={tour} />
-      </div>
+      {(tour.inclusions && tour.inclusions.length > 0) || (tour.exclusions && tour.exclusions.length > 0) ? (
+        <div>
+          <SectionTitle title="Inclusions &amp; Exclusions" editHref={`/manage/packages/${tour.id}/edit/inclusions`} />
+          <InclusionsExclusions tour={tour} />
+        </div>
+      ) : null}
       
       {tour.map && (
         <div>
@@ -168,15 +160,19 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </div>
       )}
        
-       <div>
-         <SectionTitle title="Frequently Asked Questions" editHref={`/manage/packages/${tour.id}/edit/faq`} />
-         <FaqSection faq={tour.faq} />
-       </div>
+       {tour.faq && tour.faq.length > 0 && (
+         <div>
+          <SectionTitle title="Frequently Asked Questions" editHref={`/manage/packages/${tour.id}/edit/faq`} />
+          <FaqSection faq={tour.faq} />
+        </div>
+       )}
 
-       <div>
-        <SectionTitle title="Additional Information" editHref={`/manage/packages/${tour.id}/edit/info`} />
-        <AdditionalInfoSection sections={tour.additionalInfoSections} />
-       </div>
+       {tour.additionalInfoSections && tour.additionalInfoSections.length > 0 && (
+        <div>
+          <SectionTitle title="Additional Information" editHref={`/manage/packages/${tour.id}/edit/info`} />
+          <AdditionalInfoSection sections={tour.additionalInfoSections} />
+        </div>
+       )}
 
     </div>
   );
