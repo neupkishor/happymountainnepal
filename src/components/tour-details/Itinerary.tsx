@@ -23,7 +23,7 @@ export function Itinerary({ items }: ItineraryProps) {
                 <span className="font-semibold text-left">{item.title}</span>
               </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="whitespace-pre-wrap">
               {item.description}
             </AccordionContent>
           </AccordionItem>
