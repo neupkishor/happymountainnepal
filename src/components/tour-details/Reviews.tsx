@@ -20,18 +20,32 @@ interface ReviewsProps {
 }
 
 export function Reviews({ reviews, tourId, isLoading, hasMore, onLoadMore, allToursMap }: ReviewsProps) {
-  if (!reviews || reviews.length === 0) {
+  if (reviews.length === 0 && !isLoading) {
     return (
         <div>
             <h2 className="text-3xl font-bold !font-headline mb-6">Reviews & Ratings</h2>
             <Card className="bg-card">
                 <CardContent className="p-6 text-center text-muted-foreground">
-                    No reviews for this tour yet. Be the first to leave one!
+                    Be the first to review this tour!
                 </CardContent>
             </Card>
         </div>
     );
   }
+
+  if (reviews.length === 0 && isLoading) {
+    return (
+        <div>
+            <h2 className="text-3xl font-bold !font-headline mb-6">Reviews & Ratings</h2>
+            <Card className="bg-card">
+                <CardContent className="p-6 text-center text-muted-foreground">
+                    Loading reviews...
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
 
   const averageRating = reviews.reduce((acc, review) => acc + review.stars, 0) / reviews.length;
 
@@ -61,11 +75,15 @@ export function Reviews({ reviews, tourId, isLoading, hasMore, onLoadMore, allTo
                 reviewTag = <Badge variant="default" className="bg-primary/10 text-primary hover:bg-primary/20">For this package</Badge>;
             } else if (review.type === 'onSite' && review.reviewFor && review.reviewFor !== tourId) {
                 const otherTourName = allToursMap.get(review.reviewFor);
-                reviewTag = (
-                    <Link href={`/tours/${review.reviewFor}`} className="hover:underline">
-                        <Badge variant="secondary">For: {otherTourName || 'Another Package'}</Badge>
-                    </Link>
-                );
+                if (otherTourName) {
+                    reviewTag = (
+                        <Link href={`/tours/${review.reviewFor}`} className="hover:underline">
+                            <Badge variant="secondary">For: {otherTourName}</Badge>
+                        </Link>
+                    );
+                } else {
+                    reviewTag = <Badge variant="secondary">For another package</Badge>;
+                }
             } else if (review.type === 'offSite') {
                 reviewTag = <Badge variant="outline">Off-site Review</Badge>;
             }

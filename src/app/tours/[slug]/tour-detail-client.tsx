@@ -14,7 +14,7 @@ import { TourNav } from '@/components/tour-details/TourNav';
 import type { Tour, ManagedReview } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect, useCallback } from 'react';
-import { getReviewsForPackage, logError, getAllTourNamesMap } from '@/lib/db';
+import { getReviewsForPackage, logError, getAllTourNamesMap, getGeneralReviews } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore';
@@ -29,8 +29,10 @@ const MAX_RECENTLY_VIEWED = 10;
 export default function TourDetailClient({ tour }: TourDetailClientProps) {
   const [displayedReviews, setDisplayedReviews] = useState<ManagedReview[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
-  const [hasMoreReviews, setHasMoreReviews] = useState(true);
-  const [lastReviewDocId, setLastReviewDocId] = useState<string | null>(null);
+  const [hasMorePackageReviews, setHasMorePackageReviews] = useState(true);
+  const [hasMoreGeneralReviews, setHasMoreGeneralReviews] = useState(true);
+  const [lastPackageReviewDocId, setLastPackageReviewDocId] = useState<string | null>(null);
+  const [lastGeneralReviewDocId, setLastGeneralReviewDocId] = useState<string | null>(null);
   const [allToursMap, setAllToursMap] = useState<Map<string, string>>(new Map());
   const { toast } = useToast();
   const pathname = usePathname();
@@ -41,13 +43,9 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       const stored = localStorage.getItem(RECENTLY_VIEWED_KEY);
       let recentlyViewed: string[] = stored ? JSON.parse(stored) : [];
       
-      // Remove the current tour if it already exists to move it to the front
       recentlyViewed = recentlyViewed.filter(id => id !== tour.id);
-      
-      // Add the current tour to the beginning of the array
       recentlyViewed.unshift(tour.id);
       
-      // Limit the array to the max size
       const updatedRecentlyViewed = recentlyViewed.slice(0, MAX_RECENTLY_VIEWED);
       
       localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updatedRecentlyViewed));
@@ -59,12 +57,36 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
   const fetchReviews = useCallback(async (isInitialLoad: boolean = false) => {
     setIsLoadingReviews(true);
     try {
-      const packageReviewsResult = await getReviewsForPackage(tour.id, lastReviewDocId);
-      
-      setDisplayedReviews(prev => isInitialLoad ? packageReviewsResult.reviews : [...prev, ...packageReviewsResult.reviews]);
-      setLastReviewDocId(packageReviewsResult.lastDocId);
-      setHasMoreReviews(packageReviewsResult.hasMore);
-
+      if (isInitialLoad) {
+        // Initial load: try to get package-specific reviews first
+        const packageReviewsResult = await getReviewsForPackage(tour.id, null);
+        if (packageReviewsResult.reviews.length > 0) {
+          setDisplayedReviews(packageReviewsResult.reviews);
+          setLastPackageReviewDocId(packageReviewsResult.lastDocId);
+          setHasMorePackageReviews(packageReviewsResult.hasMore);
+          setHasMoreGeneralReviews(false); // We have specific reviews, don't fetch general ones yet
+        } else {
+          // If no package reviews, fetch general reviews
+          const generalReviewsResult = await getGeneralReviews(tour.id, null);
+          setDisplayedReviews(generalReviewsResult.reviews);
+          setLastGeneralReviewDocId(generalReviewsResult.lastDocId);
+          setHasMoreGeneralReviews(generalReviewsResult.hasMore);
+          setHasMorePackageReviews(false); // No package reviews to load more of
+        }
+      } else {
+        // Load More: decide which type of reviews to fetch next
+        if (hasMorePackageReviews) {
+          const packageReviewsResult = await getReviewsForPackage(tour.id, lastPackageReviewDocId);
+          setDisplayedReviews(prev => [...prev, ...packageReviewsResult.reviews]);
+          setLastPackageReviewDocId(packageReviewsResult.lastDocId);
+          setHasMorePackageReviews(packageReviewsResult.hasMore);
+        } else if (hasMoreGeneralReviews) {
+          const generalReviewsResult = await getGeneralReviews(tour.id, lastGeneralReviewDocId);
+          setDisplayedReviews(prev => [...prev, ...generalReviewsResult.reviews]);
+          setLastGeneralReviewDocId(generalReviewsResult.lastDocId);
+          setHasMoreGeneralReviews(generalReviewsResult.hasMore);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching reviews:", error);
       logError({ message: `Failed to fetch reviews for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id } });
@@ -76,12 +98,14 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
     } finally {
       setIsLoadingReviews(false);
     }
-  }, [tour.id, lastReviewDocId, pathname, toast]);
+  }, [tour.id, lastPackageReviewDocId, lastGeneralReviewDocId, hasMorePackageReviews, hasMoreGeneralReviews, pathname, toast]);
 
   useEffect(() => {
     setDisplayedReviews([]);
-    setLastReviewDocId(null);
-    setHasMoreReviews(true);
+    setLastPackageReviewDocId(null);
+    setLastGeneralReviewDocId(null);
+    setHasMorePackageReviews(true);
+    setHasMoreGeneralReviews(true);
     fetchReviews(true);
 
     const fetchAllTourNames = async () => {
@@ -89,13 +113,15 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       setAllToursMap(map);
     };
     fetchAllTourNames();
-  }, [tour.id, fetchReviews]); // Added fetchReviews to dependency array
+  }, [tour.id, fetchReviews]);
 
   const handleLoadMore = () => {
-    if (hasMoreReviews && !isLoadingReviews) {
+    if ((hasMorePackageReviews || hasMoreGeneralReviews) && !isLoadingReviews) {
       fetchReviews();
     }
   };
+
+  const hasAnyMoreReviews = hasMorePackageReviews || hasMoreGeneralReviews;
 
   const averageRating = displayedReviews.length > 0 
     ? (displayedReviews.reduce((acc, review) => acc + review.stars, 0) / displayedReviews.length) 
@@ -227,7 +253,7 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
                     reviews={displayedReviews} 
                     tourId={tour.id}
                     isLoading={isLoadingReviews}
-                    hasMore={hasMoreReviews}
+                    hasMore={hasAnyMoreReviews}
                     onLoadMore={handleLoadMore}
                     allToursMap={allToursMap}
                 />
