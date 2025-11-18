@@ -33,8 +33,8 @@ export function TourNav({ tour, reviews }: TourNavProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Adjust this value based on your ImageGallery height
-      const stickyThreshold = window.innerHeight * 0.5; 
+      // Adjust this value to be just above the nav bar's usual position
+      const stickyThreshold = 300; 
       if (window.scrollY > stickyThreshold) {
         setIsSticky(true);
       } else {
@@ -66,7 +66,7 @@ export function TourNav({ tour, reviews }: TourNavProps) {
   return (
     <div className={cn(
       "transition-all duration-300 z-40",
-      isSticky ? 'sticky top-16 shadow-md' : 'relative'
+      isSticky ? 'sticky top-16 shadow-md' : 'relative mt-8'
     )}>
       <div className="bg-secondary/80 backdrop-blur-sm">
         <div className="container mx-auto overflow-x-auto">
