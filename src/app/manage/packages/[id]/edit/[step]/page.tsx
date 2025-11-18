@@ -6,7 +6,6 @@ import { BasicInfoForm } from '@/components/manage/forms/BasicInfoForm';
 import { ItineraryForm } from '@/components/manage/forms/ItineraryForm';
 import { InclusionsForm } from '@/components/manage/forms/InclusionsForm';
 import { BasicMediaForm } from '@/components/manage/forms/BasicMediaForm';
-import { GalleryForm } from '@/components/manage/forms/GalleryForm';
 import { PricingForm } from '@/components/manage/forms/PricingForm';
 import { FaqForm } from '@/components/manage/forms/FaqForm';
 import { AdditionalInfoForm } from '@/components/manage/forms/AdditionalInfoForm';
@@ -41,8 +40,6 @@ export default async function EditPackagePage({ params }: EditPackagePageProps) 
         return <InclusionsForm tour={tour} />;
       case 'media':
           return <BasicMediaForm tour={tour} />;
-      case 'gallery':
-          return <GalleryForm tour={tour} />;
       case 'faq':
           return <FaqForm tour={tour} />;
       case 'info':

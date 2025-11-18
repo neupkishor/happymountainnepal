@@ -14,8 +14,7 @@ const steps = [
   { slug: 'booking', label: 'Booking & Price' },
   { slug: 'itinerary', label: 'Itinerary' },
   { slug: 'inclusions', label: 'Inclusions' },
-  { slug: 'media', label: 'Main Media' },
-  { slug: 'gallery', label: 'Gallery' },
+  { slug: 'media', label: 'Media & Gallery' },
   { slug: 'faq', label: 'FAQ' },
   { slug: 'info', label: 'Additional Info' },
 ];
