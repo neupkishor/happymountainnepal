@@ -45,7 +45,7 @@ export function PackageTableRow({ tour }: PackageTableRowProps) {
       {[
         (
           <TableCell key="name">
-            <div className="font-medium break-words">{tour.name}</div>
+            <Link href={`/manage/packages/${tour.id}`} className="font-medium break-words hover:underline">{tour.name}</Link>
             <div className="text-xs text-muted-foreground break-all">{tour.id}</div>
           </TableCell>
         ),
