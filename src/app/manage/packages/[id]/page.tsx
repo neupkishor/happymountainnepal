@@ -22,6 +22,17 @@ type PackageDetailPageProps = {
   };
 };
 
+// Helper component for section titles with edit links
+const SectionTitle = ({ title, editHref }: { title: string; editHref: string }) => (
+    <div className="flex items-center gap-2 mb-6">
+      <h2 className="text-2xl font-bold !font-headline">{title}</h2>
+      <Link href={editHref}>
+        <PenSquare className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+      </Link>
+    </div>
+  );
+  
+
 export default async function PackageDetailPage({ params }: PackageDetailPageProps) {
   const tour = await getTourById(params.id);
 
@@ -41,10 +52,15 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-12">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold !font-headline">{tour.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold !font-headline">{tour.name}</h1>
+            <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>
+              <PenSquare className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" />
+            </Link>
+          </div>
           <div className="flex items-center gap-2 mt-2">
             <Badge variant={getStatusVariant(tour.status)}>
               {tour.status.charAt(0).toUpperCase() + tour.status.slice(1)}
@@ -52,12 +68,6 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
             <span className="text-sm text-muted-foreground font-mono">{tour.id}</span>
           </div>
         </div>
-        <Button asChild>
-          <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>
-            <PenSquare className="mr-2 h-4 w-4" />
-            Edit Package
-          </Link>
-        </Button>
       </div>
 
        <div>
@@ -71,14 +81,22 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
               ))}
           </div>
         ) : (
-          <p className="text-muted-foreground text-center py-8">No images have been set for this package.</p>
+          <div className="text-center py-8 bg-muted/50 rounded-lg">
+            <p className="text-muted-foreground">No images have been set for this package.</p>
+            <Button variant="outline" size="sm" className="mt-2" asChild>
+                <Link href={`/manage/packages/${tour.id}/edit/media`}>Add Images</Link>
+            </Button>
+          </div>
         )}
       </div>
       
-      <KeyFacts tour={tour} />
+      <div>
+        <SectionTitle title="Key Facts" editHref={`/manage/packages/${tour.id}/edit/basic-info`} />
+        <KeyFacts tour={tour} />
+      </div>
 
       <div>
-        <h2 className="text-2xl font-bold !font-headline mb-4">Booking & Pricing</h2>
+        <SectionTitle title="Booking & Pricing" editHref={`/manage/packages/${tour.id}/edit/booking`} />
         <Card>
             <CardContent className="p-6 space-y-4">
                 <div className="flex justify-between items-center border-b pb-2">
@@ -117,32 +135,48 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </Card>
       </div>
 
-      <Itinerary items={tour.itinerary} />
-      <InclusionsExclusions tour={tour} />
+      <div>
+        <SectionTitle title="Daily Itinerary" editHref={`/manage/packages/${tour.id}/edit/itinerary`} />
+        <Itinerary items={tour.itinerary} />
+      </div>
+
+      <div>
+        <SectionTitle title="Inclusions & Exclusions" editHref={`/manage/packages/${tour.id}/edit/inclusions`} />
+        <InclusionsExclusions tour={tour} />
+      </div>
       
       {tour.map && (
-        <Card>
-            <CardHeader><CardTitle>Map</CardTitle></CardHeader>
-            <CardContent>
-                  <div className="aspect-video">
-                  <iframe
-                    src={tour.map}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen={false}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title={`Map for ${tour.name}`}
-                    className="rounded-md"
-                  ></iframe>
-                </div>
-            </CardContent>
-        </Card>
+        <div>
+            <SectionTitle title="Trek Map" editHref={`/manage/packages/${tour.id}/edit/media`} />
+            <Card>
+                <CardContent className="p-6">
+                    <div className="aspect-video">
+                    <iframe
+                        src={tour.map}
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        allowFullScreen={false}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title={`Map for ${tour.name}`}
+                        className="rounded-md"
+                    ></iframe>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
       )}
        
-       <FaqSection faq={tour.faq} />
-       <AdditionalInfoSection sections={tour.additionalInfoSections} />
+       <div>
+         <SectionTitle title="Frequently Asked Questions" editHref={`/manage/packages/${tour.id}/edit/faq`} />
+         <FaqSection faq={tour.faq} />
+       </div>
+
+       <div>
+        <SectionTitle title="Additional Information" editHref={`/manage/packages/${tour.id}/edit/info`} />
+        <AdditionalInfoSection sections={tour.additionalInfoSections} />
+       </div>
 
     </div>
   );
