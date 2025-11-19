@@ -48,9 +48,10 @@ async function SearchResults({ term }: { term: string }) {
 }
 
 export default function SearchTermPage({ params }: { params: { term: string } }) {
-  return (
-    <Suspense fallback={<div className="container mx-auto py-12">Loading search results...</div>}>
-      <SearchResults term={params.term} />
-    </Suspense>
-  )
+    const decodedTerm = decodeURIComponent(params.term);
+    return (
+        <Suspense fallback={<div className="container mx-auto py-12">Loading search results...</div>}>
+            <SearchResults term={decodedTerm} />
+        </Suspense>
+    )
 }
