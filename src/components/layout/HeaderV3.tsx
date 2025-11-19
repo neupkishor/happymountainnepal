@@ -17,11 +17,10 @@ const navLinks: NavLink[] = [
     {
       title: 'Activities',
       children: [
-        { title: 'Trek', href: '/tours?type=trek', description: 'Journey through stunning mountain trails.' },
+        { title: 'Trekking', href: '/tours?type=trek', description: 'Journey through stunning mountain trails.' },
         { title: 'Tour', href: '/tours?type=tour', description: 'Explore cultural and natural heritage sites.' },
-        { title: 'Expedition', href: '/tours?type=expedition', description: 'Challenge yourself with peak climbing adventures.' },
-        { title: 'Safari', href: '/tours?type=safari', description: 'Discover wildlife in lush national parks.' },
-        { title: 'Adventure Sports', href: '/tours?type=adventure', description: 'Get your adrenaline pumping with thrilling activities.' },
+        { title: 'Climbing', href: '/tours?type=expedition', description: 'Challenge yourself with peak climbing adventures.' },
+        { title: 'Jungle Safari', href: '/tours?type=safari', description: 'Discover wildlife in lush national parks.' },
       ],
     },
     {

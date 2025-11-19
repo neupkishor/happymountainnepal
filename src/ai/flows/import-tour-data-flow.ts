@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -39,6 +40,7 @@ const ImportTourOutputSchema = z.object({
   exclusions: z.array(z.string()).describe('A list of what is NOT included in the tour price.'),
   faq: z.array(FaqItemSchema).describe('A list of frequently asked questions and their answers.'),
   additionalInfoSections: z.array(AdditionalInfoSectionSchema).describe('Any other distinct sections on the page with a title and content.'),
+  type: z.enum(['Trekking', 'Tour', 'Climbing', 'Jungle Safari']).describe('The type of activity of the tour.'),
 });
 
 export type ImportTourInput = z.infer<typeof ImportTourInputSchema>;
@@ -60,6 +62,7 @@ Analyze the content to find the following information:
 - **duration**: The total number of days for the trip.
 - **price**: The main numerical price for the tour.
 - **difficulty**: The difficulty level (must be one of: Easy, Moderate, Strenuous, Challenging).
+- **type**: The activity type (must be one of: Trekking, Tour, Climbing, Jungle Safari).
 - **region**: The geographical area(s), like "Everest" or "Annapurna".
 - **itinerary**: A day-by-day breakdown, including the day number, title, and description for each day.
 - **inclusions**: A list of services included in the price.

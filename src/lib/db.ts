@@ -116,12 +116,12 @@ export async function createTour(): Promise<string | null> {
         console.error("Firestore is not initialized.");
         return null;
     }
-    const newTourData = {
+    const newTourData: Omit<Tour, 'id'> = {
         name: 'New Untitled Package',
         slug: slugify('New Untitled Package'),
         description: '',
         region: [], // Changed to empty array
-        type: 'Trek',
+        type: 'Trekking',
         difficulty: 'Moderate',
         duration: 0,
         price: 0,
@@ -165,12 +165,12 @@ export async function createTourWithBasicInfo(data: Partial<ImportedTourData>): 
             throw new Error(`Slug '${slug}' is already in use.`);
         }
 
-        const newTourData = {
+        const newTourData: Omit<Tour, 'id'> = {
             name: data.name || 'New Untitled Package',
             slug: slug,
             description: data.description || '',
             region: Array.isArray(data.region) ? data.region : [],
-            type: data.type || 'Trek',
+            type: data.type || 'Trekking',
             difficulty: data.difficulty || 'Moderate',
             duration: typeof data.duration === 'number' ? data.duration : 0,
             price: data.price || 0,
@@ -306,9 +306,8 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
 
 export async function createBlogPost(): Promise<string | null> {
     if (!firestore) return null;
-    const newPost = {
+    const newPost: Omit<BlogPost, 'id' | 'slug' | 'date'> & { date: any } = {
         title: 'New Untitled Post',
-        slug: `new-untitled-post-${Date.now()}`,
         content: '<p>Start writing your amazing blog post here...</p>',
         excerpt: '',
         author: 'Admin',

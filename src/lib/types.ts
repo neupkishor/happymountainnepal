@@ -1,3 +1,4 @@
+
 import { Timestamp } from "firebase/firestore";
 
 export interface Tour {
@@ -6,7 +7,7 @@ export interface Tour {
   name: string;
   description: string;
   region: string[]; // Changed to array
-  type: 'Trek' | 'Tour' | 'Peak Climbing';
+  type: 'Trekking' | 'Tour' | 'Climbing' | 'Jungle Safari';
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';
   duration: number; // in days
   price: number; // Base price
@@ -197,5 +198,5 @@ export interface ImportedTourData {
   exclusions: string[];
   faq: { question: string; answer: string }[];
   additionalInfoSections: { title: string; content: string }[];
-  type?: 'Trek' | 'Tour' | 'Peak Climbing';
+  type?: 'Trekking' | 'Tour' | 'Climbing' | 'Jungle Safari';
 }
