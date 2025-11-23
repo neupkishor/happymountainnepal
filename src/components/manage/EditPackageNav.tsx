@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -11,12 +12,12 @@ interface EditPackageNavProps {
 
 const steps = [
   { slug: 'basic-info', label: 'Basic Info' },
-  { slug: 'booking', label: 'Booking & Price' },
+  { slug: 'media', label: 'Media & Gallery' },
   { slug: 'itinerary', label: 'Itinerary' },
   { slug: 'inclusions', label: 'Inclusions' },
-  { slug: 'media', label: 'Media & Gallery' },
   { slug: 'faq', label: 'FAQ' },
   { slug: 'info', label: 'Additional Info' },
+  { slug: 'booking', label: 'Booking & Price' },
 ];
 
 export function EditPackageNav({ packageId, currentStep }: EditPackageNavProps) {
