@@ -13,10 +13,10 @@ type TourDetailPageProps = {
 export async function generateMetadata({ params }: TourDetailPageProps): Promise<Metadata> {
   const tour = await getTourBySlug(params.slug);
 
-  if (!tour) {
+  if (!tour || tour.status === 'unpublished' || tour.status === 'draft') {
     return {
       title: 'Tour Not Found',
-      description: 'The requested tour could not be found.',
+      description: 'The requested tour could not be found or is not available.',
     };
   }
 
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: TourDetailPageProps): Promise
 export default async function TourDetailPage({ params }: TourDetailPageProps) {
   const tour = await getTourBySlug(params.slug);
 
-  if (!tour) {
+  if (!tour || tour.status === 'unpublished' || tour.status === 'draft') {
     notFound();
   }
 

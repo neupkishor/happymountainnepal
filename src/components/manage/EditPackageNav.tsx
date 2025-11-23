@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { Wand2 } from 'lucide-react'; // Import icon
+import { Wand2, Send } from 'lucide-react'; // Import icon
 
 interface EditPackageNavProps {
   packageId: string;
@@ -36,12 +36,22 @@ export function EditPackageNav({ packageId, currentStep }: EditPackageNavProps) 
       ))}
        <Button
           asChild
-          variant={currentStep === 'assist' ? 'default' : 'ghost'}
-          className="justify-start mt-4 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+          variant={currentStep === 'assist' ? 'secondary' : 'ghost'}
+          className="justify-start mt-4"
         >
           <Link href={`/manage/packages/${packageId}/edit/assist`}>
             <Wand2 className="mr-2 h-4 w-4" />
             AI Assist
+          </Link>
+        </Button>
+         <Button
+          asChild
+          variant={currentStep === 'publish' ? 'default' : 'ghost'}
+          className={cn("justify-start mt-2", currentStep === 'publish' && 'ring-2 ring-primary/50')}
+        >
+          <Link href={`/manage/packages/${packageId}/edit/publish`}>
+            <Send className="mr-2 h-4 w-4" />
+            Publish
           </Link>
         </Button>
     </nav>

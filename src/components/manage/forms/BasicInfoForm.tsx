@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour, logError, checkSlugAvailability, validateTourForPublishing } from '@/lib/db';
+import { updateTour, logError, checkSlugAvailability } from '@/lib/db';
 import { useTransition, useState, useEffect } from 'react';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -30,11 +30,10 @@ const formSchema = z.object({
   name: z.string().min(5, { message: "Name must be at least 5 characters." }),
   slug: z.string().min(3, { message: "Slug must be at least 3 characters." }).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, alphanumeric, and use hyphens for spaces."),
   region: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)).refine(val => val.length > 0, { message: "At least one region is required." }),
-  type: z.enum(['Trek', 'Tour', 'Peak Climbing']),
+  type: z.enum(['Trekking', 'Tour', 'Climbing', 'Jungle Safari']),
   difficulty: z.enum(['Easy', 'Moderate', 'Strenuous', 'Challenging']),
   duration: z.coerce.number().int().min(1, { message: "Duration must be at least 1 day." }),
   description: z.string().min(20, { message: "Description must be at least 20 characters." }),
-  status: z.enum(['draft', 'published', 'unpublished']),
   searchKeywords: z.array(z.string()).optional(),
 });
 
@@ -55,11 +54,10 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
       name: tour.name || '',
       slug: tour.slug || slugify(tour.name || 'new-package'),
       region: Array.isArray(tour.region) ? tour.region.join(', ') : tour.region || '',
-      type: tour.type || 'Trek',
+      type: tour.type || 'Trekking',
       difficulty: tour.difficulty || 'Moderate',
       duration: tour.duration || 0,
       description: tour.description || '',
-      status: tour.status || 'draft',
       searchKeywords: tour.searchKeywords || [],
     },
   });
@@ -117,27 +115,6 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        if (values.status === 'published' && tour.status !== 'published') {
-          const validationResult = await validateTourForPublishing(tour.id);
-          if (validationResult !== true) {
-            toast({
-              variant: 'destructive',
-              title: 'Cannot Publish',
-              description: (
-                <div>
-                  <p>The package cannot be published due to missing information:</p>
-                  <ul className="list-disc list-inside mt-2">
-                    {validationResult.map((item, index) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ),
-            });
-            return;
-          }
-        }
-        
         const keywords = generateKeywords(values);
         const dataToUpdate = { ...values, searchKeywords: keywords };
 
@@ -266,9 +243,10 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="Trek">Trek</SelectItem>
+                                <SelectItem value="Trekking">Trekking</SelectItem>
                                 <SelectItem value="Tour">Tour</SelectItem>
-                                <SelectItem value="Peak Climbing">Peak Climbing</SelectItem>
+                                <SelectItem value="Climbing">Climbing</SelectItem>
+                                <SelectItem value="Jungle Safari">Jungle Safari</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -299,28 +277,6 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     )}
                 />
             </div>
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="unpublished">Unpublished</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             
             <Button type="submit" disabled={isPending || isSlugChecking || (isSlugAvailable === false)}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -20,7 +20,7 @@ export interface Tour {
   anyDateAvailable?: boolean; // New field for "Any Date" option
   map: string; // URL for an embedded map iframe (renamed from mapImage)
   reviews: Review[]; // This is for embedded reviews on tour pages
-  status: 'draft' | 'published' | 'unpublished'; // Added status field
+  status: 'draft' | 'published' | 'unpublished' | 'hidden'; // Added status field
   faq: { question: string; answer: string }[]; // New field for Frequently Asked Questions
   additionalInfoSections?: { title: string; content: string }[]; // New field for additional info sections
   bookingType: 'internal' | 'external'; // New: How the tour is booked
