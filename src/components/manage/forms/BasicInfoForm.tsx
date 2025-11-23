@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useFormContext } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,12 +16,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
-import { updateTour, logError, checkSlugAvailability } from '@/lib/db';
-import { useTransition, useState, useEffect } from 'react';
+import { checkSlugAvailability } from '@/lib/db';
+import { useState, useEffect } from 'react';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { usePathname } from 'next/navigation';
 import { slugify } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
 
@@ -37,34 +34,16 @@ const formSchema = z.object({
   searchKeywords: z.array(z.string()).optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 interface BasicInfoFormProps {
   tour: Tour;
 }
 
 export function BasicInfoForm({ tour }: BasicInfoFormProps) {
-  const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
-  const pathname = usePathname();
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: tour.name || '',
-      slug: tour.slug || slugify(tour.name || 'new-package'),
-      region: Array.isArray(tour.region) ? tour.region.join(', ') : tour.region || '',
-      type: tour.type || 'Trekking',
-      difficulty: tour.difficulty || 'Moderate',
-      duration: tour.duration || 0,
-      description: tour.description || '',
-      searchKeywords: tour.searchKeywords || [],
-    },
-  });
+  const form = useFormContext();
 
   const name = form.watch('name');
   const currentSlug = form.watch('slug');
-  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(!!tour.slug);
   const [isSlugChecking, setIsSlugChecking] = useState(false);
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
 
@@ -78,6 +57,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
 
   useEffect(() => {
     const checkAvailability = async () => {
+      // @ts-ignore
       if (debouncedSlug && form.formState.errors.slug?.message === undefined) {
         setIsSlugChecking(true);
         try {
@@ -100,43 +80,13 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
       }
     };
     checkAvailability();
+    // @ts-ignore
   }, [debouncedSlug, tour.id, form, form.formState.errors.slug?.message]);
-
-  const generateKeywords = (values: FormValues): string[] => {
-    const keywords = new Set<string>();
-    values.name.toLowerCase().split(' ').forEach(word => keywords.add(word));
-    values.description.toLowerCase().split(' ').forEach(word => keywords.add(word.replace(/[^a-z0-9]/gi, '')));
-    (values.region as unknown as string).split(',').forEach(r => keywords.add(r.trim().toLowerCase()));
-    keywords.add(values.type.toLowerCase());
-    keywords.add(values.difficulty.toLowerCase());
-    return Array.from(keywords).filter(Boolean);
-  }
-
-  const onSubmit = (values: FormValues) => {
-    startTransition(async () => {
-      try {
-        const keywords = generateKeywords(values);
-        const dataToUpdate = { ...values, searchKeywords: keywords };
-
-        await updateTour(tour.id, dataToUpdate);
-        toast({ title: 'Success', description: 'Basic info updated.' });
-      } catch (error: any) {
-        console.error("Failed to save package:", error);
-        logError({ message: `Failed to update basic info for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not save package. Please try again.',
-        });
-      }
-    });
-  };
-
+  
   return (
     <Card>
       <CardContent className="p-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -144,7 +94,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                 <FormItem>
                   <FormLabel>Package Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Everest Base Camp Trek" {...field} disabled={isPending} />
+                    <Input placeholder="e.g., Everest Base Camp Trek" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -161,7 +111,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                       <Input
                         placeholder="e.g., everest-base-camp-trek"
                         {...field}
-                        disabled={isPending || isSlugChecking}
+                        disabled={isSlugChecking}
                         onChange={(e) => {
                           field.onChange(slugify(e.target.value));
                           setIsSlugManuallyEdited(true);
@@ -194,7 +144,6 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     <Textarea
                       placeholder="A brief overview of the trek or tour..."
                       {...field}
-                      disabled={isPending}
                     />
                   </FormControl>
                   <FormMessage />
@@ -209,7 +158,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     <FormItem>
                     <FormLabel>Region (comma-separated)</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., Everest, Annapurna" {...field as any} disabled={isPending} />
+                        <Input placeholder="e.g., Everest, Annapurna" {...field as any} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -222,7 +171,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     <FormItem>
                     <FormLabel>Duration (in days)</FormLabel>
                     <FormControl>
-                        <Input type="number" {...field} disabled={isPending} />
+                        <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -236,7 +185,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Activity Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select an activity type" />
@@ -259,7 +208,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Difficulty Level</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a difficulty level" />
@@ -277,13 +226,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                     )}
                 />
             </div>
-            
-            <Button type="submit" disabled={isPending || isSlugChecking || (isSlugAvailable === false)}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
-          </form>
-        </Form>
+          </div>
       </CardContent>
     </Card>
   );
