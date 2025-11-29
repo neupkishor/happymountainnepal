@@ -200,3 +200,11 @@ export interface ImportedTourData {
   additionalInfoSections: { title: string; content: string }[];
   type?: 'Trekking' | 'Tour' | 'Climbing' | 'Jungle Safari';
 }
+
+export interface ImportedBlogData {
+    title: string;
+    content: string;
+    excerpt: string;
+    author: string;
+    image: string;
+}

@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ import {
   TableRow,
   TableCell, // Imported TableCell
 } from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Wand2 } from 'lucide-react';
 import { BlogTableRow } from '@/components/manage/BlogTableRow';
 import { useFirestore } from '@/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
@@ -44,14 +45,25 @@ export default function BlogListPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold !font-headline">Blog Posts</h1>
-        <Button asChild>
-          <Link href="/manage/blog/create">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Post
-          </Link>
-        </Button>
+      <div className="flex items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 className="text-3xl font-bold !font-headline">Blog Posts</h1>
+            <p className="text-muted-foreground mt-2">Create and manage your articles.</p>
+        </div>
+        <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link href="/manage/import/blog">
+                <Wand2 className="mr-2 h-4 w-4" />
+                Import from URL
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/manage/blog/create">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Post
+              </Link>
+            </Button>
+        </div>
       </div>
       <Card>
         <CardHeader>

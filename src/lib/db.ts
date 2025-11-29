@@ -5,7 +5,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orde
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -326,6 +326,39 @@ export async function createBlogPost(): Promise<string | null> {
         return null;
     }
 }
+
+export async function createBlogPostWithData(data: ImportedBlogData): Promise<string | null> {
+    if (!firestore) return null;
+    
+    const slug = slugify(data.title);
+    const isAvailable = await checkSlugAvailability(slug);
+    if (!isAvailable) {
+        throw new Error(`A blog post with the slug '${slug}' already exists.`);
+    }
+
+    const newPost: Omit<BlogPost, 'id' | 'slug' | 'date'> & { date: any } = {
+        title: data.title,
+        content: data.content,
+        excerpt: data.excerpt,
+        author: data.author || 'Admin',
+        authorPhoto: '', // Will need to be set manually
+        date: serverTimestamp(),
+        image: data.image,
+        status: 'draft',
+        metaInformation: '',
+    };
+    try {
+        const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
+        // Add slug to the created document
+        await updateDoc(docRef, { slug });
+        return docRef.id;
+    } catch (e: any) {
+        console.error("Error creating blog post with data", e);
+        await logError({ message: `Failed to create blog post from import: ${e.message}`, stack: e.stack, pathname: '/manage/import/blog', context: { data } });
+        throw new Error("Could not save the imported blog post.");
+    }
+}
+
 
 export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'id' | 'slug'>>) {
     if (!firestore) throw new Error("Database not available.");
