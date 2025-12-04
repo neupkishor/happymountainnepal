@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -19,7 +20,7 @@ interface FileUploadInputProps {
   onUploadingChange?: (isUploading: boolean) => void;
   customFileName?: string;
   skipCompression?: boolean;
-  category?: UploadCategory;
+  category: UploadCategory; // Prop is now required
 }
 
 export function FileUploadInput({
@@ -29,7 +30,7 @@ export function FileUploadInput({
   onUploadingChange,
   customFileName,
   skipCompression = false,
-  category = 'general',
+  category, // Removed default, as it should be explicit
 }: FileUploadInputProps) {
   const { control, setValue } = useFormContext();
   const { field } = useController({ name, control });
@@ -87,7 +88,6 @@ export function FileUploadInput({
     const safeBaseName = customFileName || slugify(file.name.replace(/\.[^/.]+$/, ''));
     const safeFileName = extension ? `${safeBaseName}.${extension}` : safeBaseName;
     
-    // Use the original file's MIME type if available, otherwise construct it
     const mimeType = file.type || (isImage ? `image/${extension === 'jpg' ? 'jpeg' : extension}` : 'application/octet-stream');
 
     const correctedFile = new File([finalFile], safeFileName, { type: mimeType });
@@ -124,7 +124,7 @@ export function FileUploadInput({
           userId: userId,
           fileSize: correctedFile.size,
           fileType: correctedFile.type,
-          category: category, // Add category to the log
+          category: category,
         });
 
         onUploadSuccess?.(fullUrl);

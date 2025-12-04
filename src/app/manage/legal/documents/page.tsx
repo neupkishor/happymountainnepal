@@ -213,7 +213,7 @@ export default function LegalDocumentsPage() {
           isOpen={isLibraryOpen}
           onClose={() => setIsLibraryOpen(false)}
           onSelect={handleSelectFile}
-          defaultCategory="document"
+          defaultCategory={'document'}
         />
       </div>
     </FormProvider>
