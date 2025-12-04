@@ -30,7 +30,9 @@ interface MediaLibraryDialogProps {
 
 const categories: UploadCategory[] = ['general', 'trip', 'document', 'background', 'feature-icon', 'user-photo', 'blog', 'logo', 'author'];
 
-export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = [], defaultCategory = 'general' }: MediaLibraryDialogProps) {
+const DEFAULT_SELECTED_URLS: string[] = [];
+
+export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = DEFAULT_SELECTED_URLS, defaultCategory = 'general' }: MediaLibraryDialogProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
