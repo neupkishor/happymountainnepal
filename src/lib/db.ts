@@ -984,6 +984,24 @@ export async function getLegalDocuments(): Promise<LegalDocument[]> {
     }
 }
 
+export async function getLegalDocumentById(id: string): Promise<LegalDocument | null> {
+    if (!firestore) return null;
+    try {
+        const docRef = doc(firestore, 'legalDocuments', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return null;
+        const data = docSnap.data();
+        return {
+            id: docSnap.id,
+            ...data,
+            createdAt: (data.createdAt as Timestamp).toDate().toISOString()
+        } as LegalDocument;
+    } catch (error: any) {
+        console.error(`Error fetching legal document with id ${id}:`, error);
+        throw new Error("Could not fetch legal document.");
+    }
+}
+
 export async function addLegalDocument(data: Omit<LegalDocument, 'id' | 'createdAt'>): Promise<string> {
     if (!firestore) throw new Error("Database not available.");
     try {
