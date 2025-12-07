@@ -1,37 +1,31 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
 import { getLegalDocuments } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileText, Download } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
+import { DocumentViewer as DocumentCard } from './components/document-card';
 
-export default function LegalDocumentsPage() {
-  const [documents, setDocuments] = useState<LegalDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default async function LegalDocumentsPage() {
+  let documents: LegalDocument[] = [];
+  try {
+    documents = await getLegalDocuments();
+  } catch (error) {
+    console.error("Failed to load legal documents", error);
+  }
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      setIsLoading(true);
-      try {
-        const docs = await getLegalDocuments();
-        setDocuments(docs);
-      } catch (error) {
-        console.error("Failed to load legal documents", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDocuments();
-  }, []);
+  const cookieStore = await cookies();
+  const userEmail = cookieStore.get('user_email')?.value || 'guest';
+
+  // Get request metadata for device ID
+  const headerList = await headers();
+  const userAgent = headerList.get('user-agent') || 'unknown-device';
+  const realIp = headerList.get('x-forwarded-for') || 'unknown-ip';
+  const deviceIdentifier = `${userAgent}-${realIp}`;
 
   return (
     <div className="container mx-auto py-16">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold !font-headline">Legal Documents</h1>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -39,35 +33,34 @@ export default function LegalDocumentsPage() {
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-        ) : documents.length > 0 ? (
-          <div className="space-y-6">
+        {documents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {documents.map(doc => (
-              <Card key={doc.id}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-primary" />
-                      {doc.title}
-                    </CardTitle>
-                    {doc.description && <CardDescription className="mt-2">{doc.description}</CardDescription>}
+              <Link key={doc.id} href={`/legal/documents/${doc.id}`} className="block group h-full">
+                <div className="border rounded-lg overflow-hidden shadow-sm transition-all duration-300 h-full flex flex-col group-hover:border-primary group-hover:ring-1 group-hover:ring-primary bg-card">
+                  <div className="h-64 overflow-hidden relative shrink-0 border-b">
+                    <DocumentCard
+                      url={doc.url}
+                      email={userEmail}
+                      deviceId={deviceIdentifier}
+                    />
                   </div>
-                  <Button asChild>
-                    <Link href={`/legal/documents/${doc.id}`}>
-                      <Download className="mr-2 h-4 w-4" /> View Document
-                    </Link>
-                  </Button>
-                </CardHeader>
-              </Card>
+                  <div className="p-4 bg-muted/20 flex-grow flex items-start gap-4">
+                    <div className="bg-primary/10 p-2.5 rounded-md shrink-0">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-grow">
+                      <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                        {doc.title}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-card rounded-lg">
+          <div className="text-center py-16 bg-card rounded-lg border">
             <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">No Documents Available</h3>
             <p className="mt-2 text-sm text-muted-foreground">

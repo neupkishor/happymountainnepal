@@ -27,18 +27,26 @@ export function DocumentViewer({ url, email, deviceId }: DocumentViewerProps) {
 
     return (
         <div
-            className="relative w-full bg-white overflow-hidden"
-            style={{ minHeight: "600px" }}
+            className="relative w-full bg-white overflow-hidden bg-muted/20"
+            style={{ height: "100%", width: "100%" }}
             onContextMenu={(e) => e.preventDefault()}
             onDragStart={(e) => e.preventDefault()}
         >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {finalImage && (
-                <img
-                    src={finalImage}
-                    alt="Protected Document"
-                    className="w-full h-auto block pointer-events-none select-none"
+            {/* Secure Background Image Implementation */}
+            {finalImage ? (
+                <div
+                    className="w-full h-full absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none select-none"
+                    style={{
+                        backgroundImage: `url(${finalImage})`,
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none'
+                    }}
                 />
+            ) : (
+                // Fallback / Loading
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground animate-pulse">
+                    <div className="h-8 w-8 bg-muted-foreground/20 rounded-full" />
+                </div>
             )}
 
             {/* Transparent blocker */}
