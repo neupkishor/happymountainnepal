@@ -13,7 +13,7 @@ export interface Tour {
   price: number; // Base price
   mainImage: string;
   images: string[];
-  itinerary: { day: number; title: string; description:string }[];
+  itinerary: { day: number; title: string; description: string }[];
   inclusions: string[];
   exclusions: string[];
   departureDates: { date: string | Timestamp; price: number; guaranteed: boolean }[];
@@ -93,13 +93,13 @@ export interface Activity {
 }
 
 export interface SiteError {
-    id: string;
-    message: string;
-    stack?: string;
-    componentStack?: string;
-    pathname: string;
-    createdAt: Timestamp;
-    context?: Record<string, any>;
+  id: string;
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  pathname: string;
+  createdAt: Timestamp;
+  context?: Record<string, any>;
 }
 
 export type UploadCategory = 'general' | 'trip' | 'document' | 'background' | 'feature-icon' | 'user-photo' | 'blog' | 'logo' | 'author';
@@ -175,14 +175,14 @@ export interface LegalDocument {
   title: string;
   description?: string;
   url: string;
-  createdAt: Timestamp;
+  createdAt: string;
 }
 
 
 export interface LegalContent {
-    id: 'privacy-policy' | 'terms-of-service';
-    content: string;
-    lastUpdated: Timestamp;
+  id: 'privacy-policy' | 'terms-of-service';
+  content: string;
+  lastUpdated: Timestamp;
 }
 
 // New type for AI import
@@ -202,9 +202,9 @@ export interface ImportedTourData {
 }
 
 export interface ImportedBlogData {
-    title: string;
-    content: string;
-    excerpt: string;
-    author: string;
-    image: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  author: string;
+  image: string;
 }

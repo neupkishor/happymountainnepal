@@ -13,9 +13,9 @@ import { firestore } from './firebase-server';
 
 
 export interface Inquiry {
-  id: string;
-  conversation: CustomizeTripInput;
-  createdAt: Timestamp;
+    id: string;
+    conversation: CustomizeTripInput;
+    createdAt: Timestamp;
 }
 
 /**
@@ -29,19 +29,19 @@ export async function saveInquiry(conversation: CustomizeTripInput): Promise<str
         console.error("Firestore is not initialized.");
         throw new Error("Database not available.");
     }
-  try {
-    const docRef = await addDoc(collection(firestore, 'inquiries'), {
-      conversation,
-      createdAt: serverTimestamp(),
-    });
-    console.log("Inquiry saved with ID: ", docRef.id);
-    return docRef.id;
-  } catch (error: any) {
-    console.error("Error adding document: ", error);
-    // Log the error using the server-side logError function
-    await logError({ message: `Failed to save inquiry: ${error.message}`, stack: error.stack, pathname: '/customize', context: { conversation } });
-    throw new Error("Could not save inquiry to the database.");
-  }
+    try {
+        const docRef = await addDoc(collection(firestore, 'inquiries'), {
+            conversation,
+            createdAt: serverTimestamp(),
+        });
+        console.log("Inquiry saved with ID: ", docRef.id);
+        return docRef.id;
+    } catch (error: any) {
+        console.error("Error adding document: ", error);
+        // Log the error using the server-side logError function
+        await logError({ message: `Failed to save inquiry: ${error.message}`, stack: error.stack, pathname: '/customize', context: { conversation } });
+        throw new Error("Could not save inquiry to the database.");
+    }
 }
 
 /**
@@ -54,60 +54,60 @@ export async function getInquiries(): Promise<Inquiry[]> {
         console.error("Firestore is not initialized.");
         return [];
     }
-  try {
-    const inquiriesRef = collection(firestore, 'inquiries');
-    const q = query(inquiriesRef, orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Inquiry));
+    try {
+        const inquiriesRef = collection(firestore, 'inquiries');
+        const q = query(inquiriesRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
 
-  } catch (error: any) {
-    console.error("Error fetching inquiries: ", error);
-    await logError({ message: `Failed to fetch inquiries: ${error.message}`, stack: error.stack, pathname: '/manage/inquiries' });
-    throw new Error("Could not fetch inquiries from the database.");
-  }
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as Inquiry));
+
+    } catch (error: any) {
+        console.error("Error fetching inquiries: ", error);
+        await logError({ message: `Failed to fetch inquiries: ${error.message}`, stack: error.stack, pathname: '/manage/inquiries' });
+        throw new Error("Could not fetch inquiries from the database.");
+    }
 }
 
 async function getDocById<T>(collectionName: string, id: string): Promise<T | null> {
-  if (!firestore) {
-    console.error("Firestore is not initialized.");
-    return null;
-  }
-  try {
-    const docRef = doc(firestore, collectionName, id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) {
-      return null;
+    if (!firestore) {
+        console.error("Firestore is not initialized.");
+        return null;
     }
-    return { id: docSnap.id, ...docSnap.data() } as T;
-  } catch (error: any) {
-    console.error(`Error fetching doc from ${collectionName} with id ${id}:`, error);
-    await logError({ message: `Failed to fetch doc ${id} from ${collectionName}: ${error.message}`, stack: error.stack, pathname: `/${collectionName}/${id}` });
-    throw new Error(`Could not fetch from ${collectionName}.`);
-  }
+    try {
+        const docRef = doc(firestore, collectionName, id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+            return null;
+        }
+        return { id: docSnap.id, ...docSnap.data() } as T;
+    } catch (error: any) {
+        console.error(`Error fetching doc from ${collectionName} with id ${id}:`, error);
+        await logError({ message: `Failed to fetch doc ${id} from ${collectionName}: ${error.message}`, stack: error.stack, pathname: `/${collectionName}/${id}` });
+        throw new Error(`Could not fetch from ${collectionName}.`);
+    }
 }
 
 async function getDocBySlug<T>(collectionName: string, slug: string): Promise<T | null> {
-  if (!firestore) {
-    console.error("Firestore is not initialized.");
-    return null;
-  }
-  try {
-    const q = query(collection(firestore, collectionName), where('slug', '==', slug), firestoreLimit(1));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-      return null;
+    if (!firestore) {
+        console.error("Firestore is not initialized.");
+        return null;
     }
-    const docSnap = querySnapshot.docs[0];
-    return { id: docSnap.id, ...docSnap.data() } as T;
-  } catch (error: any) {
-    console.error(`Error fetching doc from ${collectionName} with slug ${slug}:`, error);
-    await logError({ message: `Failed to fetch doc with slug ${slug} from ${collectionName}: ${error.message}`, stack: error.stack, pathname: `/${collectionName}/${slug}` });
-    throw new Error(`Could not fetch from ${collectionName}.`);
-  }
+    try {
+        const q = query(collection(firestore, collectionName), where('slug', '==', slug), firestoreLimit(1));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            return null;
+        }
+        const docSnap = querySnapshot.docs[0];
+        return { id: docSnap.id, ...docSnap.data() } as T;
+    } catch (error: any) {
+        console.error(`Error fetching doc from ${collectionName} with slug ${slug}:`, error);
+        await logError({ message: `Failed to fetch doc with slug ${slug} from ${collectionName}: ${error.message}`, stack: error.stack, pathname: `/${collectionName}/${slug}` });
+        throw new Error(`Could not fetch from ${collectionName}.`);
+    }
 }
 
 
@@ -203,8 +203,8 @@ export async function updateTour(id: string, data: Partial<Omit<Tour, 'id'>>) {
     if (!firestore) throw new Error("Database not available.");
     try {
         const docRef = doc(firestore, 'packages', id);
-        
-        let finalData: Partial<Omit<Tour, 'id'>> = {...data};
+
+        let finalData: Partial<Omit<Tour, 'id'>> = { ...data };
 
         if (finalData.departureDates) {
             finalData.departureDates = finalData.departureDates.map(d => ({
@@ -237,7 +237,7 @@ export async function checkSlugAvailability(slug: string, excludeTourId?: string
     try {
         const q = query(collection(firestore, 'packages'), where('slug', '==', slug));
         const querySnapshot = await getDocs(q);
-        
+
         if (excludeTourId) {
             return querySnapshot.docs.every(doc => doc.id === excludeTourId);
         }
@@ -271,7 +271,7 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
     if (!tour.type) missing.push("Activity Type");
     if (!tour.difficulty) missing.push("Difficulty Level");
     if (!tour.duration || tour.duration < 1) missing.push("Duration (at least 1 day)");
-    
+
     // Price and Booking Type validation
     if (!tour.price || tour.price <= 0) missing.push("Base Price (must be positive)");
     if (!tour.bookingType) missing.push("Booking Type");
@@ -281,7 +281,7 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
 
     if (!tour.mainImage || tour.mainImage.length === 0) missing.push("Main Image");
     if (!tour.map || tour.map.length === 0) missing.push("Map URL");
-    
+
     if (!tour.itinerary || tour.itinerary.length === 0 || tour.itinerary.some(item => !item.day || !item.title || !item.description)) {
         missing.push("Itinerary (at least one complete day)");
     }
@@ -329,7 +329,7 @@ export async function createBlogPost(): Promise<string | null> {
 
 export async function createBlogPostWithData(data: ImportedBlogData): Promise<string | null> {
     if (!firestore) return null;
-    
+
     const slug = slugify(data.title);
     const isAvailable = await checkSlugAvailability(slug);
     if (!isAvailable) {
@@ -364,12 +364,12 @@ export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'i
     if (!firestore) throw new Error("Database not available.");
     try {
         const docRef = doc(firestore, 'blogPosts', id);
-        let finalData: Partial<Omit<BlogPost, 'id'>> = {...data};
+        let finalData: Partial<Omit<BlogPost, 'id'>> = { ...data };
 
-        if(data.title) {
+        if (data.title) {
             finalData.slug = slugify(data.title);
         }
-        
+
         await updateDoc(docRef, finalData);
     } catch (e: any) {
         console.error("Error updating blog post", e);
@@ -410,7 +410,7 @@ export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
     }
 }
 
-export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id'| 'slug'>) {
+export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id' | 'slug'>) {
     if (!firestore) throw new Error("Database not available.");
     try {
         const slug = slugify(data.name);
@@ -519,19 +519,19 @@ export async function getErrorById(id: string): Promise<SiteError | null> {
 
 // File Upload Logging
 export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt'>): Promise<void> {
-  if (!firestore) {
-    console.error("Firestore is not initialized. Cannot log file upload.");
-    return;
-  }
-  try {
-    await addDoc(collection(firestore, 'uploads'), {
-      ...data,
-      uploadedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    console.error('Failed to log file upload to Firestore:', error);
-    // Don't throw, as the primary goal (upload) was successful.
-  }
+    if (!firestore) {
+        console.error("Firestore is not initialized. Cannot log file upload.");
+        return;
+    }
+    try {
+        await addDoc(collection(firestore, 'uploads'), {
+            ...data,
+            uploadedAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error('Failed to log file upload to Firestore:', error);
+        // Don't throw, as the primary goal (upload) was successful.
+    }
 }
 
 export async function getFileUploads(options?: { limit?: number; category?: UploadCategory }): Promise<FileUpload[]> {
@@ -546,12 +546,12 @@ export async function getFileUploads(options?: { limit?: number; category?: Uplo
         if (options?.limit) {
             q = query(q, firestoreLimit(options.limit));
         }
-        
+
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => {
             const data = doc.data();
-            return { 
-                id: doc.id, 
+            return {
+                id: doc.id,
                 ...data,
                 uploadedAt: (data.uploadedAt as Timestamp).toDate().toISOString() // Convert Timestamp to ISO string
             } as FileUpload;
@@ -658,14 +658,14 @@ export async function getDestinations(): Promise<Destination[]> {
                 });
             }
         }
-        
+
         const everestIndex = sortedRegions.findIndex(d => d.name === 'Everest');
         if (everestIndex > 0) {
-          const everest = sortedRegions[everestIndex];
-          sortedRegions.splice(everestIndex, 1);
-          sortedRegions.unshift(everest);
+            const everest = sortedRegions[everestIndex];
+            sortedRegions.splice(everestIndex, 1);
+            sortedRegions.unshift(everest);
         }
-        
+
         return sortedRegions.slice(0, 5);
     } catch (error: any) {
         console.error("Error fetching destinations:", error);
@@ -952,9 +952,9 @@ export async function updateLegalContent(id: 'privacy-policy' | 'terms-of-servic
     if (!firestore) throw new Error("Database not available.");
     try {
         const docRef = doc(firestore, 'legal', id);
-        await setDoc(docRef, { 
-            content: content, 
-            lastUpdated: serverTimestamp() 
+        await setDoc(docRef, {
+            content: content,
+            lastUpdated: serverTimestamp()
         }, { merge: true });
     } catch (error: any) {
         console.error(`Error updating legal content for ${id}:`, error);
@@ -970,7 +970,14 @@ export async function getLegalDocuments(): Promise<LegalDocument[]> {
         const docsRef = collection(firestore, 'legalDocuments');
         const q = query(docsRef, orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LegalDocument));
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString()
+            } as LegalDocument;
+        });
     } catch (error: any) {
         console.error("Error fetching legal documents:", error);
         throw new Error("Could not fetch legal documents.");
@@ -1077,7 +1084,7 @@ export async function getAllTourRegions(): Promise<string[]> {
 
 export async function updateTourWithAiData(tourId: string, data: Partial<ImportedTourData>): Promise<void> {
     if (!firestore) throw new Error("Database not available.");
-    
+
     try {
         const docRef = doc(firestore, 'packages', tourId);
         const tourDoc = await getDoc(docRef);
@@ -1088,7 +1095,7 @@ export async function updateTourWithAiData(tourId: string, data: Partial<Importe
 
         const existingData = tourDoc.data() as Tour;
         const updateData: Partial<Tour> = {};
-        
+
         // Simple fields (overwrite)
         if (data.name) updateData.name = data.name;
         if (data.description) updateData.description = data.description;
@@ -1110,9 +1117,9 @@ export async function updateTourWithAiData(tourId: string, data: Partial<Importe
             updateData.exclusions = [...new Set([...(existingData.exclusions || []), ...data.exclusions])];
         }
         if (data.faq) {
-             const existingQuestions = new Set(existingData.faq?.map(f => f.question));
-             const newFaqs = data.faq.filter(f => !existingQuestions.has(f.question));
-             updateData.faq = [...(existingData.faq || []), ...newFaqs];
+            const existingQuestions = new Set(existingData.faq?.map(f => f.question));
+            const newFaqs = data.faq.filter(f => !existingQuestions.has(f.question));
+            updateData.faq = [...(existingData.faq || []), ...newFaqs];
         }
         if (data.additionalInfoSections) {
             const existingTitles = new Set(existingData.additionalInfoSections?.map(s => s.title));

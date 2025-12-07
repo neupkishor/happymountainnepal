@@ -19,6 +19,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Paywall for /legal/documents
+  if (pathname === '/legal/documents') {
+    if (!request.cookies.has('user_email')) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/legal/documents/gate';
+      return NextResponse.redirect(url);
+    }
+  }
+
   const response = NextResponse.next();
   let accountId = request.cookies.get(COOKIE_NAME)?.value;
   // Use x-forwarded-for header to get the client IP, or a fallback
@@ -34,9 +43,9 @@ export async function middleware(request: NextRequest) {
   // If it was a new account, set the cookie in the response.
   if (isNewAccount) {
     response.cookies.set(COOKIE_NAME, accountId, {
-        httpOnly: true,
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365, // 1 year
+      httpOnly: true,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
     });
   }
 
