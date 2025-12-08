@@ -26,10 +26,10 @@ export function Chatbot() {
     if (isLoading || !profile?.chatbot?.enabled) {
         return null;
     }
-    
+
     const { position, whatsappNumber, emailAddress } = profile.chatbot;
 
-    const positionClasses = {
+    const positionClasses: Record<string, string> = {
         'bottom-right': 'bottom-4 right-4',
         'bottom-left': 'bottom-4 left-4',
         'top-right': 'top-4 right-4',
@@ -38,14 +38,25 @@ export function Chatbot() {
         'middle-left': 'top-1/2 left-4 -translate-y-1/2',
     };
 
+    const pos = position || 'bottom-right';
+    const isTop = pos.includes('top');
+    const isLeft = pos.includes('left');
+
+    const menuClasses = cn(
+        "absolute w-72 z-40",
+        isTop ? "top-[4.5rem]" : "bottom-[4.5rem]",
+        isLeft ? "left-0" : "right-0",
+        isTop ? (isLeft ? "origin-top-left" : "origin-top-right") : (isLeft ? "origin-bottom-left" : "origin-bottom-right")
+    );
+
     const menuAnimation = {
-        open: { opacity: 1, y: 0, scale: 1 },
-        closed: { opacity: 0, y: 20, scale: 0.95 },
+        open: { opacity: 1, scale: 1, y: 0 },
+        closed: { opacity: 0, scale: 0.95, y: isTop ? -20 : 20 },
     };
 
     if (isChatting) {
         return (
-            <div className={cn("fixed z-50", positionClasses[position || 'bottom-right'])}>
+            <div className={cn("fixed z-50", positionClasses[pos])}>
                 <Card className="w-[350px] h-[500px] flex flex-col">
                     <CardHeader className='flex-row items-center justify-between'>
                         <CardTitle>Customize Your Trip</CardTitle>
@@ -60,7 +71,7 @@ export function Chatbot() {
     }
 
     return (
-        <div className={cn("fixed z-50", positionClasses[position || 'bottom-right'])}>
+        <div className={cn("fixed z-50 flex flex-col items-end", positionClasses[pos])}>
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -69,7 +80,7 @@ export function Chatbot() {
                         animate="open"
                         exit="closed"
                         transition={{ duration: 0.2, ease: "easeInOut" }}
-                        className="mb-2 w-72 origin-bottom-right"
+                        className={menuClasses}
                     >
                         <Card className="shadow-2xl">
                             <CardHeader>
@@ -87,7 +98,7 @@ export function Chatbot() {
                                     </Button>
                                 )}
                                 {emailAddress && (
-                                     <Button variant="outline" className="w-full justify-start" asChild>
+                                    <Button variant="outline" className="w-full justify-start" asChild>
                                         <a href={`mailto:${emailAddress}`}>
                                             <Mail className="mr-2 h-5 w-5" /> Email Us
                                         </a>
@@ -101,16 +112,30 @@ export function Chatbot() {
 
             <Button
                 size="icon"
-                className="rounded-full w-16 h-16 shadow-lg"
+                className="rounded-full w-16 h-16 shadow-lg relative"
                 onClick={() => setIsOpen(prev => !prev)}
             >
-                <AnimatePresence>
+                <AnimatePresence initial={false} mode="wait">
                     {isOpen ? (
-                        <motion.div key="close" initial={{ rotate: 45, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: -45, scale: 0 }}>
+                        <motion.div
+                            key="close"
+                            initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
+                            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                            exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.15, ease: "easeInOut" }}
+                            className="absolute inset-0 flex items-center justify-center"
+                        >
                             <X className="h-8 w-8" />
                         </motion.div>
                     ) : (
-                        <motion.div key="open" initial={{ rotate: -45, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: 45, scale: 0 }}>
+                        <motion.div
+                            key="open"
+                            initial={{ rotate: 90, scale: 0.5, opacity: 0 }}
+                            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                            exit={{ rotate: -90, scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.15, ease: "easeInOut" }}
+                            className="absolute inset-0 flex items-center justify-center"
+                        >
                             <MessageSquare className="h-8 w-8" />
                         </motion.div>
                     )}
