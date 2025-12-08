@@ -534,8 +534,12 @@ export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt'>)
     }
 }
 
-export async function getFileUploads(options?: { limit?: number; category?: UploadCategory }): Promise<FileUpload[]> {
-    if (!firestore) return [];
+export async function getFileUploads(options?: {
+    limit?: number;
+    category?: UploadCategory;
+    lastDocId?: string | null;
+}): Promise<{ uploads: FileUpload[]; hasMore: boolean; totalCount?: number }> {
+    if (!firestore) return { uploads: [], hasMore: false };
     try {
         let q = query(collection(firestore, 'uploads'), orderBy('uploadedAt', 'desc'));
 
@@ -543,24 +547,48 @@ export async function getFileUploads(options?: { limit?: number; category?: Uplo
             q = query(q, where('category', '==', options.category));
         }
 
-        if (options?.limit) {
-            q = query(q, firestoreLimit(options.limit));
+        // If we have a cursor (lastDocId), start after that document
+        if (options?.lastDocId) {
+            const lastDoc = await getDoc(doc(firestore, 'uploads', options.lastDocId));
+            if (lastDoc.exists()) {
+                q = query(q, startAfter(lastDoc));
+            }
         }
 
+        // Fetch one extra to determine if there are more results
+        const limit = options?.limit || 10;
+        q = query(q, firestoreLimit(limit + 1));
+
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => {
+        const uploads = querySnapshot.docs.slice(0, limit).map(doc => {
             const data = doc.data();
             return {
                 id: doc.id,
                 ...data,
-                uploadedAt: (data.uploadedAt as Timestamp).toDate().toISOString() // Convert Timestamp to ISO string
+                uploadedAt: (data.uploadedAt as Timestamp).toDate().toISOString()
             } as FileUpload;
         });
+
+        const hasMore = querySnapshot.docs.length > limit;
+
+        return { uploads, hasMore };
 
     } catch (error: any) {
         console.error("Error fetching file uploads:", error);
         await logError({ message: `Failed to fetch file uploads: ${error.message}`, stack: error.stack, pathname: '/manage/uploads', context: { options } });
         throw new Error("Could not fetch file uploads from the database.");
+    }
+}
+
+// Get total count of uploads
+export async function getFileUploadsCount(): Promise<number> {
+    if (!firestore) return 0;
+    try {
+        const snapshot = await getDocs(collection(firestore, 'uploads'));
+        return snapshot.size;
+    } catch (error: any) {
+        console.error("Error counting file uploads:", error);
+        return 0;
     }
 }
 
