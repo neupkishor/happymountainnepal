@@ -217,20 +217,22 @@ export default function LegalDocumentsPage() {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium truncate mb-1" title={doc.title}>
-                  {doc.title}
-                </h3>
-                {doc.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {doc.description}
-                  </p>
-                )}
+                <Link href={`/manage/legal/documents/${doc.id}`} className="block hover:underline">
+                  <h3 className="font-medium truncate mb-1" title={doc.title}>
+                    {doc.title}
+                  </h3>
+                  {doc.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {doc.description}
+                    </p>
+                  )}
+                </Link>
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/legal/documents/${doc.id}`}>
+                  <Link href={`/legal/documents/${doc.id}`} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View
                   </Link>

@@ -1091,6 +1091,17 @@ export async function deleteLegalDocument(id: string): Promise<void> {
     }
 }
 
+export async function updateLegalDocument(id: string, data: Partial<Omit<LegalDocument, 'id' | 'createdAt'>>): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'legalDocuments', id);
+        await updateDoc(docRef, { ...data });
+    } catch (error: any) {
+        console.error("Error updating legal document:", error);
+        throw new Error("Could not update legal document.");
+    }
+}
+
 // New paginated tours function
 interface PaginatedToursResult {
     tours: Tour[];
