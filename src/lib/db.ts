@@ -419,10 +419,15 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 export async function getBlogPosts(options?: {
     limit?: number;
     lastDocId?: string | null;
+    status?: 'published' | 'draft';
 }): Promise<{ posts: BlogPost[]; hasMore: boolean }> {
     if (!firestore) return { posts: [], hasMore: false };
     try {
         let q = query(collection(firestore, 'blogPosts'), orderBy('date', 'desc'));
+
+        if (options?.status) {
+            q = query(collection(firestore, 'blogPosts'), where('status', '==', options.status), orderBy('date', 'desc'));
+        }
 
         if (options?.lastDocId) {
             const lastDoc = await getDoc(doc(firestore, 'blogPosts', options.lastDocId));
@@ -450,10 +455,14 @@ export async function getBlogPosts(options?: {
     }
 }
 
-export async function getBlogPostCount(): Promise<number> {
+export async function getBlogPostCount(status?: 'published' | 'draft'): Promise<number> {
     if (!firestore) return 0;
     try {
-        const snapshot = await getDocs(collection(firestore, 'blogPosts'));
+        let q = query(collection(firestore, 'blogPosts'));
+        if (status) {
+            q = query(q, where('status', '==', status));
+        }
+        const snapshot = await getDocs(q);
         return snapshot.size;
     } catch (e) {
         console.error("Error counting blog posts", e);
