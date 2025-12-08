@@ -23,7 +23,7 @@ export default function ManageLayout({
                     <div className="flex">
                         <AutoHideScrollbar className="w-64 border-r hidden md:block fixed h-screen flex-shrink-0 max-w-[1400px]">
                             <Sidebar className="h-full">
-                                <SidebarContent className="p-4 flex flex-col justify-between min-h-full">
+                                <SidebarContent className="p-2 md:p-4 flex flex-col justify-between min-h-full">
                                     <SidebarGroup>
                                         <SidebarGroupLabel>Management</SidebarGroupLabel>
                                         <SidebarMenu>
@@ -128,7 +128,7 @@ export default function ManageLayout({
                                 </SidebarContent>
                             </Sidebar>
                         </AutoHideScrollbar>
-                        <main className="flex-1 md:ml-64 p-4 md:p-8 min-h-screen">
+                        <main className="flex-1 md:ml-64 p-2 md:p-6 min-h-screen">
                             {children}
                         </main>
                     </div>

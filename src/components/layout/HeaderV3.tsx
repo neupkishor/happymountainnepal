@@ -249,55 +249,54 @@ export function HeaderV3() {
         className="fixed top-0 z-40 w-full border-b bg-background shadow-xl"
         onMouseLeave={handleMouseLeave}
       >
-        <div className="container flex h-16 items-center">
-          {/* Mobile Menu Trigger */}
-          <div className="md:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)}>
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Open Menu</span>
-            </Button>
-          </div>
+        <div className="container flex h-16 items-center justify-between">
 
           {/* Left aligned logo */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 md:mr-6">
+          <div className="flex items-center shrink-0">
+            <Link href="/" className="flex items-center space-x-2">
               <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
-              <span className="font-bold font-headline hidden sm:inline-block">Happy Mountain Nepal</span>
+              <span className="font-bold font-headline">Happy Mountain Nepal</span>
             </Link>
           </div>
 
           {/* Centered Desktop Navigation */}
-          <div className="hidden md:flex flex-1 justify-center">
+          <div className="hidden md:flex flex-1 justify-center px-4">
             <HeaderV3Nav links={navLinks} onLinkHover={handleMouseEnter} />
           </div>
 
-          {/* Right aligned icons */}
-          <div className="flex items-center justify-end md:w-auto w-full md:flex-none">
-            {isUserLoading ? (
-              <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
-            ) : user ? (
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/profile">
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">Profile</span>
-                </Link>
+          {/* Right aligned section */}
+          <div className="flex items-center justify-end gap-2">
+
+            {/* Desktop Only Icons/Buttons */}
+            <div className="hidden md:flex items-center gap-2">
+              {isUserLoading ? (
+                <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
+              ) : user ? (
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="/profile">
+                    <User className="h-5 w-5" />
+                    <span className="sr-only">Profile</span>
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Only Burger (Right) */}
+            <div className="md:hidden">
+              <Button variant="outline" size="icon" onClick={() => setMenuOpen(true)}>
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Open Menu</span>
               </Button>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-              </>
-            )}
-            <Button variant="ghost" size="icon" asChild className="md:hidden">
-              <Link href="/search">
-                <Search className="h-5 w-5" />
-                <span className="sr-only">Search</span>
-              </Link>
-            </Button>
+            </div>
           </div>
         </div>
         <AnimatePresence>
