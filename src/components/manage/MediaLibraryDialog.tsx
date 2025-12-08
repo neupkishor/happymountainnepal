@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText } from 'lucide-react';
 import { getFileUploads } from '@/lib/db';
 import type { FileUpload, UploadCategory } from '@/lib/types';
 import Image from 'next/image';
@@ -45,7 +45,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   const fetchUploads = async (category?: UploadCategory | 'all') => {
     setIsLoading(true);
     try {
-      const fetchedUploads = await getFileUploads({
+      const { uploads: fetchedUploads } = await getFileUploads({
         category: category === 'all' ? undefined : category,
       });
       setUploads(fetchedUploads);
@@ -107,17 +107,17 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
         <DialogHeader>
           <DialogTitle>Media Library</DialogTitle>
         </DialogHeader>
-        
+
         <div className="flex-grow flex flex-col gap-4 overflow-hidden">
           {/* Upload Area */}
           <div className="border border-dashed p-4 rounded-lg space-y-4">
-              <h3 className="font-semibold text-lg">Upload New File</h3>
-              <FileUploadInput 
-                name="media-library-upload"
-                onUploadSuccess={handleFileUploadSuccess}
-                onUploadingChange={setIsUploading}
-                category={defaultCategory} // Pass down the category for new uploads
-              />
+            <h3 className="font-semibold text-lg">Upload New File</h3>
+            <FileUploadInput
+              name="media-library-upload"
+              onUploadSuccess={handleFileUploadSuccess}
+              onUploadingChange={setIsUploading}
+              category={defaultCategory} // Pass down the category for new uploads
+            />
           </div>
 
           {/* Library Browser */}
@@ -134,13 +134,13 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
               </div>
               <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as UploadCategory | 'all')}>
                 <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by category" />
+                  <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
-                    ))}
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -168,16 +168,16 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                       onClick={() => handleImageClick(file.url)}
                     >
                       {file.fileType?.startsWith('image/') ? (
-                          <Image
-                            src={file.url}
-                            alt={file.fileName}
-                            fill
-                            className="object-cover"
-                          />
+                        <Image
+                          src={file.url}
+                          alt={file.fileName}
+                          fill
+                          className="object-cover"
+                        />
                       ) : (
-                         <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
-                            <FileText className="h-8 w-8" />
-                         </div>
+                        <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
+                          <FileText className="h-8 w-8" />
+                        </div>
                       )}
                       {currentSelection.includes(file.url) && (
                         <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
@@ -190,11 +190,11 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
               </ScrollArea>
             )}
           </div>
-          
+
           <div className="flex justify-end mt-auto pt-4 border-t">
-              <Button onClick={handleInsertSelected} disabled={currentSelection.length === 0 || isUploading}>
-                  Insert Selected ({currentSelection.length})
-              </Button>
+            <Button onClick={handleInsertSelected} disabled={currentSelection.length === 0 || isUploading}>
+              Insert Selected ({currentSelection.length})
+            </Button>
           </div>
         </div>
       </DialogContent>

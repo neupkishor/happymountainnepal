@@ -34,7 +34,7 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
   const fetchRecentUploads = async () => {
     setIsLoadingRecent(true);
     try {
-      const uploads = await getFileUploads();
+      const { uploads } = await getFileUploads();
       setRecentUploads(uploads);
     } catch (error) {
       console.error('Failed to fetch recent uploads:', error);
@@ -74,7 +74,7 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
     setIsUploading(false);
     toast({ title: 'Upload Successful', description: 'New file uploaded and selected.' });
   };
-  
+
   const displayedRecent = recentUploads.slice(0, maxRecent);
 
   return (
@@ -109,6 +109,7 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
               name={`${name}-direct-upload`}
               onUploadSuccess={handleDirectUploadSuccess}
               onUploadingChange={setIsUploading}
+              category="general"
             >
               <div className="flex items-center justify-center h-24 w-full rounded-md border-2 border-dashed text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors cursor-pointer">
                 {isUploading ? (
@@ -142,7 +143,7 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
                 )}
               </div>
             ))}
-            
+
             {/* Show More Box */}
             <div
               className="flex items-center justify-center h-24 w-full rounded-md border text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors cursor-pointer"
@@ -153,7 +154,7 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
           </div>
         </div>
       </Card>
-      
+
       <MediaLibraryDialog
         isOpen={isLibraryOpen}
         onClose={() => setIsLibraryOpen(false)}
