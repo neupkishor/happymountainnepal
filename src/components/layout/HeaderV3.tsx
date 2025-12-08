@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -10,7 +9,7 @@ import { HeaderV3Nav, type NavLink } from './HeaderV3Nav';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUser } from '@/firebase';
-import { useSiteProfile } from '@/hooks/use-site-profile'; // Import the hook
+import { useSiteProfile } from '@/hooks/use-site-profile';
 
 // This data would likely come from a CMS or a shared data file in a real app
 const navLinks: NavLink[] = [
@@ -111,7 +110,7 @@ const navLinks: NavLink[] = [
 ];
 
 
-function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
+function MobileMenuList({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
   const [openSubMenu, setOpenSubMenu] = React.useState<string | null>(null);
 
   const toggleSubMenu = (title: string) => {
@@ -123,24 +122,29 @@ function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
       if (link.children) {
         const isOpen = openSubMenu === link.title;
         return (
-          <div key={link.title} className="text-lg">
+          <div key={link.title} className="text-lg border-b border-border/40 last:border-0">
             <button
-              className="flex items-center justify-between w-full py-3"
+              className="flex items-center justify-between w-full py-4 text-left group"
               onClick={() => toggleSubMenu(link.title)}
             >
-              <span className="font-headline text-lg">{link.title}</span>
-              <ChevronDown className={cn("h-5 w-5 transition-transform", isOpen && "rotate-180")} />
+              <span className={cn("font-headline text-lg font-medium transition-colors", isOpen ? "text-primary" : "text-foreground")}>{link.title}</span>
+              <ChevronDown className={cn("h-5 w-5 transition-transform duration-300 text-muted-foreground group-hover:text-primary", isOpen && "rotate-180 text-primary")} />
             </button>
-            <div
-              className={cn(
-                "grid transition-all duration-300 ease-in-out overflow-hidden",
-                isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pb-4 pl-4 space-y-1 border-l-2 border-primary/20 ml-2">
+                    {renderLinks(link.children, level + 1)}
+                  </div>
+                </motion.div>
               )}
-            >
-              <div className="min-h-0 pl-4 border-l">
-                {renderLinks(link.children, level + 1)}
-              </div>
-            </div>
+            </AnimatePresence>
           </div>
         );
       }
@@ -148,7 +152,7 @@ function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
         <Link
           key={link.href}
           href={link.href!}
-          className="block py-3 text-lg"
+          className="block py-4 text-lg font-medium border-b border-border/40 last:border-0 hover:text-primary transition-colors"
           onClick={() => setMenuOpen(false)}
         >
           {link.title}
@@ -158,21 +162,18 @@ function MobileNav({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 p-6 flex flex-col">
-      <div className="flex items-center justify-between mb-8">
-        <Link href="/" className="flex items-center space-x-2" onClick={() => setMenuOpen(false)}>
-          <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
-          <span className="font-bold font-headline">Happy Mountain Nepal</span>
-        </Link>
-        <Button variant="ghost" size="icon" onClick={() => setMenuOpen(false)}>
-          <X className="h-6 w-6" />
-        </Button>
-      </div>
-      <div className="flex-grow overflow-y-auto -mr-6 pr-6">
-        <nav className="flex flex-col divide-y">
-          {renderLinks(navLinks)}
-        </nav>
-      </div>
+    <div className="flex flex-col h-full bg-background px-6 pt-4 pb-20 overflow-y-auto">
+      <nav className="flex flex-col w-full max-w-lg mx-auto">
+        {renderLinks(navLinks)}
+        <div className="mt-8 pt-8 border-t space-y-4">
+          <Button variant="ghost" className="w-full justify-start text-lg h-12" asChild>
+            <Link href="/login" onClick={() => setMenuOpen(false)}><LogIn className="mr-3 h-5 w-5" /> Login</Link>
+          </Button>
+          <Button className="w-full justify-start text-lg h-12" asChild>
+            <Link href="/signup" onClick={() => setMenuOpen(false)}><User className="mr-3 h-5 w-5" /> Sign Up</Link>
+          </Button>
+        </div>
+      </nav>
     </div>
   );
 }
@@ -185,16 +186,20 @@ export function HeaderV3() {
   const [isMenuOpen, setMenuOpen] = React.useState(false);
   const [activeSubMenu, setActiveSubMenu] = React.useState<NavLink | null>(null);
   const { user, isUserLoading } = useUser();
-  const { profile } = useSiteProfile(); // Fetch site profile
+  const { profile } = useSiteProfile();
 
   React.useEffect(() => {
+    const chatbot = document.getElementById('chatbot-container');
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
+      if (chatbot) chatbot.style.display = 'none';
     } else {
       document.body.style.overflow = '';
+      if (chatbot) chatbot.style.display = '';
     }
     return () => {
       document.body.style.overflow = '';
+      if (chatbot) chatbot.style.display = '';
     };
   }, [isMenuOpen]);
 
@@ -210,7 +215,6 @@ export function HeaderV3() {
     setActiveSubMenu(null);
   };
 
-  // Dynamically create the contact info column
   const contactColumn: NavLink = {
     title: 'Get In Touch',
     description: 'We are here to help you plan your adventure.',
@@ -246,14 +250,17 @@ export function HeaderV3() {
   return (
     <>
       <header
-        className="fixed top-0 z-40 w-full border-b bg-background shadow-xl"
+        className={cn(
+          "fixed top-0 z-40 w-full bg-background border-b transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          isMenuOpen ? "h-screen" : "h-16"
+        )}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-16 items-center justify-between relative z-50 bg-background">
 
           {/* Left aligned logo */}
           <div className="flex items-center shrink-0">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2" onClick={() => setMenuOpen(false)}>
               <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
               <span className="font-bold font-headline">Happy Mountain Nepal</span>
             </Link>
@@ -290,19 +297,63 @@ export function HeaderV3() {
               )}
             </div>
 
-            {/* Mobile Only Burger (Right) */}
+            {/* Mobile Only Burger (With Morphing Animation) */}
             <div className="md:hidden">
-              <Button variant="outline" size="icon" onClick={() => setMenuOpen(true)}>
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Open Menu</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setMenuOpen(!isMenuOpen)}
+                className="relative overflow-hidden border-none shadow-none hover:bg-transparent"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {isMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                      animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                      exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <X className="h-6 w-6" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="open"
+                      initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                      animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                      exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <Menu className="h-6 w-6" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu Content (Expandable) */}
         <AnimatePresence>
-          {activeSubMenu && (
+          {isMenuOpen && (
             <motion.div
-              className="fixed top-16 w-screen bg-background shadow-lg border-t left-0"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "calc(100vh - 4rem)", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
+              className="md:hidden overflow-hidden bg-background border-t absolute top-16 left-0 w-full"
+            >
+              <MobileMenuList setMenuOpen={setMenuOpen} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {activeSubMenu && !isMenuOpen && (
+            <motion.div
+              className="fixed top-16 w-screen bg-background shadow-lg border-t left-0 hidden md:block"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -351,9 +402,6 @@ export function HeaderV3() {
           )}
         </AnimatePresence>
       </header>
-
-      {/* Mobile Navigation Panel */}
-      {isMenuOpen && <MobileNav setMenuOpen={setMenuOpen} />}
     </>
   );
 }

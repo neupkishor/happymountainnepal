@@ -71,7 +71,7 @@ export function Chatbot() {
     }
 
     return (
-        <div className={cn("fixed z-50 flex flex-col items-end", positionClasses[pos])}>
+        <div id="chatbot-container" className={cn("fixed z-50 flex flex-col items-end", positionClasses[pos])}>
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
