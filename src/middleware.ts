@@ -1,11 +1,30 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
+import { getRedirects } from './lib/db';
+import { Redirect } from './lib/types';
 
 const COOKIE_NAME = 'temp_account';
-
-// List of file extensions to exclude from the middleware
 const PUBLIC_FILE = /\.(.*)$/;
+
+let redirectsCache: Redirect[] = [];
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+async function loadRedirects() {
+    const now = Date.now();
+    if (now - cacheTimestamp > CACHE_DURATION) {
+        try {
+            redirectsCache = await getRedirects();
+            cacheTimestamp = now;
+        } catch (error) {
+            console.error("Failed to refresh redirects cache:", error);
+            // Use stale cache if available
+        }
+    }
+    return redirectsCache;
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,6 +36,15 @@ export async function middleware(request: NextRequest) {
     PUBLIC_FILE.test(pathname)
   ) {
     return NextResponse.next();
+  }
+
+  // Handle redirects
+  const redirects = await loadRedirects();
+  const foundRedirect = redirects.find(r => r.source === pathname);
+
+  if (foundRedirect) {
+    const statusCode = foundRedirect.permanent ? 308 : 307;
+    return NextResponse.redirect(new URL(foundRedirect.destination, request.url), statusCode);
   }
 
   // Paywall for /legal/documents

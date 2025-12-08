@@ -208,3 +208,12 @@ export interface ImportedBlogData {
   author: string;
   image: string;
 }
+
+// New type for Redirects
+export interface Redirect {
+    id: string;
+    source: string;
+    destination: string;
+    permanent: boolean;
+    createdAt: Timestamp;
+}
