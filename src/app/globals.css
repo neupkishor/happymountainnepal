@@ -85,3 +85,47 @@
 .homepage-sections-wrapper > section:first-of-type {
   background-color: transparent; /* Ensure the image background is visible */
 }
+
+/* Custom Auto-Hiding Scrollbar */
+.auto-hide-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.5s ease;
+}
+
+.auto-hide-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.auto-hide-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  transition: background 0.5s ease;
+}
+
+.auto-hide-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.5s ease;
+}
+
+/* Show scrollbar on hover or scroll */
+.auto-hide-scrollbar:hover,
+.auto-hide-scrollbar.scrolling {
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.auto-hide-scrollbar:hover::-webkit-scrollbar-thumb,
+.auto-hide-scrollbar.scrolling::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Dark mode scrollbar */
+.dark .auto-hide-scrollbar:hover,
+.dark .auto-hide-scrollbar.scrolling {
+  scrollbar-color: rgba(75, 85, 99, 0.7) transparent;
+}
+
+.dark .auto-hide-scrollbar:hover::-webkit-scrollbar-thumb,
+.dark .auto-hide-scrollbar.scrolling::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.7);
+}

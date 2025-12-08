@@ -5,6 +5,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, 
 import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare, Import, ArrowRightLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
+import { AutoHideScrollbar } from "@/components/ui/AutoHideScrollbar";
 
 export default function ManageLayout({
     children,
@@ -20,111 +21,113 @@ export default function ManageLayout({
             <div className="min-h-screen">
                 <div className="max-w-[1400px] mx-auto relative">
                     <div className="flex">
-                        <Sidebar className="w-64 border-r hidden md:block fixed h-screen overflow-y-scroll flex-shrink-0 max-w-[1400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
-                            <SidebarContent className="p-4 flex flex-col justify-between min-h-full">
-                                <SidebarGroup>
-                                    <SidebarGroupLabel>Management</SidebarGroupLabel>
-                                    <SidebarMenu>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage" isActive={pathname === '/manage'} tooltip="Dashboard">
-                                                <LayoutGrid />
-                                                <span>Dashboard</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/profile" isActive={pathname.startsWith('/manage/profile')} tooltip="Profile">
-                                                <UserCircle2 />
-                                                <span>Profile</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/uploads" isActive={pathname.startsWith('/manage/uploads')} tooltip="Uploads">
-                                                <PictureInPicture />
-                                                <span>Uploads</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/inquiries" isActive={pathname.startsWith('/manage/inquiries')} tooltip="Inquiries">
-                                                <Mail />
-                                                <span>Inquiries</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/chatbot" isActive={pathname.startsWith('/manage/chatbot')} tooltip="Chatbot">
-                                                <MessageSquare />
-                                                <span>Chatbot</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/accounts" isActive={pathname.startsWith('/manage/accounts')} tooltip="Users">
-                                                <Users />
-                                                <span>Users</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/blog" isActive={pathname.startsWith('/manage/blog')} tooltip="Blog">
-                                                <PenSquare />
-                                                <span>Blog</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/import/blog" isActive={pathname.startsWith('/manage/import/blog')} tooltip="Import Blog">
-                                                <Import />
-                                                <span>Import Blog</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/team" isActive={pathname.startsWith('/manage/team')} tooltip="Team">
-                                                <UsersRound />
-                                                <span>Team</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/packages" isActive={pathname.startsWith('/manage/packages')} tooltip="Packages">
-                                                <Package />
-                                                <span>Packages</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/partners" isActive={pathname.startsWith('/manage/partners')} tooltip="Partners">
-                                                <Handshake />
-                                                <span>Partners</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/reviews" isActive={pathname.startsWith('/manage/reviews')} tooltip="Reviews">
-                                                <Star />
-                                                <span>Reviews</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/legal" isActive={pathname.startsWith('/manage/legal')} tooltip="Legal">
-                                                <Landmark />
-                                                <span>Legal</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/site/errors" isActive={pathname.startsWith('/manage/site/errors')} tooltip="Site Errors">
-                                                <ShieldAlert />
-                                                <span>Site Errors</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/manage/redirects" isActive={pathname.startsWith('/manage/redirects')} tooltip="Redirects">
-                                                <ArrowRightLeft />
-                                                <span>Redirects</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton href="/" tooltip="Back to Site">
-                                                <ArrowLeft />
-                                                <span>Back to Site</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    </SidebarMenu>
-                                </SidebarGroup>
-                            </SidebarContent>
-                        </Sidebar>
+                        <AutoHideScrollbar className="w-64 border-r hidden md:block fixed h-screen flex-shrink-0 max-w-[1400px]">
+                            <Sidebar className="h-full">
+                                <SidebarContent className="p-4 flex flex-col justify-between min-h-full">
+                                    <SidebarGroup>
+                                        <SidebarGroupLabel>Management</SidebarGroupLabel>
+                                        <SidebarMenu>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage" isActive={pathname === '/manage'} tooltip="Dashboard">
+                                                    <LayoutGrid />
+                                                    <span>Dashboard</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/profile" isActive={pathname.startsWith('/manage/profile')} tooltip="Profile">
+                                                    <UserCircle2 />
+                                                    <span>Profile</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/uploads" isActive={pathname.startsWith('/manage/uploads')} tooltip="Uploads">
+                                                    <PictureInPicture />
+                                                    <span>Uploads</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/inquiries" isActive={pathname.startsWith('/manage/inquiries')} tooltip="Inquiries">
+                                                    <Mail />
+                                                    <span>Inquiries</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/chatbot" isActive={pathname.startsWith('/manage/chatbot')} tooltip="Chatbot">
+                                                    <MessageSquare />
+                                                    <span>Chatbot</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/accounts" isActive={pathname.startsWith('/manage/accounts')} tooltip="Users">
+                                                    <Users />
+                                                    <span>Users</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/blog" isActive={pathname.startsWith('/manage/blog')} tooltip="Blog">
+                                                    <PenSquare />
+                                                    <span>Blog</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/import/blog" isActive={pathname.startsWith('/manage/import/blog')} tooltip="Import Blog">
+                                                    <Import />
+                                                    <span>Import Blog</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/team" isActive={pathname.startsWith('/manage/team')} tooltip="Team">
+                                                    <UsersRound />
+                                                    <span>Team</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/packages" isActive={pathname.startsWith('/manage/packages')} tooltip="Packages">
+                                                    <Package />
+                                                    <span>Packages</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/partners" isActive={pathname.startsWith('/manage/partners')} tooltip="Partners">
+                                                    <Handshake />
+                                                    <span>Partners</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/reviews" isActive={pathname.startsWith('/manage/reviews')} tooltip="Reviews">
+                                                    <Star />
+                                                    <span>Reviews</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/legal" isActive={pathname.startsWith('/manage/legal')} tooltip="Legal">
+                                                    <Landmark />
+                                                    <span>Legal</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/site/errors" isActive={pathname.startsWith('/manage/site/errors')} tooltip="Site Errors">
+                                                    <ShieldAlert />
+                                                    <span>Site Errors</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/redirects" isActive={pathname.startsWith('/manage/redirects')} tooltip="Redirects">
+                                                    <ArrowRightLeft />
+                                                    <span>Redirects</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/" tooltip="Back to Site">
+                                                    <ArrowLeft />
+                                                    <span>Back to Site</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        </SidebarMenu>
+                                    </SidebarGroup>
+                                </SidebarContent>
+                            </Sidebar>
+                        </AutoHideScrollbar>
                         <main className="flex-1 md:ml-64 p-4 md:p-8 min-h-screen">
                             {children}
                         </main>
