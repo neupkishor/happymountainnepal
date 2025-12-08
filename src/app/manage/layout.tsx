@@ -2,7 +2,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarProvider, SidebarMenuItem } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare, Import, Waypoints } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare, Import } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 
@@ -43,13 +43,13 @@ export default function ManageLayout({
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                               <SidebarMenuItem>
-                                  <SidebarMenuButton href="/manage/inquiries" isActive={pathname === '/manage/inquiries'} tooltip="Inquiries">
+                                  <SidebarMenuButton href="/manage/inquiries" isActive={pathname.startsWith('/manage/inquiries')} tooltip="Inquiries">
                                       <Mail />
                                       <span>Inquiries</span>
                                   </SidebarMenuButton>
                               </SidebarMenuItem>
                               <SidebarMenuItem>
-                                  <SidebarMenuButton href="/manage/chatbot" isActive={pathname === '/manage/chatbot'} tooltip="Chatbot">
+                                  <SidebarMenuButton href="/manage/chatbot" isActive={pathname.startsWith('/manage/chatbot')} tooltip="Chatbot">
                                       <MessageSquare />
                                       <span>Chatbot</span>
                                   </SidebarMenuButton>
@@ -100,12 +100,6 @@ export default function ManageLayout({
                                 <SidebarMenuButton href="/manage/legal" isActive={pathname.startsWith('/manage/legal')} tooltip="Legal">
                                     <Landmark />
                                     <span>Legal</span>
-                                </SidebarMenuButton>
-                               </SidebarMenuItem>
-                                <SidebarMenuItem>
-                                <SidebarMenuButton href="/manage/redirects" isActive={pathname.startsWith('/manage/redirects')} tooltip="Redirects">
-                                    <Waypoints />
-                                    <span>Redirects</span>
                                 </SidebarMenuButton>
                                </SidebarMenuItem>
                               <SidebarMenuItem>

@@ -1,0 +1,7 @@
+[
+  {
+    "source": "/example-old-page",
+    "destination": "/example-new-page",
+    "permanent": true
+  }
+]
