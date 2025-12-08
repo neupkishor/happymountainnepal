@@ -35,8 +35,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { getRedirects, addRedirect, deleteRedirect } from '@/lib/redirects';
 import type { Redirect } from '@/lib/types';
-import { Loader2, PlusCircle, Trash2, ArrowRight } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, ArrowRight, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const formSchema = z.object({
   source: z.string().min(1, 'Source path is required.').refine(val => val.startsWith('/'), { message: 'Source must start with a /' }),
@@ -112,6 +113,13 @@ export default function RedirectsPage() {
         <h1 className="text-3xl font-bold !font-headline">Redirect Manager</h1>
         <p className="text-muted-foreground mt-2">Create and manage URL redirects for your site.</p>
       </div>
+
+      <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <strong>Important:</strong> After adding or deleting redirects, you need to restart the dev server for changes to take effect in the middleware.
+        </AlertDescription>
+      </Alert>
 
       <Card className="mb-8">
         <CardHeader>

@@ -1,14 +1,14 @@
 
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { Footer } from '@/components/layout/Footer';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { HeaderV3 as Header } from '@/components/layout/HeaderV3';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Chatbot } from '@/components/Chatbot'; // New import
 import 'quill/dist/quill.snow.css'; // Import Quill's CSS
+import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 
 export const metadata: Metadata = {
   title: {
@@ -63,7 +63,7 @@ export default function RootLayout({
             <div className="flex flex-col min-h-screen">
               <Header />
               <main className="flex-grow">{children}</main>
-              <Footer />
+              <ConditionalFooter />
             </div>
             <Chatbot />
             <Toaster />
