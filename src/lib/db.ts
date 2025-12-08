@@ -416,6 +416,51 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
     return getDocBySlug<BlogPost>('blogPosts', slug);
 }
 
+export async function getBlogPosts(options?: {
+    limit?: number;
+    lastDocId?: string | null;
+}): Promise<{ posts: BlogPost[]; hasMore: boolean }> {
+    if (!firestore) return { posts: [], hasMore: false };
+    try {
+        let q = query(collection(firestore, 'blogPosts'), orderBy('date', 'desc'));
+
+        if (options?.lastDocId) {
+            const lastDoc = await getDoc(doc(firestore, 'blogPosts', options.lastDocId));
+            if (lastDoc.exists()) {
+                q = query(q, startAfter(lastDoc));
+            }
+        }
+
+        const limit = options?.limit || 10;
+        q = query(q, firestoreLimit(limit + 1));
+
+        const querySnapshot = await getDocs(q);
+        const posts = querySnapshot.docs.slice(0, limit).map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as BlogPost));
+
+        const hasMore = querySnapshot.docs.length > limit;
+
+        return { posts, hasMore };
+    } catch (e: any) {
+        console.error("Error fetching blog posts", e);
+        await logError({ message: `Failed to fetch blog posts: ${e.message}`, stack: e.stack, pathname: '/manage/blog' });
+        return { posts: [], hasMore: false };
+    }
+}
+
+export async function getBlogPostCount(): Promise<number> {
+    if (!firestore) return 0;
+    try {
+        const snapshot = await getDocs(collection(firestore, 'blogPosts'));
+        return snapshot.size;
+    } catch (e) {
+        console.error("Error counting blog posts", e);
+        return 0;
+    }
+}
+
 export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
     if (!firestore) throw new Error("Database not available.");
     try {

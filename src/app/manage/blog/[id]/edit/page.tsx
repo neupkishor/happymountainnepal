@@ -1,5 +1,5 @@
 import { getBlogPostById } from '@/lib/db';
-import { BlogPostForm } from '@/components/manage/BlogPostForm';
+import { BlogPostForm } from '@/components/manage/forms/BlogPostForm';
 import { notFound } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore'; // Import Timestamp
 
