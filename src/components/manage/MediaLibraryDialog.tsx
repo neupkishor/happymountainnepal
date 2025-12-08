@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText } from 'lucide-react';
-import { getFileUploads } from '@/lib/db';
+import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2 } from 'lucide-react';
+import { getFileUploads, deleteFileUpload } from '@/lib/db';
 import type { FileUpload, UploadCategory } from '@/lib/types';
 import Image from 'next/image';
 import { SmartImage } from '@/components/ui/smart-image';
@@ -90,6 +90,29 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   // For relative paths with baseUrl, this returns the full absolute URL
   const getFilePath = (file: FileUpload): string => {
     return getSelectablePath(file, profile?.baseUrl);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, fileId: string) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this file?')) {
+      return;
+    }
+
+    try {
+      await deleteFileUpload(fileId);
+      toast({
+        title: 'File Deleted',
+        description: 'The file has been removed.',
+      });
+      // Refresh list
+      setUploads(prev => prev.filter(f => f.id !== fileId));
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete file.',
+      });
+    }
   };
 
   const handleImageClick = (filePath: string) => {
@@ -185,7 +208,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                       <div
                         key={file.id}
                         className={cn(
-                          'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
+                          'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group', // Added group class
                           currentSelection.includes(filePath) ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
                         )}
                         onClick={() => handleImageClick(filePath)}
@@ -209,6 +232,18 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                             <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
                           </div>
                         )}
+
+                        {/* Delete Button - Only visible on hover */}
+                        <div className="absolute top-1 right-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={(e) => handleDelete(e, file.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}

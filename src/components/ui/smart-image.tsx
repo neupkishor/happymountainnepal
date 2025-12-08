@@ -11,8 +11,24 @@ interface SmartImageProps extends Omit<ImageProps, 'src'> {
 }
 
 /**
+ * Replaces {{basePath}} template variable with actual baseUrl
+ */
+function replaceBasePath(path: string, baseUrl?: string): string {
+    if (!path.includes('{{basePath}}')) {
+        return path;
+    }
+
+    if (!baseUrl) {
+        return path.replace('{{basePath}}', '');
+    }
+
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return path.replace('{{basePath}}', cleanBaseUrl);
+}
+
+/**
  * SmartImage component that handles both absolute and relative image paths
- * - For relative paths: uses baseUrl from site profile + path
+ * - For relative paths: replaces {{basePath}} template with actual baseUrl
  * - For absolute paths: uses the src prop (full URL)
  */
 export function SmartImage({ src, pathType = 'absolute', path, ...props }: SmartImageProps) {
@@ -21,12 +37,8 @@ export function SmartImage({ src, pathType = 'absolute', path, ...props }: Smart
     let imageSrc = src;
 
     if (pathType === 'relative' && path) {
-        // For relative paths, construct full URL using baseUrl
-        const baseUrl = profile?.baseUrl || '';
-        // Remove trailing slash from baseUrl and leading slash from path if both exist
-        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-        const cleanPath = path.startsWith('/') ? path : `/${path}`;
-        imageSrc = baseUrl ? `${cleanBaseUrl}${cleanPath}` : path;
+        // For relative paths, replace {{basePath}} template
+        imageSrc = replaceBasePath(path, profile?.baseUrl);
     }
 
     return <Image src={imageSrc} {...props} />;

@@ -534,6 +534,18 @@ export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt'>)
     }
 }
 
+// Delete file upload
+export async function deleteFileUpload(id: string): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await deleteDoc(doc(firestore, 'uploads', id));
+    } catch (error: any) {
+        console.error("Error deleting file upload:", error);
+        await logError({ message: `Failed to delete file upload: ${error.message}`, stack: error.stack, pathname: 'db.ts', context: { id } });
+        throw new Error("Could not delete file upload from the database.");
+    }
+}
+
 // Add external media link
 export async function addExternalMediaLink(url: string, userId: string): Promise<string> {
     if (!firestore) throw new Error("Database not available.");
@@ -555,15 +567,28 @@ export async function addExternalMediaLink(url: string, userId: string): Promise
             }
         }
 
+        // Extract relative path from URL
+        let relativePath = url;
+        try {
+            const urlObj = new URL(url);
+            relativePath = urlObj.pathname;
+        } catch (e) {
+            // If URL parsing fails, use the full URL
+            console.warn('Could not parse external URL, using as-is:', url);
+        }
+
+        // Create template path
+        const templatePath = `{{basePath}}${relativePath}`;
+
         const docRef = await addDoc(collection(firestore, 'uploads'), {
-            url,
+            url: templatePath, // Store with template
             fileName,
             fileType,
             userId,
             category: 'general' as UploadCategory,
             uploadedAt: serverTimestamp(),
-            pathType: 'absolute',
-            path: url,
+            pathType: 'relative', // Changed to relative
+            path: templatePath, // Store with template
             uploadSource: 'Application',
         });
         return docRef.id;

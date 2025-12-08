@@ -2,16 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getFileUploads, getFileUploadsCount } from '@/lib/db';
+import { getFileUploads, getFileUploadsCount, deleteFileUpload } from '@/lib/db';
 import { UploadDialog } from '@/components/upload/UploadDialog';
 import { formatDistanceToNow } from 'date-fns';
-import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon } from 'lucide-react';
+import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { FileUpload } from '@/lib/types';
 import { AddLocalImageDialog } from '@/components/manage/AddLocalImageDialog';
+import { useSiteProfile } from '@/hooks/use-site-profile';
+import { getFullUrl } from '@/lib/url-utils';
+import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -28,6 +31,32 @@ export default function UploadsLibraryPage() {
   const [isLocalImageDialogOpen, setIsLocalImageDialogOpen] = useState(false);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const { profile } = useSiteProfile();
+  const { toast } = useToast();
+
+  const handleDelete = async (fileId: string) => {
+    if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await deleteFileUpload(fileId);
+      toast({
+        title: 'File Deleted',
+        description: 'The file has been successfully removed.',
+      });
+      // Refresh the list by removing the item locally or fetching again
+      setFileItems((prev) => prev.filter((item) => item.id !== fileId));
+      setTotalCount((prev) => prev - 1);
+    } catch (error) {
+      console.error('Failed to delete file:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete the file. Please try again.',
+      });
+    }
+  };
 
   useEffect(() => {
     async function fetchCount() {
@@ -190,10 +219,19 @@ export default function UploadsLibraryPage() {
                   )}
                 </div>
                 <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
-                  <Link href={item.pathType === 'relative' ? item.path : item.url} target="_blank" rel="noopener noreferrer">
+                  <Link href={getFullUrl(item, profile?.baseUrl)} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View
                   </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-shrink-0 text-destructive hover:text-destructive"
+                  onClick={() => handleDelete(item.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
                 </Button>
               </div>
             ))}

@@ -116,17 +116,34 @@ export function FileUploadInput({
 
       if (result.success && result.url) {
         const fullUrl = result.url;
+
+        // Extract the relative path from the CDN URL
+        // Assuming CDN URL format: https://neupgroup.com/content/bridge/uploads/...
+        // We want to store: {{basePath}}/relative/path
+        let relativePath = fullUrl;
+        try {
+          const url = new URL(fullUrl);
+          // Get the path part (everything after the domain)
+          relativePath = url.pathname;
+        } catch (e) {
+          // If URL parsing fails, use the full URL as-is
+          console.warn('Could not parse URL, using full URL:', fullUrl);
+        }
+
+        // Create template path
+        const templatePath = `{{basePath}}${relativePath}`;
+
         setValue(name, fullUrl, { shouldValidate: true, shouldDirty: true });
 
         await logFileUpload({
           fileName: correctedFile.name,
-          url: fullUrl,
+          url: templatePath, // Store with template
           userId: userId,
           fileSize: correctedFile.size,
           fileType: correctedFile.type,
           category: category,
-          pathType: 'absolute',
-          path: fullUrl,
+          pathType: 'relative', // Changed to relative
+          path: templatePath, // Store with template
           uploadSource: 'NeupCDN',
         });
 

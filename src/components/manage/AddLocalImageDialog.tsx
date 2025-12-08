@@ -39,15 +39,18 @@ export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'ge
         // Ensure path starts with /
         const normalizedPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
+        // Create path with {{basePath}} template variable
+        const templatePath = `{{basePath}}${normalizedPath}`;
+
         setIsSubmitting(true);
         try {
             await logFileUpload({
                 fileName,
-                url: normalizedPath, // For relative paths, url is the same as path
+                url: templatePath, // Store with template variable
                 userId: 'admin-user',
                 category: selectedCategory,
                 pathType: 'relative',
-                path: normalizedPath,
+                path: templatePath, // Store with template variable
                 uploadSource: 'Application',
                 fileType: getFileTypeFromPath(normalizedPath),
             });
@@ -124,7 +127,10 @@ export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'ge
                             onChange={(e) => setRelativePath(e.target.value)}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Path relative to /public directory (e.g., /images/hero.jpg for public/images/hero.jpg)
+                            Path will be stored as: <code className="bg-muted px-1 rounded">{'{{basePath}}'}/your/path.jpg</code>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            The {'{{basePath}}'} template will be replaced with your site's base URL when the image is used.
                         </p>
                     </div>
 
