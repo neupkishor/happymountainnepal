@@ -31,7 +31,7 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
       "name": "Happy Mountain Nepal",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://neupgroup.com/content/p3happymountainnepal/logo.png" 
+        "url": "https://neupgroup.com/content/p3happymountainnepal/logo.png"
       }
     },
     "description": post.excerpt,
@@ -76,9 +76,9 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
 
       <div className="container mx-auto py-12">
         <div className="max-w-3xl mx-auto">
-          <div 
-            className="prose prose-lg max-w-none text-foreground prose-headings:text-foreground prose-h2:font-headline prose-h2:text-4xl prose-h3:font-headline prose-h3:text-2xl prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-ul:list-disc prose-ul:ml-6"
-            dangerouslySetInnerHTML={{ __html: post.content }} 
+          <div
+            className="formatted-content max-w-none text-foreground"
+            dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </div>
       </div>
