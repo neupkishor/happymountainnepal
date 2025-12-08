@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getFileUploads, getFileUploadsCount } from '@/lib/db';
+import { UploadDialog } from '@/components/upload/UploadDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon } from 'lucide-react';
 import Image from 'next/image';
@@ -22,8 +23,8 @@ export default function UploadsLibraryPage() {
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Get current page from URL, default to 1
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
   useEffect(() => {
@@ -71,6 +72,20 @@ export default function UploadsLibraryPage() {
     }
   };
 
+  const handleUploadComplete = async () => {
+    // Refresh the uploads list
+    router.refresh();
+    if (currentPage !== 1) {
+      router.push('/manage/uploads?page=1');
+    } else {
+      const result = await getFileUploads({ limit: ITEMS_PER_PAGE, lastDocId: null });
+      setFileItems(result.uploads);
+      setHasMore(result.hasMore);
+      const count = await getFileUploadsCount();
+      setTotalCount(count);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -80,20 +95,25 @@ export default function UploadsLibraryPage() {
             {totalCount} {totalCount === 1 ? 'file' : 'files'} uploaded
           </p>
         </div>
+        <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+          Upload
+        </Button>
       </div>
+
+      <UploadDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onUploadComplete={handleUploadComplete}
+      />
 
       {isLoading ? (
         <div className="space-y-4 mb-8">
-          {/* Skeleton Cards */}
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
               className="flex items-center gap-4 p-4 border rounded-lg bg-card animate-pulse"
             >
-              {/* Skeleton Preview */}
               <div className="h-20 w-20 rounded-md bg-muted flex-shrink-0"></div>
-
-              {/* Skeleton Info */}
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="h-5 bg-muted rounded w-3/4"></div>
                 <div className="flex items-center gap-3">
@@ -101,22 +121,18 @@ export default function UploadsLibraryPage() {
                   <div className="h-4 bg-muted rounded w-24"></div>
                 </div>
               </div>
-
-              {/* Skeleton Button */}
               <div className="h-9 w-20 bg-muted rounded flex-shrink-0"></div>
             </div>
           ))}
         </div>
       ) : fileItems.length > 0 ? (
         <>
-          {/* List of Upload Cards */}
           <div className="space-y-4 mb-8">
             {fileItems.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow bg-card"
               >
-                {/* Preview */}
                 <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                   {item.fileType?.startsWith('image/') ? (
                     <Image
@@ -131,8 +147,6 @@ export default function UploadsLibraryPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium truncate mb-1" title={item.fileName}>
                     {item.fileName}
@@ -146,8 +160,6 @@ export default function UploadsLibraryPage() {
                     </span>
                   </div>
                 </div>
-
-                {/* Action */}
                 <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
                   <Link href={item.url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
@@ -158,7 +170,6 @@ export default function UploadsLibraryPage() {
             ))}
           </div>
 
-          {/* Pagination Controls */}
           {totalCount > ITEMS_PER_PAGE && (
             <div className="flex items-center justify-between border-t pt-6">
               <div className="text-sm text-muted-foreground">
@@ -174,7 +185,6 @@ export default function UploadsLibraryPage() {
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Previous
                 </Button>
-
                 <Button
                   variant="outline"
                   size="sm"

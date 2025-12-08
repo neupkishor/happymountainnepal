@@ -534,6 +534,43 @@ export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt'>)
     }
 }
 
+// Add external media link
+export async function addExternalMediaLink(url: string, userId: string): Promise<string> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        // Extract filename from URL or use a default
+        const urlParts = url.split('/');
+        const fileName = urlParts[urlParts.length - 1] || 'external-media';
+
+        // Determine file type from URL extension
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        let fileType = 'application/octet-stream';
+        if (extension) {
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+            const videoExtensions = ['mp4', 'webm', 'ogg'];
+            if (imageExtensions.includes(extension)) {
+                fileType = `image/${extension}`;
+            } else if (videoExtensions.includes(extension)) {
+                fileType = `video/${extension}`;
+            }
+        }
+
+        const docRef = await addDoc(collection(firestore, 'uploads'), {
+            url,
+            fileName,
+            fileType,
+            userId,
+            category: 'general' as UploadCategory,
+            uploadedAt: serverTimestamp(),
+        });
+        return docRef.id;
+    } catch (error: any) {
+        console.error("Error adding external media link:", error);
+        await logError({ message: `Failed to add external media link: ${error.message}`, stack: error.stack, pathname: '/manage/uploads', context: { url, userId } });
+        throw new Error("Could not add external media link.");
+    }
+}
+
 export async function getFileUploads(options?: {
     limit?: number;
     category?: UploadCategory;
