@@ -304,6 +304,24 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
 }
 
 
+export async function checkBlogSlugAvailability(slug: string, excludePostId?: string): Promise<boolean> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const q = query(collection(firestore, 'blogPosts'), where('slug', '==', slug));
+        const querySnapshot = await getDocs(q);
+
+        if (excludePostId) {
+            return querySnapshot.docs.every(doc => doc.id === excludePostId);
+        }
+        return querySnapshot.empty;
+    } catch (error: any) {
+        console.error("Error checking blog slug availability:", error);
+        await logError({ message: `Failed to check blog slug availability for ${slug}: ${error.message}`, stack: error.stack, pathname: `/manage/blog/edit`, context: { slug, excludePostId } });
+        throw new Error("Could not check blog slug availability.");
+    }
+}
+
+
 export async function createBlogPost(): Promise<string | null> {
     if (!firestore) return null;
     const newPost: Omit<BlogPost, 'id' | 'slug' | 'date'> & { date: any } = {
@@ -360,15 +378,16 @@ export async function createBlogPostWithData(data: ImportedBlogData): Promise<st
 }
 
 
-export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'id' | 'slug'>>) {
+export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'id'>>) {
     if (!firestore) throw new Error("Database not available.");
     try {
         const docRef = doc(firestore, 'blogPosts', id);
         let finalData: Partial<Omit<BlogPost, 'id'>> = { ...data };
 
-        if (data.title) {
-            finalData.slug = slugify(data.title);
-        }
+        // Do not auto-update slug from title anymore, as we have a manual slug field.
+        // if (data.title) {
+        //     finalData.slug = slugify(data.title);
+        // }
 
         await updateDoc(docRef, finalData);
     } catch (e: any) {

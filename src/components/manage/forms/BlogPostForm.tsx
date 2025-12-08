@@ -16,9 +16,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type BlogPost } from '@/lib/types';
-import { updateBlogPost, logError } from '@/lib/db';
+import { updateBlogPost, logError, checkBlogSlugAvailability } from '@/lib/db';
+import { slugify } from '@/lib/utils';
 import { useTransition } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MediaPicker } from '../MediaPicker';
 import { usePathname, useRouter } from 'next/navigation';
@@ -34,6 +35,8 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor'; // Import the n
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
+  slug: z.string().min(5, "Slug must be at least 5 characters.")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must contain only lowercase letters, numbers, and hyphens."),
   content: z.string().min(20, "Content must be at least 20 characters."),
   excerpt: z.string().min(10).max(200, "Excerpt must be between 10 and 200 characters."),
   author: z.string().min(2, "Author name is required."),
@@ -59,6 +62,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: post.title || '',
+      slug: post.slug || '',
       content: post.content || '',
       excerpt: post.excerpt || '',
       author: post.author || 'Admin',
@@ -72,6 +76,13 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
+        // Check slug availability
+        const isAvailable = await checkBlogSlugAvailability(values.slug, post.id);
+        if (!isAvailable) {
+          form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
+          return;
+        }
+
         await updateBlogPost(post.id, {
           ...values,
           date: post.date, // Preserve original date
@@ -104,6 +115,40 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                     <FormControl>
                       <Input placeholder="Your amazing blog post title" {...field} disabled={isPending} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug (URL)</FormLabel>
+                    <FormControl>
+                      <div className="flex gap-2">
+                        <Input placeholder="post-url-slug" {...field} disabled={isPending} />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            const title = form.getValues('title');
+                            if (title) {
+                              form.setValue('slug', slugify(title));
+                            }
+                          }}
+                          disabled={isPending}
+                          title="Generate from Title"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      https://happymountainnepal.com/blog/{field.value}
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -163,7 +208,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 <MediaPicker name="authorPhoto" label="Author Photo" category="author" />
               </div>
 
