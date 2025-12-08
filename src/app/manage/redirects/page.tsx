@@ -33,7 +33,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { getRedirects, addRedirect, deleteRedirect } from '@/lib/db';
+import { getRedirects, addRedirect, deleteRedirect } from '@/lib/redirects';
 import type { Redirect } from '@/lib/types';
 import { Loader2, PlusCircle, Trash2, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -82,8 +82,8 @@ export default function RedirectsPage() {
     startTransition(async () => {
       try {
         await addRedirect({
-            ...values,
-            permanent: values.permanent === 'true'
+          ...values,
+          permanent: values.permanent === 'true'
         });
         toast({ title: 'Success', description: 'Redirect created.' });
         form.reset();
@@ -96,13 +96,13 @@ export default function RedirectsPage() {
 
   const handleDelete = (id: string) => {
     startTransition(async () => {
-        try {
-            await deleteRedirect(id);
-            toast({ title: 'Success', description: 'Redirect deleted.'});
-            fetchRedirects();
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete redirect.' });
-        }
+      try {
+        await deleteRedirect(id);
+        toast({ title: 'Success', description: 'Redirect deleted.' });
+        fetchRedirects();
+      } catch (error) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete redirect.' });
+      }
     });
   }
 
@@ -155,28 +155,28 @@ export default function RedirectsPage() {
                   name="permanent"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                        <FormLabel>Redirect Type</FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex items-center space-x-4"
-                            disabled={isPending}
-                            >
-                            <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="true" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Permanent (308)</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="false" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Temporary (307)</FormLabel>
-                            </FormItem>
-                            </RadioGroup>
-                        </FormControl>
+                      <FormLabel>Redirect Type</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex items-center space-x-4"
+                          disabled={isPending}
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="true" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Permanent (308)</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="false" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Temporary (307)</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
                     </FormItem>
                   )}
                 />

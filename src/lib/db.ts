@@ -5,7 +5,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orde
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData, Redirect } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -1157,3 +1157,53 @@ export async function updateTourWithAiData(tourId: string, data: Partial<Importe
         throw new Error("Could not update tour with imported data.");
     }
 }
+
+// --- Redirect Management Functions ---
+
+export async function getRedirects(): Promise<Redirect[]> {
+    if (!firestore) return [];
+    try {
+        const redirectsRef = collection(firestore, 'redirects');
+        const q = query(redirectsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate().toISOString() : new Date().toISOString()
+            } as Redirect;
+        });
+    } catch (error: any) {
+        console.error("Error fetching redirects:", error);
+        await logError({ message: `Failed to fetch redirects: ${error.message}`, stack: error.stack, pathname: '/manage/redirects' });
+        throw new Error("Could not fetch redirects from the database.");
+    }
+}
+
+export async function addRedirect(data: Omit<Redirect, 'id' | 'createdAt'>): Promise<string> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = await addDoc(collection(firestore, 'redirects'), {
+            ...data,
+            createdAt: serverTimestamp(),
+        });
+        return docRef.id;
+    } catch (error: any) {
+        console.error("Error adding redirect: ", error);
+        await logError({ message: `Failed to add redirect: ${error.message}`, stack: error.stack, pathname: '/manage/redirects', context: { data } });
+        throw new Error("Could not add redirect.");
+    }
+}
+
+export async function deleteRedirect(id: string): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await deleteDoc(doc(firestore, 'redirects', id));
+    } catch (error: any) {
+        console.error("Error deleting redirect: ", error);
+        await logError({ message: `Failed to delete redirect ${id}: ${error.message}`, stack: error.stack, pathname: `/manage/redirects`, context: { redirectId: id } });
+        throw new Error("Could not delete redirect.");
+    }
+}
+

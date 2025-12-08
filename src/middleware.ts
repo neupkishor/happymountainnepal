@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import redirects from './redirects.json'; // Import the JSON file directly
+import redirects from './redirects.json';
 
 const COOKIE_NAME = 'temp_account';
 const PUBLIC_FILE = /\.(.*)$/;
@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle redirects from the JSON file
-  const foundRedirect = redirects.find(r => r.source === pathname);
+  const foundRedirect = redirects.find((r: any) => r.source === pathname);
 
   if (foundRedirect) {
     const statusCode = foundRedirect.permanent ? 308 : 307;

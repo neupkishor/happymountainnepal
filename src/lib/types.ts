@@ -208,3 +208,11 @@ export interface ImportedBlogData {
   author: string;
   image: string;
 }
+
+export interface Redirect {
+  id: string;
+  source: string;
+  destination: string;
+  permanent: boolean;
+  createdAt?: Timestamp | string;
+}
