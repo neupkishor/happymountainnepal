@@ -1,24 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getFileUploads, getFileUploadsCount } from '@/lib/db';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { formatDistanceToNow } from 'date-fns';
-import { PictureInPicture, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -28,12 +14,17 @@ import type { FileUpload } from '@/lib/types';
 const ITEMS_PER_PAGE = 10;
 
 export default function UploadsLibraryPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [fileItems, setFileItems] = useState<FileUpload[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
-  const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]); // Track last doc ID for each page
+  const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
+
+  // Get current page from URL, default to 1
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
   useEffect(() => {
     async function fetchCount() {
@@ -69,128 +60,141 @@ export default function UploadsLibraryPage() {
     if (hasMore && fileItems.length > 0) {
       const lastDocId = fileItems[fileItems.length - 1].id;
       setPageHistory(prev => [...prev, lastDocId]);
-      setCurrentPage(prev => prev + 1);
+      router.push(`/manage/uploads?page=${currentPage + 1}`);
     }
   };
 
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setPageHistory(prev => prev.slice(0, -1));
-      setCurrentPage(prev => prev - 1);
+      router.push(`/manage/uploads?page=${currentPage - 1}`);
     }
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold !font-headline">Uploads Library</h1>
+        <div>
+          <h1 className="text-3xl font-bold !font-headline">Uploads Library</h1>
+          <p className="text-muted-foreground mt-2">
+            {totalCount} {totalCount === 1 ? 'file' : 'files'} uploaded
+          </p>
+        </div>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Uploaded Files</CardTitle>
-          <CardDescription>
-            A log of all files uploaded to the site. Showing {fileItems.length} of {totalCount} files.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <div className="animate-spin mx-auto h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
-              <p className="mt-4">Loading uploads...</p>
+
+      {isLoading ? (
+        <div className="space-y-4 mb-8">
+          {/* Skeleton Cards */}
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-4 p-4 border rounded-lg bg-card animate-pulse"
+            >
+              {/* Skeleton Preview */}
+              <div className="h-20 w-20 rounded-md bg-muted flex-shrink-0"></div>
+
+              {/* Skeleton Info */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="h-5 bg-muted rounded w-3/4"></div>
+                <div className="flex items-center gap-3">
+                  <div className="h-4 bg-muted rounded w-20"></div>
+                  <div className="h-4 bg-muted rounded w-24"></div>
+                </div>
+              </div>
+
+              {/* Skeleton Button */}
+              <div className="h-9 w-20 bg-muted rounded flex-shrink-0"></div>
             </div>
-          ) : fileItems.length > 0 ? (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Preview</TableHead>
-                    <TableHead>File Name</TableHead>
-                    <TableHead>Uploaded By</TableHead>
-                    <TableHead>Uploaded At</TableHead>
-                    <TableHead className="text-right">URL</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fileItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="relative h-16 w-16 rounded-md overflow-hidden bg-muted">
-                          {item.fileType?.startsWith('image/') ? (
-                            <Image
-                              src={item.url}
-                              alt={item.fileName}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full w-full text-muted-foreground text-xs">
-                              {item.fileType?.split('/')[1].toUpperCase() || 'FILE'}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium max-w-sm truncate">{item.fileName}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{item.userId}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {item.uploadedAt ? formatDistanceToNow(new Date(item.uploadedAt), { addSuffix: true }) : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={item.url} target="_blank" rel="noopener noreferrer">
-                            View File
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {/* Pagination Controls */}
-              {totalCount > ITEMS_PER_PAGE && (
-                <div className="flex items-center justify-between mt-6">
-                  <div className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages} ({totalCount} total files)
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToPreviousPage}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Previous
-                    </Button>
-
-                    <div className="text-sm font-medium px-4">
-                      Page {currentPage}
+          ))}
+        </div>
+      ) : fileItems.length > 0 ? (
+        <>
+          {/* List of Upload Cards */}
+          <div className="space-y-4 mb-8">
+            {fileItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow bg-card"
+              >
+                {/* Preview */}
+                <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                  {item.fileType?.startsWith('image/') ? (
+                    <Image
+                      src={item.url}
+                      alt={item.fileName}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full w-full text-muted-foreground">
+                      <FileIcon className="h-10 w-10" />
                     </div>
+                  )}
+                </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={goToNextPage}
-                      disabled={!hasMore}
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium truncate mb-1" title={item.fileName}>
+                    {item.fileName}
+                  </h3>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Badge variant="outline" className="text-xs">
+                      {item.userId}
+                    </Badge>
+                    <span>
+                      {item.uploadedAt ? formatDistanceToNow(new Date(item.uploadedAt), { addSuffix: true }) : 'N/A'}
+                    </span>
                   </div>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-16 text-muted-foreground">
-              <PictureInPicture className="mx-auto h-12 w-12" />
-              <h3 className="mt-4 text-lg font-semibold">No Files Uploaded</h3>
-              <p>Uploaded files will appear here as they are added.</p>
+
+                {/* Action */}
+                <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
+                  <Link href={item.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View
+                  </Link>
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalCount > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between border-t pt-6">
+              <div className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={!hasMore}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </>
+      ) : (
+        <div className="text-center py-16 text-muted-foreground border rounded-lg">
+          <PictureInPicture className="mx-auto h-12 w-12" />
+          <h3 className="mt-4 text-lg font-semibold">No Files Uploaded</h3>
+          <p>Uploaded files will appear here as they are added.</p>
+        </div>
+      )}
     </div>
   );
 }
