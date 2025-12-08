@@ -11,20 +11,24 @@ import { cn } from '@/lib/utils';
 import { MediaLibraryDialog } from './MediaLibraryDialog';
 import { FileUploadInput } from './FileUploadInput';
 import { getFileUploads } from '@/lib/db';
-import type { FileUpload } from '@/lib/types';
+import type { FileUpload, UploadCategory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '../ui/card';
+import { useSiteProfile } from '@/hooks/use-site-profile';
+import { getSelectablePath } from '@/lib/url-utils';
 
 interface MediaPickerProps {
   name: string;
   label?: string;
   maxRecent?: number;
+  category?: UploadCategory;
 }
 
-export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
+export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }: MediaPickerProps) {
   const { control, setValue } = useFormContext();
   const { field } = useController({ name, control });
   const { toast } = useToast();
+  const { profile } = useSiteProfile();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(field.value || null);
   const [recentUploads, setRecentUploads] = useState<FileUpload[]>([]);
@@ -77,8 +81,9 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
   };
 
   // Helper function to get the correct path for a file
+  // For relative paths with baseUrl, this returns the full absolute URL
   const getFilePath = (file: FileUpload): string => {
-    return file.pathType === 'relative' ? file.path : file.url;
+    return getSelectablePath(file, profile?.baseUrl);
   };
 
   const displayedRecent = recentUploads.slice(0, maxRecent);

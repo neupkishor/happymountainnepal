@@ -154,6 +154,7 @@ export type ChatbotPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'to
 
 export interface SiteProfile {
   id: string;
+  baseUrl?: string; // Base URL for the site (e.g., 'https://happymountainnepal.com')
   reviewCount?: number;
   contactEmail?: string;
   phone?: string;

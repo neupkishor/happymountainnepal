@@ -34,6 +34,7 @@ const whyUsSchema = z.object({
 });
 
 const formSchema = z.object({
+  baseUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   reviewCount: z.coerce.number().int().min(0, "Review count cannot be negative.").optional(),
   contactEmail: z.string().email({ message: "Please enter a valid email." }).optional(),
   phone: z.string().optional(),
@@ -67,6 +68,7 @@ export function ProfileForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      baseUrl: '',
       reviewCount: 0,
       contactEmail: '',
       phone: '',
@@ -89,7 +91,7 @@ export function ProfileForm() {
       },
     },
   });
-  
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "whyUs",
@@ -98,6 +100,7 @@ export function ProfileForm() {
   useEffect(() => {
     if (profile) {
       form.reset({
+        baseUrl: profile.baseUrl || '',
         reviewCount: profile.reviewCount || 0,
         contactEmail: profile.contactEmail || '',
         phone: profile.phone || '',
@@ -152,238 +155,254 @@ export function ProfileForm() {
       </Card>
     );
   }
-  
+
 
   return (
     <FormProvider {...form}>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Homepage Content</CardTitle>
-                    <CardDescription>Manage the main text content and background image for your homepage.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <MediaPicker name="heroImage" label="Hero Background Image" category="background" />
-                    <FormField
-                        control={form.control}
-                        name="heroTitle"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Homepage Hero Title</FormLabel>
-                            <FormControl>
-                            <Input placeholder="Discover Your Next Adventure" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="heroDescription"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Homepage Hero Description</FormLabel>
-                            <FormControl>
-                            <Textarea placeholder="Explore breathtaking treks..." {...field} disabled={isPending} rows={3}/>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="footerTagline"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Footer Tagline</FormLabel>
-                            <FormControl>
-                            <Input placeholder="Your gateway to Himalayan adventures." {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Homepage Content</CardTitle>
+              <CardDescription>Manage the main text content and background image for your homepage.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <MediaPicker name="heroImage" label="Hero Background Image" category="background" />
+              <FormField
+                control={form.control}
+                name="heroTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Homepage Hero Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Discover Your Next Adventure" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="heroDescription"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Homepage Hero Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Explore breathtaking treks..." {...field} disabled={isPending} rows={3} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="footerTagline"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Footer Tagline</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your gateway to Himalayan adventures." {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>"Why Trek With Us" Section</CardTitle>
-                    <CardDescription>Manage the features highlighted on your homepage.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                    {fields.map((field, index) => (
-                        <div key={field.id} className="p-4 border rounded-md relative space-y-4">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={() => remove(index)}
-                            disabled={isPending}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <MediaPicker name={`whyUs.${index}.icon`} label="Feature Icon" category="feature-icon" />
-                        <FormField
-                            control={form.control}
-                            name={`whyUs.${index}.title`}
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Title</FormLabel>
-                                <FormControl>
-                                <Input placeholder="e.g., Expert Local Guides" {...field} disabled={isPending} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`whyUs.${index}.description`}
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Description</FormLabel>
-                                <FormControl>
-                                <Textarea placeholder="Briefly describe this feature." {...field} disabled={isPending} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        </div>
-                    ))}
-                    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>"Why Trek With Us" Section</CardTitle>
+              <CardDescription>Manage the features highlighted on your homepage.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="p-4 border rounded-md relative space-y-4">
                     <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => append({ icon: '', title: '', description: '' })}
-                    disabled={isPending}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => remove(index)}
+                      disabled={isPending}
                     >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Feature
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                </CardContent>
-            </Card>
+                    <MediaPicker name={`whyUs.${index}.icon`} label="Feature Icon" category="feature-icon" />
+                    <FormField
+                      control={form.control}
+                      name={`whyUs.${index}.title`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Expert Local Guides" {...field} disabled={isPending} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`whyUs.${index}.description`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Briefly describe this feature." {...field} disabled={isPending} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => append({ icon: '', title: '', description: '' })}
+                disabled={isPending}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Feature
+              </Button>
+            </CardContent>
+          </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Company Information</CardTitle>
-                    <CardDescription>Manage public company stats and contact details.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <FormField
-                        control={form.control}
-                        name="reviewCount"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Total Review Count</FormLabel>
-                            <FormControl>
-                            <Input type="number" placeholder="e.g., 250" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="contactEmail"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Contact Email</FormLabel>
-                            <FormControl>
-                            <Input type="email" placeholder="info@example.com" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                            <Input placeholder="+1 555-123-4567" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="address"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Company Address</FormLabel>
-                            <FormControl>
-                            <Input placeholder="123 Mountain Rd, Kathmandu, Nepal" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Company Information</CardTitle>
+              <CardDescription>Manage public company stats and contact details.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="baseUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Base URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://happymountainnepal.com" {...field} disabled={isPending} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      The base URL of your website. This will be used to construct full URLs for relative image paths.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="reviewCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Review Count</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 250" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="contactEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contact Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="info@example.com" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 555-123-4567" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="123 Mountain Rd, Kathmandu, Nepal" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Social Media Links</CardTitle>
-                    <CardDescription>Enter the full URLs for your social media profiles.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <FormField
-                        control={form.control}
-                        name="socials.facebook"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Facebook className="h-4 w-4" /> Facebook</FormLabel>
-                            <FormControl>
-                                <Input placeholder="https://facebook.com/your-page" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="socials.instagram"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Instagram className="h-4 w-4" /> Instagram</FormLabel>
-                            <FormControl>
-                                <Input placeholder="https://instagram.com/your-profile" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="socials.twitter"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Twitter className="h-4 w-4" /> Twitter / X</FormLabel>
-                            <FormControl>
-                                <Input placeholder="https://twitter.com/your-handle" {...field} disabled={isPending} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Social Media Links</CardTitle>
+              <CardDescription>Enter the full URLs for your social media profiles.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="socials.facebook"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Facebook className="h-4 w-4" /> Facebook</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://facebook.com/your-page" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="socials.instagram"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Instagram className="h-4 w-4" /> Instagram</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://instagram.com/your-profile" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="socials.twitter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Twitter className="h-4 w-4" /> Twitter / X</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://twitter.com/your-handle" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-            <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" />
-                Save All Profile Settings
-            </Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Save className="mr-2 h-4 w-4" />
+            Save All Profile Settings
+          </Button>
         </form>
-        </Form>
+      </Form>
     </FormProvider>
   );
 }

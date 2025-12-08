@@ -21,6 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AddLocalImageDialog } from './AddLocalImageDialog';
+import { useSiteProfile } from '@/hooks/use-site-profile';
+import { getSelectablePath } from '@/lib/url-utils';
 
 interface MediaLibraryDialogProps {
   isOpen: boolean;
@@ -44,6 +46,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   const [isLocalImageDialogOpen, setIsLocalImageDialogOpen] = useState(false);
 
   const { toast } = useToast();
+  const { profile } = useSiteProfile();
 
   const fetchUploads = async (category?: UploadCategory | 'all') => {
     setIsLoading(true);
@@ -84,8 +87,9 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   );
 
   // Helper function to get the correct path for a file
+  // For relative paths with baseUrl, this returns the full absolute URL
   const getFilePath = (file: FileUpload): string => {
-    return file.pathType === 'relative' ? file.path : file.url;
+    return getSelectablePath(file, profile?.baseUrl);
   };
 
   const handleImageClick = (filePath: string) => {
