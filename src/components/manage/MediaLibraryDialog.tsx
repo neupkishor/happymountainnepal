@@ -39,6 +39,8 @@ const DEFAULT_SELECTED_URLS: string[] = [];
 export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = DEFAULT_SELECTED_URLS, defaultCategory = 'general' }: MediaLibraryDialogProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastDocId, setLastDocId] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentSelection, setCurrentSelection] = useState<string[]>(initialSelectedUrls);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,13 +50,28 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   const { toast } = useToast();
   const { profile } = useSiteProfile();
 
-  const fetchUploads = async (category?: UploadCategory | 'all') => {
-    setIsLoading(true);
+  const fetchUploads = async (category: UploadCategory | 'all' = 'all', isLoadMore = false) => {
+    if (!isLoadMore) setIsLoading(true);
     try {
-      const { uploads: fetchedUploads } = await getFileUploads({
+      const currentLimit = isLoadMore ? 8 : 16;
+      const cursor = isLoadMore ? lastDocId : null;
+
+      const { uploads: fetchedUploads, hasMore: moreAvailable } = await getFileUploads({
         category: category === 'all' ? undefined : category,
+        limit: currentLimit,
+        lastDocId: cursor
       });
-      setUploads(fetchedUploads);
+
+      if (isLoadMore) {
+        setUploads(prev => [...prev, ...fetchedUploads]);
+      } else {
+        setUploads(fetchedUploads);
+      }
+
+      setHasMore(moreAvailable);
+      if (fetchedUploads.length > 0) {
+        setLastDocId(fetchedUploads[fetchedUploads.length - 1].id);
+      }
     } catch (error: any) {
       console.error('Failed to fetch uploads:', error);
       toast({
@@ -189,12 +206,12 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
               </Select>
             </div>
 
-            {isLoading ? (
+            {isLoading && uploads.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-grow text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin mb-4" />
                 Loading files...
               </div>
-            ) : filteredUploads.length === 0 ? (
+            ) : filteredUploads.length === 0 && uploads.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-grow text-muted-foreground">
                 <ImageIcon className="h-12 w-12 mb-4" />
                 <p>No files found in this category.</p>
@@ -208,7 +225,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                       <div
                         key={file.id}
                         className={cn(
-                          'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group', // Added group class
+                          'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
                           currentSelection.includes(filePath) ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
                         )}
                         onClick={() => handleImageClick(filePath)}
@@ -248,6 +265,14 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                     );
                   })}
                 </div>
+                {hasMore && (
+                  <div className="mt-4 flex justify-center pb-4">
+                    <Button variant="outline" onClick={() => fetchUploads(selectedCategory, true)} disabled={isLoading}>
+                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {isLoading ? 'Loading...' : 'Show More'}
+                    </Button>
+                  </div>
+                )}
               </ScrollArea>
             )}
           </div>
