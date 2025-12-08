@@ -562,6 +562,9 @@ export async function addExternalMediaLink(url: string, userId: string): Promise
             userId,
             category: 'general' as UploadCategory,
             uploadedAt: serverTimestamp(),
+            pathType: 'absolute',
+            path: url,
+            uploadSource: 'Application',
         });
         return docRef.id;
     } catch (error: any) {

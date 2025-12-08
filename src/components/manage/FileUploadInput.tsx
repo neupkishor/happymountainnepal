@@ -52,31 +52,31 @@ export function FileUploadInput({
     let finalFile = file;
 
     if (!skipCompression && file.type.startsWith('image/')) {
-        try {
-          const options = {
-            maxSizeMB: 0.2,
-            maxWidthOrHeight: 1920,
-            useWebWorker: true,
-          };
-          finalFile = await imageCompression(file, options);
-          console.log(`[Compression] Original: ${(file.size / 1024).toFixed(2)} KB, Compressed: ${(finalFile.size / 1024).toFixed(2)} KB`);
-        } catch (compressionError: any) {
-          logError({
-            message: `Image compression failed: ${compressionError.message}`,
-            stack: compressionError.stack,
-            pathname,
-          });
-          toast({
-            variant: 'destructive',
-            title: 'Compression Failed',
-            description: 'Could not compress the image. Please try a different file.',
-          });
-          setIsUploadingInternal(false);
-          onUploadingChange?.(false);
-          return;
-        }
+      try {
+        const options = {
+          maxSizeMB: 0.2,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        finalFile = await imageCompression(file, options);
+        console.log(`[Compression] Original: ${(file.size / 1024).toFixed(2)} KB, Compressed: ${(finalFile.size / 1024).toFixed(2)} KB`);
+      } catch (compressionError: any) {
+        logError({
+          message: `Image compression failed: ${compressionError.message}`,
+          stack: compressionError.stack,
+          pathname,
+        });
+        toast({
+          variant: 'destructive',
+          title: 'Compression Failed',
+          description: 'Could not compress the image. Please try a different file.',
+        });
+        setIsUploadingInternal(false);
+        onUploadingChange?.(false);
+        return;
+      }
     } else {
-        console.log('[Compression] Skipped for this file type or setting.');
+      console.log('[Compression] Skipped for this file type or setting.');
     }
 
     let extension = file.name.split('.').pop()?.toLowerCase();
@@ -87,7 +87,7 @@ export function FileUploadInput({
 
     const safeBaseName = customFileName || slugify(file.name.replace(/\.[^/.]+$/, ''));
     const safeFileName = extension ? `${safeBaseName}.${extension}` : safeBaseName;
-    
+
     const mimeType = file.type || (isImage ? `image/${extension === 'jpg' ? 'jpeg' : extension}` : 'application/octet-stream');
 
     const correctedFile = new File([finalFile], safeFileName, { type: mimeType });
@@ -125,6 +125,9 @@ export function FileUploadInput({
           fileSize: correctedFile.size,
           fileType: correctedFile.type,
           category: category,
+          pathType: 'absolute',
+          path: fullUrl,
+          uploadSource: 'NeupCDN',
         });
 
         onUploadSuccess?.(fullUrl);

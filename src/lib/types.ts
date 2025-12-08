@@ -104,16 +104,22 @@ export interface SiteError {
 
 export type UploadCategory = 'general' | 'trip' | 'document' | 'background' | 'feature-icon' | 'user-photo' | 'blog' | 'logo' | 'author';
 
+export type PathType = 'absolute' | 'relative';
+export type UploadSource = 'NeupCDN' | 'Application';
+
 export interface FileUpload {
   id: string;
   fileName: string;
-  url: string;
+  url: string; // The actual URL or path to the file
   userId: string;
   uploadedAt: string; // Changed from Timestamp to string
-  fileSize?: number; // Added: Size of the uploaded file in bytes
-  fileType?: string; // Added: MIME type of the uploaded file
+  fileSize?: number; // Size of the uploaded file in bytes
+  fileType?: string; // MIME type of the uploaded file
   category: UploadCategory; // The "for" field, e.g., 'trip', 'document', 'feature-icon'
-  metaInformation?: Record<string, any>; // Added: Any additional metadata
+  metaInformation?: Record<string, any>; // Any additional metadata
+  pathType: PathType; // 'absolute' for external URLs, 'relative' for local files
+  path: string; // If absolute: full URL, if relative: path relative to /public
+  uploadSource: UploadSource; // Where the file is stored: 'NeupCDN' or 'Application'
 }
 
 // New Review types for the /manage/reviews section

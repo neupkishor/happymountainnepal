@@ -14,11 +14,13 @@ import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText } from 'luc
 import { getFileUploads } from '@/lib/db';
 import type { FileUpload, UploadCategory } from '@/lib/types';
 import Image from 'next/image';
+import { SmartImage } from '@/components/ui/smart-image';
 import { cn } from '@/lib/utils';
 import { FileUploadInput } from './FileUploadInput';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { AddLocalImageDialog } from './AddLocalImageDialog';
 
 interface MediaLibraryDialogProps {
   isOpen: boolean;
@@ -39,6 +41,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   const [currentSelection, setCurrentSelection] = useState<string[]>(initialSelectedUrls);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<UploadCategory | 'all'>('all');
+  const [isLocalImageDialogOpen, setIsLocalImageDialogOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -80,12 +83,17 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
     upload.fileName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleImageClick = (url: string) => {
+  // Helper function to get the correct path for a file
+  const getFilePath = (file: FileUpload): string => {
+    return file.pathType === 'relative' ? file.path : file.url;
+  };
+
+  const handleImageClick = (filePath: string) => {
     setCurrentSelection(prev => {
-      if (prev.includes(url)) {
-        return prev.filter(u => u !== url);
+      if (prev.includes(filePath)) {
+        return prev.filter(u => u !== filePath);
       } else {
-        return [...prev, url];
+        return [...prev, filePath];
       }
     });
   };
@@ -111,7 +119,16 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
         <div className="flex-grow flex flex-col gap-4 overflow-hidden">
           {/* Upload Area */}
           <div className="border border-dashed p-4 rounded-lg space-y-4">
-            <h3 className="font-semibold text-lg">Upload New File</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg">Upload New File</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLocalImageDialogOpen(true)}
+              >
+                Add Local Image
+              </Button>
+            </div>
             <FileUploadInput
               name="media-library-upload"
               onUploadSuccess={handleFileUploadSuccess}
@@ -158,34 +175,39 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
             ) : (
               <ScrollArea className="flex-grow -mr-4 pr-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {filteredUploads.map((file) => (
-                    <div
-                      key={file.id}
-                      className={cn(
-                        'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
-                        currentSelection.includes(file.url) ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
-                      )}
-                      onClick={() => handleImageClick(file.url)}
-                    >
-                      {file.fileType?.startsWith('image/') ? (
-                        <Image
-                          src={file.url}
-                          alt={file.fileName}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
-                          <FileText className="h-8 w-8" />
-                        </div>
-                      )}
-                      {currentSelection.includes(file.url) && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
-                          <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {filteredUploads.map((file) => {
+                    const filePath = getFilePath(file);
+                    return (
+                      <div
+                        key={file.id}
+                        className={cn(
+                          'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
+                          currentSelection.includes(filePath) ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                        )}
+                        onClick={() => handleImageClick(filePath)}
+                      >
+                        {file.fileType?.startsWith('image/') ? (
+                          <SmartImage
+                            src={file.url}
+                            pathType={file.pathType}
+                            path={file.path}
+                            alt={file.fileName}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
+                            <FileText className="h-8 w-8" />
+                          </div>
+                        )}
+                        {currentSelection.includes(filePath) && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
+                            <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             )}
@@ -198,6 +220,13 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
           </div>
         </div>
       </DialogContent>
+
+      <AddLocalImageDialog
+        isOpen={isLocalImageDialogOpen}
+        onClose={() => setIsLocalImageDialogOpen(false)}
+        onSuccess={() => fetchUploads(selectedCategory)}
+        category={selectedCategory === 'all' ? 'general' : selectedCategory}
+      />
     </Dialog>
   );
 }

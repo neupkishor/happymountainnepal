@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useFormContext, useController } from 'react-hook-form';
 import Image from 'next/image';
+import { SmartImage } from '@/components/ui/smart-image';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, XCircle, Library, CheckCircle2 } from 'lucide-react';
@@ -75,7 +76,15 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
     toast({ title: 'Upload Successful', description: 'New file uploaded and selected.' });
   };
 
+  // Helper function to get the correct path for a file
+  const getFilePath = (file: FileUpload): string => {
+    return file.pathType === 'relative' ? file.path : file.url;
+  };
+
   const displayedRecent = recentUploads.slice(0, maxRecent);
+
+  // Find the selected file for preview
+  const selectedFile = displayedRecent.find(f => getFilePath(f) === previewUrl);
 
   return (
     <div className="space-y-2">
@@ -83,8 +92,10 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
       <Card className="p-4">
         {previewUrl && (
           <div className="relative group w-full h-48 mb-4">
-            <Image
-              src={previewUrl}
+            <SmartImage
+              src={selectedFile?.url || previewUrl}
+              pathType={selectedFile?.pathType}
+              path={selectedFile?.path}
               alt="Selected image preview"
               fill
               className="object-cover rounded-md border-2 border-primary"
@@ -121,28 +132,33 @@ export function MediaPicker({ name, label, maxRecent = 7 }: MediaPickerProps) {
             </FileUploadInput>
 
             {/* Recent Images */}
-            {displayedRecent.map((file) => (
-              <div
-                key={file.id}
-                className={cn(
-                  'relative h-24 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
-                  previewUrl === file.url ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
-                )}
-                onClick={() => handleSelectImage([file.url])}
-              >
-                <Image
-                  src={file.url}
-                  alt={file.fileName}
-                  fill
-                  className="object-cover"
-                />
-                {previewUrl === file.url && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
-                    <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                )}
-              </div>
-            ))}
+            {displayedRecent.map((file) => {
+              const filePath = getFilePath(file);
+              return (
+                <div
+                  key={file.id}
+                  className={cn(
+                    'relative h-24 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
+                    previewUrl === filePath ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                  )}
+                  onClick={() => handleSelectImage([filePath])}
+                >
+                  <SmartImage
+                    src={file.url}
+                    pathType={file.pathType}
+                    path={file.path}
+                    alt={file.fileName}
+                    fill
+                    className="object-cover"
+                  />
+                  {previewUrl === filePath && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
+                      <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             {/* Show More Box */}
             <div

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { FileUpload } from '@/lib/types';
+import { AddLocalImageDialog } from '@/components/manage/AddLocalImageDialog';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -24,6 +25,7 @@ export default function UploadsLibraryPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLocalImageDialogOpen, setIsLocalImageDialogOpen] = useState(false);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
@@ -95,15 +97,26 @@ export default function UploadsLibraryPage() {
             {totalCount} {totalCount === 1 ? 'file' : 'files'} uploaded
           </p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} variant="outline">
-          Upload
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsLocalImageDialogOpen(true)} variant="outline">
+            Add Local Image
+          </Button>
+          <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+            Upload
+          </Button>
+        </div>
       </div>
 
       <UploadDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onUploadComplete={handleUploadComplete}
+      />
+
+      <AddLocalImageDialog
+        isOpen={isLocalImageDialogOpen}
+        onClose={() => setIsLocalImageDialogOpen(false)}
+        onSuccess={handleUploadComplete}
       />
 
       {isLoading ? (
@@ -136,7 +149,7 @@ export default function UploadsLibraryPage() {
                 <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                   {item.fileType?.startsWith('image/') ? (
                     <Image
-                      src={item.url}
+                      src={item.pathType === 'relative' ? item.path : item.url}
                       alt={item.fileName}
                       fill
                       className="object-cover"
@@ -151,17 +164,33 @@ export default function UploadsLibraryPage() {
                   <h3 className="font-medium truncate mb-1" title={item.fileName}>
                     {item.fileName}
                   </h3>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                     <Badge variant="outline" className="text-xs">
                       {item.userId}
+                    </Badge>
+                    {item.fileSize && (
+                      <Badge variant="secondary" className="text-xs">
+                        {(item.fileSize / 1024).toFixed(2)} KB
+                      </Badge>
+                    )}
+                    <Badge variant={item.uploadSource === 'NeupCDN' ? 'default' : 'secondary'} className="text-xs">
+                      {item.uploadSource || 'Unknown'}
+                    </Badge>
+                    <Badge variant={item.pathType === 'relative' ? 'outline' : 'secondary'} className="text-xs">
+                      {item.pathType === 'relative' ? 'Local' : 'External'}
                     </Badge>
                     <span>
                       {item.uploadedAt ? formatDistanceToNow(new Date(item.uploadedAt), { addSuffix: true }) : 'N/A'}
                     </span>
                   </div>
+                  {item.pathType === 'relative' && (
+                    <p className="text-xs text-muted-foreground mt-1 truncate" title={item.path}>
+                      Path: {item.path}
+                    </p>
+                  )}
                 </div>
                 <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
-                  <Link href={item.url} target="_blank" rel="noopener noreferrer">
+                  <Link href={item.pathType === 'relative' ? item.path : item.url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View
                   </Link>
