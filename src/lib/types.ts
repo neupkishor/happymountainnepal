@@ -58,6 +58,15 @@ export type TeamMember = {
   role: string;
   bio: string;
   image: string;
+  groupId?: string; // ID of the group/category this member belongs to
+  orderIndex?: number; // Order within the group for drag-and-drop positioning
+}
+
+export type TeamGroup = {
+  id: string;
+  name: string; // e.g., "Management Team", "Internal Team", "International Team"
+  description?: string;
+  orderIndex: number; // Order of the group itself
 }
 
 export interface Destination {

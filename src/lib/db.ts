@@ -5,7 +5,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orde
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData, Redirect, Log } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, TeamGroup, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData, Redirect, Log } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -515,6 +515,116 @@ export async function getTeamMemberById(id: string): Promise<TeamMember | null> 
 
 export async function getTeamMemberBySlug(slug: string): Promise<TeamMember | null> {
     return getDocBySlug<TeamMember>('teamMembers', slug);
+}
+
+// Team Group Functions
+export async function createTeamGroup(data: Omit<TeamGroup, 'id'>): Promise<string> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = await addDoc(collection(firestore, 'teamGroups'), data);
+        return docRef.id;
+    } catch (error: any) {
+        console.error("Error creating team group: ", error);
+        await logError({ message: `Failed to create team group: ${error.message}`, stack: error.stack, pathname: '/manage/team', context: { data } });
+        throw new Error("Could not create team group.");
+    }
+}
+
+export async function updateTeamGroup(id: string, data: Partial<Omit<TeamGroup, 'id'>>): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'teamGroups', id);
+        await updateDoc(docRef, data);
+    } catch (error: any) {
+        console.error("Error updating team group: ", error);
+        await logError({ message: `Failed to update team group ${id}: ${error.message}`, stack: error.stack, pathname: '/manage/team', context: { groupId: id, data } });
+        throw new Error("Could not update team group.");
+    }
+}
+
+export async function deleteTeamGroup(id: string): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        // First, remove groupId from all members in this group
+        const membersRef = collection(firestore, 'teamMembers');
+        const q = query(membersRef, where('groupId', '==', id));
+        const querySnapshot = await getDocs(q);
+
+        const updatePromises = querySnapshot.docs.map(doc =>
+            updateDoc(doc.ref, { groupId: null, orderIndex: null })
+        );
+        await Promise.all(updatePromises);
+
+        // Then delete the group
+        await deleteDoc(doc(firestore, 'teamGroups', id));
+    } catch (error: any) {
+        console.error("Error deleting team group: ", error);
+        await logError({ message: `Failed to delete team group ${id}: ${error.message}`, stack: error.stack, pathname: '/manage/team', context: { groupId: id } });
+        throw new Error("Could not delete team group.");
+    }
+}
+
+export async function getTeamGroups(): Promise<TeamGroup[]> {
+    if (!firestore) return [];
+    try {
+        const groupsRef = collection(firestore, 'teamGroups');
+        const q = query(groupsRef, orderBy('orderIndex', 'asc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamGroup));
+    } catch (error: any) {
+        console.error("Error fetching team groups:", error);
+        await logError({ message: `Failed to fetch team groups: ${error.message}`, stack: error.stack, pathname: '/manage/team' });
+        return [];
+    }
+}
+
+export async function getTeamGroupById(id: string): Promise<TeamGroup | null> {
+    return getDocById<TeamGroup>('teamGroups', id);
+}
+
+// Update team member's group and order
+export async function updateTeamMemberPosition(id: string, groupId: string | null, orderIndex: number): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const docRef = doc(firestore, 'teamMembers', id);
+        await updateDoc(docRef, { groupId, orderIndex });
+    } catch (error: any) {
+        console.error("Error updating team member position: ", error);
+        await logError({ message: `Failed to update team member position ${id}: ${error.message}`, stack: error.stack, pathname: '/manage/team', context: { memberId: id, groupId, orderIndex } });
+        throw new Error("Could not update team member position.");
+    }
+}
+
+// Batch update team member positions (for drag-and-drop reordering)
+export async function batchUpdateTeamMemberPositions(updates: { id: string; groupId: string | null; orderIndex: number }[]): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const updatePromises = updates.map(({ id, groupId, orderIndex }) => {
+            const docRef = doc(firestore, 'teamMembers', id);
+            return updateDoc(docRef, { groupId, orderIndex });
+        });
+        await Promise.all(updatePromises);
+    } catch (error: any) {
+        console.error("Error batch updating team member positions: ", error);
+        await logError({ message: `Failed to batch update team member positions: ${error.message}`, stack: error.stack, pathname: '/manage/team', context: { updates } });
+        throw new Error("Could not batch update team member positions.");
+    }
+}
+
+// Batch update team group order indices
+export async function batchUpdateTeamGroupOrder(updates: { id: string; orderIndex: number }[]): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const updatePromises = updates.map(({ id, orderIndex }) => {
+            const docRef = doc(firestore, 'teamGroups', id);
+            return updateDoc(docRef, { orderIndex });
+        });
+        await Promise.all(updatePromises);
+    } catch (error: any) {
+        console.error("Error batch updating team group order: ", error);
+        await logError({ message: `Failed to batch update team group order: ${error.message}`, stack: error.stack, pathname: '/manage/team', context: { updates } });
+        throw new Error("Could not batch update team group order.");
+    }
 }
 
 export async function addPartner(data: Omit<Partner, 'id'>) {
