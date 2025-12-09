@@ -41,22 +41,17 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
   }
 
   try {
-    const { username, password } = JSON.parse(managerCookie);
+    // Call the validation API endpoint instead of reading file directly
+    // This avoids Edge Runtime limitations with fs/path modules
+    const response = await fetch(`${request.nextUrl.origin}/api/manager-auth`, {
+      method: 'GET',
+      headers: {
+        'Cookie': `${MANAGER_COOKIE_NAME}=${managerCookie}`,
+      },
+    });
 
-    // Read manager credentials from manager.json
-    const { readFile } = await import('fs/promises');
-    const { join } = await import('path');
-    const managersFilePath = join(process.cwd(), 'manager.json');
-    const managersData = await readFile(managersFilePath, 'utf-8');
-    const managers = JSON.parse(managersData);
-
-    // Check if credentials match
-    const manager = managers.find(
-      (m: { username: string; password: string }) =>
-        m.username === username && m.password === password
-    );
-
-    return !!manager;
+    const data = await response.json();
+    return data.valid === true;
   } catch (error) {
     console.error('Manager auth validation error:', error);
     return false;

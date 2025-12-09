@@ -4,6 +4,7 @@ import { join } from 'path';
 
 const MANAGER_COOKIE_NAME = 'manager_auth';
 
+// Login endpoint
 export async function POST(request: NextRequest) {
     try {
         const { username, password } = await request.json();
@@ -69,4 +70,33 @@ export async function DELETE(request: NextRequest) {
     response.cookies.delete(MANAGER_COOKIE_NAME);
 
     return response;
+}
+
+// Validation endpoint (for middleware)
+export async function GET(request: NextRequest) {
+    try {
+        const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
+
+        if (!managerCookie) {
+            return NextResponse.json({ valid: false }, { status: 200 });
+        }
+
+        const { username, password } = JSON.parse(managerCookie);
+
+        // Read manager credentials from manager.json
+        const managersFilePath = join(process.cwd(), 'manager.json');
+        const managersData = await readFile(managersFilePath, 'utf-8');
+        const managers = JSON.parse(managersData);
+
+        // Check if credentials match
+        const manager = managers.find(
+            (m: { username: string; password: string }) =>
+                m.username === username && m.password === password
+        );
+
+        return NextResponse.json({ valid: !!manager }, { status: 200 });
+    } catch (error) {
+        console.error('Manager auth validation error:', error);
+        return NextResponse.json({ valid: false }, { status: 200 });
+    }
 }
