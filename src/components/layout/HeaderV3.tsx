@@ -251,7 +251,7 @@ export function HeaderV3() {
     <>
       <header
         className={cn(
-          "fixed top-0 z-40 w-full bg-background border-b transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "fixed top-0 z-40 w-full bg-background shadow-md transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]",
           isMenuOpen ? "h-screen" : "h-16"
         )}
         onMouseLeave={handleMouseLeave}
@@ -343,7 +343,7 @@ export function HeaderV3() {
               animate={{ height: "calc(100vh - 4rem)", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
-              className="md:hidden overflow-hidden bg-background border-t absolute top-16 left-0 w-full"
+              className="md:hidden overflow-hidden bg-background absolute top-16 left-0 w-full"
             >
               <MobileMenuList setMenuOpen={setMenuOpen} />
             </motion.div>
@@ -353,7 +353,7 @@ export function HeaderV3() {
         <AnimatePresence>
           {activeSubMenu && !isMenuOpen && (
             <motion.div
-              className="fixed top-16 w-screen bg-background shadow-lg border-t left-0 hidden md:block"
+              className="fixed top-16 w-screen bg-background shadow-lg left-0 hidden md:block"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
