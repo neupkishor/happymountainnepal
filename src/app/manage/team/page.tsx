@@ -36,6 +36,9 @@ export default function TeamManagementPage() {
   const [loading, setLoading] = useState(true);
   const [draggedMember, setDraggedMember] = useState<TeamMember | null>(null);
   const [draggedGroup, setDraggedGroup] = useState<TeamGroup | null>(null);
+  const [dragOverGroupId, setDragOverGroupId] = useState<string | null>(null);
+  const [dragOverMemberIndex, setDragOverMemberIndex] = useState<number | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [editingGroup, setEditingGroup] = useState<TeamGroup | null>(null);
@@ -80,6 +83,7 @@ export default function TeamManagementPage() {
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) return;
 
+    setIsUpdating(true);
     try {
       const maxOrder = teamGroups.length > 0 ? Math.max(...teamGroups.map(g => g.orderIndex)) : -1;
       await createTeamGroup({
@@ -103,12 +107,15 @@ export default function TeamManagementPage() {
         description: 'Failed to create team group',
         variant: 'destructive',
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleUpdateGroup = async () => {
     if (!editingGroup || !newGroupName.trim()) return;
 
+    setIsUpdating(true);
     try {
       await updateTeamGroup(editingGroup.id, {
         name: newGroupName,
@@ -131,12 +138,15 @@ export default function TeamManagementPage() {
         description: 'Failed to update team group',
         variant: 'destructive',
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleDeleteGroup = async (groupId: string) => {
     if (!confirm('Are you sure you want to delete this group? Members will be moved to "Ungrouped".')) return;
 
+    setIsUpdating(true);
     try {
       await deleteTeamGroup(groupId);
       toast({
@@ -150,6 +160,8 @@ export default function TeamManagementPage() {
         description: 'Failed to delete team group',
         variant: 'destructive',
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -167,18 +179,57 @@ export default function TeamManagementPage() {
     setIsGroupDialogOpen(true);
   };
 
-  // Drag and drop handlers for members
+  // Drag and drop handlers for members with optimistic UI
   const handleMemberDragStart = (member: TeamMember) => {
     setDraggedMember(member);
   };
 
-  const handleMemberDragOver = (e: React.DragEvent) => {
+  const handleMemberDragOver = (e: React.DragEvent, targetGroupId: string | null, targetIndex: number) => {
     e.preventDefault();
+    e.stopPropagation();
+
+    if (!draggedMember) return;
+
+    // Optimistically update the UI
+    const membersInTargetGroup = teamMembers
+      .filter(m => (m.groupId || null) === targetGroupId)
+      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+
+    // Remove dragged member from its current position
+    const filteredMembers = membersInTargetGroup.filter(m => m.id !== draggedMember.id);
+
+    // Insert at new position
+    filteredMembers.splice(targetIndex, 0, draggedMember);
+
+    // Create optimistic state
+    const updatedMembers = teamMembers.map(member => {
+      if (member.id === draggedMember.id) {
+        return { ...member, groupId: targetGroupId, orderIndex: targetIndex };
+      }
+
+      const indexInGroup = filteredMembers.findIndex(m => m.id === member.id);
+      if (indexInGroup !== -1 && (member.groupId || null) === targetGroupId) {
+        return { ...member, orderIndex: indexInGroup };
+      }
+
+      return member;
+    });
+
+    setTeamMembers(updatedMembers);
+    setDragOverGroupId(targetGroupId);
+    setDragOverMemberIndex(targetIndex);
+  };
+
+  const handleMemberDragEnd = () => {
+    setDraggedMember(null);
+    setDragOverGroupId(null);
+    setDragOverMemberIndex(null);
   };
 
   const handleMemberDrop = async (targetGroupId: string | null, targetIndex: number) => {
     if (!draggedMember) return;
 
+    setIsUpdating(true);
     try {
       const membersInTargetGroup = teamMembers
         .filter(m => (m.groupId || null) === targetGroupId)
@@ -211,19 +262,55 @@ export default function TeamManagementPage() {
         description: 'Failed to update team member position',
         variant: 'destructive',
       });
+      // Revert optimistic update on error
+      fetchData();
     } finally {
       setDraggedMember(null);
+      setDragOverGroupId(null);
+      setDragOverMemberIndex(null);
+      setIsUpdating(false);
     }
   };
 
-  // Drag and drop handlers for groups
+  // Drag and drop handlers for groups with optimistic UI
   const handleGroupDragStart = (group: TeamGroup) => {
     setDraggedGroup(group);
+  };
+
+  const handleGroupDragOver = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!draggedGroup) return;
+
+    const reorderedGroups = [...teamGroups];
+    const currentIndex = reorderedGroups.findIndex(g => g.id === draggedGroup.id);
+
+    if (currentIndex === targetIndex) return;
+
+    // Remove from current position
+    reorderedGroups.splice(currentIndex, 1);
+
+    // Insert at new position
+    reorderedGroups.splice(targetIndex, 0, draggedGroup);
+
+    // Update order indices optimistically
+    const updatedGroups = reorderedGroups.map((group, index) => ({
+      ...group,
+      orderIndex: index,
+    }));
+
+    setTeamGroups(updatedGroups);
+  };
+
+  const handleGroupDragEnd = () => {
+    setDraggedGroup(null);
   };
 
   const handleGroupDrop = async (targetIndex: number) => {
     if (!draggedGroup) return;
 
+    setIsUpdating(true);
     try {
       const reorderedGroups = [...teamGroups];
       const currentIndex = reorderedGroups.findIndex(g => g.id === draggedGroup.id);
@@ -254,8 +341,11 @@ export default function TeamManagementPage() {
         description: 'Failed to update group order',
         variant: 'destructive',
       });
+      // Revert optimistic update on error
+      fetchData();
     } finally {
       setDraggedGroup(null);
+      setIsUpdating(false);
     }
   };
 
@@ -294,12 +384,22 @@ export default function TeamManagementPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="relative">
         <CardHeader>
-          <CardTitle>Organize Your Team</CardTitle>
-          <CardDescription>
-            Drag and drop team members to reorder them or move them between groups. Drag groups to reorder them.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Organize Your Team</CardTitle>
+              <CardDescription>
+                Drag and drop team members to reorder them or move them between groups. Drag groups to reorder them.
+              </CardDescription>
+            </div>
+            {isUpdating && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Updating...
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Team Groups */}
@@ -308,16 +408,21 @@ export default function TeamManagementPage() {
               key={group.id}
               draggable
               onDragStart={() => handleGroupDragStart(group)}
-              onDragOver={handleMemberDragOver}
+              onDragOver={(e) => handleGroupDragOver(e, groupIndex)}
+              onDragEnd={handleGroupDragEnd}
               onDrop={(e) => {
                 e.stopPropagation();
                 handleGroupDrop(groupIndex);
               }}
-              className="border rounded-lg p-4 bg-muted/30"
+              className={`border rounded-lg p-4 bg-muted/30 transition-all duration-200 ${draggedGroup?.id === group.id ? 'opacity-50 scale-95' : ''
+                } ${isUpdating ? 'pointer-events-none' : ''}`}
+              style={{
+                transform: draggedGroup?.id === group.id ? 'rotate(2deg)' : 'none',
+              }}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
                   <div>
                     <h3 className="font-semibold text-lg">{group.name}</h3>
                     {group.description && (
@@ -330,6 +435,7 @@ export default function TeamManagementPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => openEditDialog(group)}
+                    disabled={isUpdating}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -337,6 +443,7 @@ export default function TeamManagementPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleDeleteGroup(group.id)}
+                    disabled={isUpdating}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -349,12 +456,16 @@ export default function TeamManagementPage() {
                     key={member.id}
                     draggable
                     onDragStart={() => handleMemberDragStart(member)}
-                    onDragOver={handleMemberDragOver}
+                    onDragOver={(e) => handleMemberDragOver(e, group.id, memberIndex)}
+                    onDragEnd={handleMemberDragEnd}
                     onDrop={(e) => {
                       e.stopPropagation();
                       handleMemberDrop(group.id, memberIndex);
                     }}
-                    className="flex items-center gap-3 p-3 bg-background border rounded-lg cursor-move hover:border-primary transition-colors"
+                    className={`flex items-center gap-3 p-3 bg-background border rounded-lg cursor-move transition-all duration-200 ${draggedMember?.id === member.id
+                      ? 'opacity-50 scale-95 rotate-2'
+                      : 'hover:border-primary hover:shadow-md'
+                      } ${isUpdating ? 'pointer-events-none' : ''}`}
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                     <Avatar className="h-10 w-10">
@@ -375,14 +486,19 @@ export default function TeamManagementPage() {
 
                 {/* Drop zone for adding members to this group */}
                 <div
-                  onDragOver={handleMemberDragOver}
+                  onDragOver={(e) => handleMemberDragOver(e, group.id, getMembersInGroup(group.id).length)}
                   onDrop={(e) => {
                     e.stopPropagation();
                     handleMemberDrop(group.id, getMembersInGroup(group.id).length);
                   }}
-                  className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/50 transition-colors"
+                  className={`border-2 border-dashed rounded-lg p-4 text-center text-sm transition-all duration-200 ${dragOverGroupId === group.id && draggedMember
+                    ? 'border-primary bg-primary/10 text-primary scale-105'
+                    : 'border-muted-foreground/20 text-muted-foreground hover:border-primary/50'
+                    }`}
                 >
-                  Drop member here to add to {group.name}
+                  {dragOverGroupId === group.id && draggedMember
+                    ? `Drop ${draggedMember.name} here`
+                    : `Drop member here to add to ${group.name}`}
                 </div>
               </div>
             </div>
@@ -390,7 +506,8 @@ export default function TeamManagementPage() {
 
           {/* Ungrouped Members */}
           {ungroupedMembers.length > 0 && (
-            <div className="border rounded-lg p-4">
+            <div className={`border rounded-lg p-4 transition-all duration-200 ${dragOverGroupId === null && draggedMember ? 'border-primary bg-primary/5' : ''
+              }`}>
               <h3 className="font-semibold text-lg mb-4">Ungrouped Members</h3>
               <div className="space-y-2">
                 {ungroupedMembers.map((member, memberIndex) => (
@@ -398,12 +515,16 @@ export default function TeamManagementPage() {
                     key={member.id}
                     draggable
                     onDragStart={() => handleMemberDragStart(member)}
-                    onDragOver={handleMemberDragOver}
+                    onDragOver={(e) => handleMemberDragOver(e, null, memberIndex)}
+                    onDragEnd={handleMemberDragEnd}
                     onDrop={(e) => {
                       e.stopPropagation();
                       handleMemberDrop(null, memberIndex);
                     }}
-                    className="flex items-center gap-3 p-3 bg-background border rounded-lg cursor-move hover:border-primary transition-colors"
+                    className={`flex items-center gap-3 p-3 bg-background border rounded-lg cursor-move transition-all duration-200 ${draggedMember?.id === member.id
+                      ? 'opacity-50 scale-95 rotate-2'
+                      : 'hover:border-primary hover:shadow-md'
+                      } ${isUpdating ? 'pointer-events-none' : ''}`}
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                     <Avatar className="h-10 w-10">
@@ -451,6 +572,7 @@ export default function TeamManagementPage() {
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
                 placeholder="e.g., Management Team"
+                disabled={isUpdating}
               />
             </div>
             <div>
@@ -460,15 +582,23 @@ export default function TeamManagementPage() {
                 value={newGroupDescription}
                 onChange={(e) => setNewGroupDescription(e.target.value)}
                 placeholder="Brief description of this team"
+                disabled={isUpdating}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsGroupDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsGroupDialogOpen(false)}
+              disabled={isUpdating}
+            >
               Cancel
             </Button>
-            <Button onClick={editingGroup ? handleUpdateGroup : handleCreateGroup}>
-              {editingGroup ? 'Update' : 'Create'}
+            <Button
+              onClick={editingGroup ? handleUpdateGroup : handleCreateGroup}
+              disabled={isUpdating || !newGroupName.trim()}
+            >
+              {isUpdating ? 'Saving...' : (editingGroup ? 'Update' : 'Create')}
             </Button>
           </DialogFooter>
         </DialogContent>
