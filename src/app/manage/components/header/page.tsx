@@ -5,17 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Plus,
     Trash2,
     Save,
-    ChevronRight,
-    ChevronDown,
     GripVertical,
     ArrowLeft,
-    Eye,
-    EyeOff
+    ChevronRight,
+    Pencil
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -37,23 +34,40 @@ interface NavigationData {
     };
 }
 
+interface NavigationLevel {
+    items: NavLink[];
+    title: string;
+    path: number[];
+}
+
 export default function HeaderManagementPage() {
     const [links, setLinks] = useState<NavLink[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-    const [previewMode, setPreviewMode] = useState(false);
+    const [navigationStack, setNavigationStack] = useState<NavigationLevel[]>([]);
+    const [draggedItem, setDraggedItem] = useState<{ item: NavLink; index: number } | null>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [editingItem, setEditingItem] = useState<{ item: NavLink; path: number[] } | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
         loadData();
     }, []);
 
+    useEffect(() => {
+        // Initialize navigation stack with root level
+        if (links.length > 0 && navigationStack.length === 0) {
+            setNavigationStack([{ items: links, title: 'Level 1 - Main Navigation', path: [] }]);
+        }
+    }, [links]);
+
     const loadData = async () => {
         try {
-            const response = await fetch('/navigation-components.json');
+            const response = await fetch('/api/navigation-components');
+            if (!response.ok) throw new Error('Failed to fetch');
             const data: NavigationData = await response.json();
             setLinks(data.header.links || []);
+            setNavigationStack([{ items: data.header.links || [], title: 'Level 1 - Main Navigation', path: [] }]);
         } catch (error) {
             console.error('Error loading navigation data:', error);
             toast({
@@ -69,14 +83,12 @@ export default function HeaderManagementPage() {
     const saveData = async () => {
         setSaving(true);
         try {
-            // Load current data
-            const response = await fetch('/navigation-components.json');
+            const response = await fetch('/api/navigation-components');
+            if (!response.ok) throw new Error('Failed to fetch current data');
             const data: NavigationData = await response.json();
 
-            // Update header links
             data.header.links = links;
 
-            // Save to file via API
             const saveResponse = await fetch('/api/navigation-components', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -101,182 +113,119 @@ export default function HeaderManagementPage() {
         }
     };
 
-    const toggleExpand = (path: string) => {
-        const newExpanded = new Set(expandedItems);
-        if (newExpanded.has(path)) {
-            newExpanded.delete(path);
-        } else {
-            newExpanded.add(path);
-        }
-        setExpandedItems(newExpanded);
-    };
-
-    const updateLink = (path: number[], field: keyof NavLink, value: string) => {
+    const updateLinksAtPath = (path: number[], updater: (items: NavLink[]) => NavLink[]) => {
         const newLinks = JSON.parse(JSON.stringify(links));
-        let current: any = newLinks;
 
+        if (path.length === 0) {
+            const updated = updater(newLinks);
+            setLinks(updated);
+            setNavigationStack([{ items: updated, title: 'Level 1 - Main Navigation', path: [] }]);
+            return;
+        }
+
+        let current: any = newLinks;
         for (let i = 0; i < path.length - 1; i++) {
             current = current[path[i]].children;
         }
 
-        current[path[path.length - 1]][field] = value;
+        current[path[path.length - 1]].children = updater(current[path[path.length - 1]].children || []);
         setLinks(newLinks);
+
+        // Update navigation stack
+        const currentLevel = navigationStack[navigationStack.length - 1];
+        const newStack = [...navigationStack];
+        newStack[newStack.length - 1] = {
+            ...currentLevel,
+            items: current[path[path.length - 1]].children
+        };
+        setNavigationStack(newStack);
     };
 
-    const addLink = (path: number[], level: number) => {
-        const newLinks = JSON.parse(JSON.stringify(links));
-        const newLink: NavLink = {
+    const navigateToChildren = (item: NavLink, index: number) => {
+        if (!item.children || item.children.length === 0) return;
+
+        const currentLevel = navigationStack[navigationStack.length - 1];
+        const newPath = [...currentLevel.path, index];
+        const level = newPath.length + 1;
+
+        setNavigationStack([
+            ...navigationStack,
+            {
+                items: item.children,
+                title: `Level ${level} - ${item.title}`,
+                path: newPath
+            }
+        ]);
+    };
+
+    const navigateBack = () => {
+        if (navigationStack.length > 1) {
+            setNavigationStack(navigationStack.slice(0, -1));
+        }
+    };
+
+    const addItem = () => {
+        const currentLevel = navigationStack[navigationStack.length - 1];
+        const level = currentLevel.path.length + 1;
+
+        const newItem: NavLink = {
             title: 'New Link',
-            ...(level < 3 ? {} : { href: '#', description: '' })
+            ...(level >= 2 ? { href: '#', description: '' } : {})
         };
 
-        if (path.length === 0) {
-            // Add to root
-            newLinks.push(newLink);
-        } else {
-            let current: any = newLinks;
-            for (let i = 0; i < path.length; i++) {
-                if (i === path.length - 1) {
-                    if (!current[path[i]].children) {
-                        current[path[i]].children = [];
-                    }
-                    current[path[i]].children.push(newLink);
-                } else {
-                    current = current[path[i]].children;
-                }
-            }
-        }
-
-        setLinks(newLinks);
+        updateLinksAtPath(currentLevel.path, (items) => [...items, newItem]);
     };
 
-    const deleteLink = (path: number[]) => {
-        const newLinks = JSON.parse(JSON.stringify(links));
+    const deleteItem = (index: number) => {
+        if (!confirm('Are you sure you want to delete this item?')) return;
 
-        if (path.length === 1) {
-            newLinks.splice(path[0], 1);
-        } else {
-            let current: any = newLinks;
-            for (let i = 0; i < path.length - 1; i++) {
-                current = current[path[i]].children;
-            }
-            current.splice(path[path.length - 1], 1);
-        }
-
-        setLinks(newLinks);
+        const currentLevel = navigationStack[navigationStack.length - 1];
+        updateLinksAtPath(currentLevel.path, (items) => items.filter((_, i) => i !== index));
     };
 
-    const renderLinkEditor = (link: NavLink, path: number[], level: number) => {
-        const pathString = path.join('-');
-        const isExpanded = expandedItems.has(pathString);
-        const hasChildren = link.children && link.children.length > 0;
-        const canHaveChildren = level < 3;
-
-        return (
-            <div key={pathString} className="space-y-2">
-                <Card className={cn("transition-all", level === 1 && "border-l-4 border-l-primary")}>
-                    <CardHeader className="pb-3">
-                        <div className="flex items-start gap-2">
-                            <GripVertical className="h-5 w-5 text-muted-foreground mt-1 cursor-move" />
-                            <div className="flex-1 space-y-3">
-                                <div className="flex items-center gap-2">
-                                    {canHaveChildren && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => toggleExpand(pathString)}
-                                            className="h-6 w-6 p-0"
-                                        >
-                                            {isExpanded ? (
-                                                <ChevronDown className="h-4 w-4" />
-                                            ) : (
-                                                <ChevronRight className="h-4 w-4" />
-                                            )}
-                                        </Button>
-                                    )}
-                                    <span className="text-xs font-medium text-muted-foreground">
-                                        Level {level}
-                                    </span>
-                                    {hasChildren && (
-                                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                            {link.children!.length} {link.children!.length === 1 ? 'child' : 'children'}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="grid gap-3">
-                                    <div>
-                                        <Label htmlFor={`title-${pathString}`}>Title</Label>
-                                        <Input
-                                            id={`title-${pathString}`}
-                                            value={link.title}
-                                            onChange={(e) => updateLink(path, 'title', e.target.value)}
-                                            placeholder="Link title"
-                                        />
-                                    </div>
-
-                                    {level > 1 && (
-                                        <>
-                                            <div>
-                                                <Label htmlFor={`href-${pathString}`}>URL (optional for parent items)</Label>
-                                                <Input
-                                                    id={`href-${pathString}`}
-                                                    value={link.href || ''}
-                                                    onChange={(e) => updateLink(path, 'href', e.target.value)}
-                                                    placeholder="/path or https://example.com"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor={`desc-${pathString}`}>Description</Label>
-                                                <Textarea
-                                                    id={`desc-${pathString}`}
-                                                    value={link.description || ''}
-                                                    onChange={(e) => updateLink(path, 'description', e.target.value)}
-                                                    placeholder="Brief description"
-                                                    rows={2}
-                                                />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-
-                                <div className="flex gap-2">
-                                    {canHaveChildren && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => addLink(path, level + 1)}
-                                        >
-                                            <Plus className="h-4 w-4 mr-1" />
-                                            Add Child
-                                        </Button>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => deleteLink(path)}
-                                        className="text-destructive hover:text-destructive"
-                                    >
-                                        <Trash2 className="h-4 w-4 mr-1" />
-                                        Delete
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </CardHeader>
-                </Card>
-
-                {hasChildren && isExpanded && (
-                    <div className="ml-8 space-y-2 border-l-2 border-border pl-4">
-                        {link.children!.map((child, index) =>
-                            renderLinkEditor(child, [...path, index], level + 1)
-                        )}
-                    </div>
-                )}
-            </div>
-        );
+    const updateItem = (index: number, field: keyof NavLink, value: string) => {
+        const currentLevel = navigationStack[navigationStack.length - 1];
+        updateLinksAtPath(currentLevel.path, (items) => {
+            const newItems = [...items];
+            newItems[index] = { ...newItems[index], [field]: value };
+            return newItems;
+        });
     };
+
+    // Drag and drop handlers
+    const handleDragStart = (item: NavLink, index: number) => {
+        setDraggedItem({ item, index });
+    };
+
+    const handleDragOver = (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!draggedItem || draggedItem.index === targetIndex) return;
+
+        const currentLevel = navigationStack[navigationStack.length - 1];
+        updateLinksAtPath(currentLevel.path, (items) => {
+            const newItems = [...items];
+            const [removed] = newItems.splice(draggedItem.index, 1);
+            newItems.splice(targetIndex, 0, removed);
+            return newItems;
+        });
+
+        setDraggedItem({ ...draggedItem, index: targetIndex });
+    };
+
+    const handleDragEnd = () => {
+        setDraggedItem(null);
+        setIsUpdating(false);
+    };
+
+    const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+        e.stopPropagation();
+        handleDragEnd();
+    };
+
+    const currentLevel = navigationStack[navigationStack.length - 1];
+    const canHaveChildren = currentLevel && currentLevel.path.length < 2;
 
     if (loading) {
         return (
@@ -297,81 +246,228 @@ export default function HeaderManagementPage() {
                         <Button variant="ghost" size="sm" asChild>
                             <Link href="/manage/components">
                                 <ArrowLeft className="h-4 w-4 mr-1" />
-                                Back
+                                Back to Components
                             </Link>
                         </Button>
                     </div>
                     <h1 className="text-3xl font-bold font-headline mt-2">Header Navigation</h1>
                     <p className="text-muted-foreground mt-1">
-                        Manage your website's main navigation menu structure
+                        {currentLevel?.title || 'Manage your website\'s main navigation menu structure'}
                     </p>
                 </div>
 
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => setPreviewMode(!previewMode)}
-                    >
-                        {previewMode ? (
-                            <>
-                                <EyeOff className="h-4 w-4 mr-2" />
-                                Hide Preview
-                            </>
-                        ) : (
-                            <>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Show Preview
-                            </>
+                <Button onClick={saveData} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+            </div>
+
+            <Card className="relative">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                {navigationStack.length > 1 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={navigateBack}
+                                    >
+                                        <ArrowLeft className="h-4 w-4 mr-1" />
+                                        Back
+                                    </Button>
+                                )}
+                                {currentLevel?.title}
+                            </CardTitle>
+                            <CardDescription>
+                                Drag and drop items to reorder them. Click items with children to navigate deeper.
+                            </CardDescription>
+                        </div>
+                        {isUpdating && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                Updating...
+                            </div>
                         )}
-                    </Button>
-                    <Button onClick={saveData} disabled={saving}>
-                        <Save className="h-4 w-4 mr-2" />
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                </div>
-            </div>
-
-            {previewMode && (
-                <Card className="bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Preview</CardTitle>
-                        <CardDescription>
-                            This is how your navigation structure looks (simplified view)
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <pre className="text-xs overflow-auto max-h-96 bg-background p-4 rounded-lg">
-                            {JSON.stringify(links, null, 2)}
-                        </pre>
-                    </CardContent>
-                </Card>
-            )}
-
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold">Navigation Links</h2>
-                    <Button onClick={() => addLink([], 1)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Level 1 Link
-                    </Button>
-                </div>
-
-                {links.length === 0 ? (
-                    <Card>
-                        <CardContent className="py-12 text-center">
-                            <p className="text-muted-foreground mb-4">No navigation links yet</p>
-                            <Button onClick={() => addLink([], 1)}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Your First Link
-                            </Button>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <div className="space-y-4">
-                        {links.map((link, index) => renderLinkEditor(link, [index], 1))}
                     </div>
-                )}
-            </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {currentLevel?.items.map((item, index) => (
+                        <div
+                            key={index}
+                            draggable
+                            onDragStart={() => handleDragStart(item, index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDragEnd={handleDragEnd}
+                            onDrop={(e) => handleDrop(e, index)}
+                            className={cn(
+                                "border rounded-lg p-4 bg-background transition-all duration-200 cursor-move",
+                                draggedItem?.index === index && "opacity-50 scale-95 rotate-1",
+                                !draggedItem && "hover:border-primary hover:shadow-md",
+                                isUpdating && "pointer-events-none"
+                            )}
+                        >
+                            <div className="flex items-start gap-3">
+                                <GripVertical className="h-5 w-5 text-muted-foreground mt-1 cursor-grab active:cursor-grabbing flex-shrink-0" />
+
+                                <div className="flex-1 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                                                Level {currentLevel.path.length + 1}
+                                            </span>
+                                            {item.children && item.children.length > 0 && (
+                                                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                                    {item.children.length} {item.children.length === 1 ? 'child' : 'children'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {item.children && item.children.length > 0 && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => navigateToChildren(item, index)}
+                                                >
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    const currentPath = JSON.stringify([...currentLevel.path, index]);
+                                                    const editingPath = editingItem ? JSON.stringify(editingItem.path) : null;
+                                                    setEditingItem(editingPath === currentPath ? null : { item, path: [...currentLevel.path, index] });
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => deleteItem(index)}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {editingItem && JSON.stringify(editingItem.path) === JSON.stringify([...currentLevel.path, index]) ? (
+                                        <div className="space-y-3 pt-2 border-t">
+                                            <div>
+                                                <Label htmlFor={`title-${index}`}>Title</Label>
+                                                <Input
+                                                    id={`title-${index}`}
+                                                    value={item.title}
+                                                    onChange={(e) => updateItem(index, 'title', e.target.value)}
+                                                    placeholder="Link title"
+                                                />
+                                            </div>
+
+                                            {currentLevel.path.length >= 0 && (
+                                                <>
+                                                    <div>
+                                                        <Label htmlFor={`href-${index}`}>URL {canHaveChildren && '(optional for parent items)'}</Label>
+                                                        <Input
+                                                            id={`href-${index}`}
+                                                            value={item.href || ''}
+                                                            onChange={(e) => updateItem(index, 'href', e.target.value)}
+                                                            placeholder="/path or https://example.com"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <Label htmlFor={`desc-${index}`}>Description</Label>
+                                                        <textarea
+                                                            id={`desc-${index}`}
+                                                            value={item.description || ''}
+                                                            onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                            placeholder="Brief description"
+                                                            rows={2}
+                                                            className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {canHaveChildren && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        const newLinks = JSON.parse(JSON.stringify(links));
+                                                        let current: any = newLinks;
+                                                        const path = [...currentLevel.path, index];
+
+                                                        for (let i = 0; i < path.length - 1; i++) {
+                                                            current = current[path[i]].children;
+                                                        }
+
+                                                        if (!current[path[path.length - 1]].children) {
+                                                            current[path[path.length - 1]].children = [];
+                                                        }
+
+                                                        current[path[path.length - 1]].children.push({
+                                                            title: 'New Child Link',
+                                                            href: '#',
+                                                            description: ''
+                                                        });
+
+                                                        setLinks(newLinks);
+
+                                                        // Navigate to the child level immediately
+                                                        const updatedItem = current[path[path.length - 1]];
+                                                        const level = path.length + 1;
+
+                                                        setNavigationStack([
+                                                            ...navigationStack,
+                                                            {
+                                                                items: updatedItem.children,
+                                                                title: `Level ${level} - ${updatedItem.title}`,
+                                                                path: path
+                                                            }
+                                                        ]);
+
+                                                        // Close the edit view
+                                                        setEditingItem(null);
+                                                    }}
+                                                >
+                                                    <Plus className="h-4 w-4 mr-1" />
+                                                    Add Child Item
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="font-medium">{item.title}</p>
+                                            {item.href && <p className="text-sm text-muted-foreground">{item.href}</p>}
+                                            {item.description && <p className="text-sm text-muted-foreground mt-1">{item.description}</p>}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    {currentLevel?.items.length === 0 && (
+                        <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                            <p className="mb-4">No items in this level yet</p>
+                            <Button onClick={addItem}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add First Item
+                            </Button>
+                        </div>
+                    )}
+
+                    {currentLevel?.items.length > 0 && (
+                        <Button onClick={addItem} variant="outline" className="w-full">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Item to {currentLevel.title}
+                        </Button>
+                    )}
+                </CardContent>
+            </Card>
 
             <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                 <CardHeader>
@@ -381,9 +477,10 @@ export default function HeaderManagementPage() {
                     <p>• <strong>Level 1:</strong> Top navigation items (shown in header bar)</p>
                     <p>• <strong>Level 2:</strong> Dropdown items (left column in mega menu)</p>
                     <p>• <strong>Level 3:</strong> Sub-items (right column in mega menu)</p>
-                    <p>• Items without children and with href will be clickable links</p>
-                    <p>• Items with children act as category headers</p>
-                    <p>• On mobile, users navigate through levels progressively</p>
+                    <p>• Drag items to reorder them within the current level</p>
+                    <p>• Click the edit icon to modify an item's details</p>
+                    <p>• Click items with children to navigate into that level</p>
+                    <p>• Use the back button to return to the previous level</p>
                 </CardContent>
             </Card>
         </div>

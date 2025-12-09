@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Plus,
     Trash2,
@@ -51,7 +50,8 @@ export default function FooterManagementPage() {
 
     const loadData = async () => {
         try {
-            const response = await fetch('/navigation-components.json');
+            const response = await fetch('/api/navigation-components');
+            if (!response.ok) throw new Error('Failed to fetch');
             const data: NavigationData = await response.json();
             setSections(data.footer.links || []);
         } catch (error) {
@@ -70,7 +70,8 @@ export default function FooterManagementPage() {
         setSaving(true);
         try {
             // Load current data
-            const response = await fetch('/navigation-components.json');
+            const response = await fetch('/api/navigation-components');
+            if (!response.ok) throw new Error('Failed to fetch current data');
             const data: NavigationData = await response.json();
 
             // Update footer links
@@ -330,13 +331,13 @@ export default function FooterManagementPage() {
                                                                 <Label htmlFor={`link-desc-${sectionIndex}-${linkIndex}`}>
                                                                     Description (optional)
                                                                 </Label>
-                                                                <Textarea
+                                                                <textarea
                                                                     id={`link-desc-${sectionIndex}-${linkIndex}`}
                                                                     value={link.description || ''}
                                                                     onChange={(e) => updateLink(sectionIndex, linkIndex, 'description', e.target.value)}
                                                                     placeholder="Brief description"
                                                                     rows={2}
-                                                                    className="text-sm"
+                                                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                                                 />
                                                             </div>
                                                         </CardContent>
