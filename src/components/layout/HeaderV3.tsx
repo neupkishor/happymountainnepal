@@ -10,9 +10,10 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUser } from '@/firebase';
 import { useSiteProfile } from '@/hooks/use-site-profile';
+import { useHeaderLinks } from '@/hooks/use-navigation-data';
 
-// This data would likely come from a CMS or a shared data file in a real app
-const navLinks: NavLink[] = [
+// Fallback data if API fails
+const defaultNavLinks: NavLink[] = [
   {
     title: 'Activities',
     children: [
@@ -110,7 +111,7 @@ const navLinks: NavLink[] = [
 ];
 
 
-function MobileMenuList({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
+function MobileMenuList({ setMenuOpen, navLinks }: { setMenuOpen: (open: boolean) => void; navLinks: NavLink[] }) {
   const [navigationStack, setNavigationStack] = React.useState<{ items: NavLink[], title: string }[]>([
     { items: navLinks, title: 'Menu' }
   ]);
@@ -225,6 +226,10 @@ export function HeaderV3() {
   const [activeLevel2Item, setActiveLevel2Item] = React.useState<string | null>(null);
   const { user, isUserLoading } = useUser();
   const { profile } = useSiteProfile();
+  const { links: apiLinks, loading: linksLoading } = useHeaderLinks();
+
+  // Use API links if available, otherwise use default links
+  const navLinks = apiLinks.length > 0 ? apiLinks : defaultNavLinks;
 
   React.useEffect(() => {
     const chatbot = document.getElementById('chatbot-container');
@@ -245,7 +250,7 @@ export function HeaderV3() {
     if (hasChildren(item)) {
       setActiveSubMenu(item);
       // Auto-expand first level 2 item if it has level 3 children
-      const firstChildWithLevel3 = item.children?.find(child => hasChildren(child));
+      const firstChildWithLevel3 = item.children?.find((child: NavLink) => hasChildren(child));
       if (firstChildWithLevel3) {
         setActiveLevel2Item(firstChildWithLevel3.title);
       } else {
@@ -292,7 +297,7 @@ export function HeaderV3() {
     ]
   };
 
-  const aboutMenu = navLinks.find(link => link.title === 'About');
+  const aboutMenu = navLinks.find((link: NavLink) => link.title === 'About');
   const aboutMenuWithContact = aboutMenu ? {
     ...aboutMenu,
     children: [...(aboutMenu.children || []), contactColumn]
@@ -396,7 +401,7 @@ export function HeaderV3() {
               transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
               className="md:hidden overflow-hidden bg-background absolute top-16 left-0 w-full"
             >
-              <MobileMenuList setMenuOpen={setMenuOpen} />
+              <MobileMenuList setMenuOpen={setMenuOpen} navLinks={navLinks} />
             </motion.div>
           )}
         </AnimatePresence>
