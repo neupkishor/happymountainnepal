@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import redirects from './redirects.json';
 
 const COOKIE_NAME = 'temp_account';
+const MANAGER_COOKIE_NAME = 'manager_auth';
 const PUBLIC_FILE = /\.(.*)$/;
 
 // Bot detection helper
@@ -29,6 +30,37 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
   if (pathname.startsWith('/api')) return 'api';
   if (PUBLIC_FILE.test(pathname)) return 'static';
   return 'page';
+}
+
+// Helper to validate manager authentication
+async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
+  const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
+
+  if (!managerCookie) {
+    return false;
+  }
+
+  try {
+    const { username, password } = JSON.parse(managerCookie);
+
+    // Read manager credentials from manager.json
+    const { readFile } = await import('fs/promises');
+    const { join } = await import('path');
+    const managersFilePath = join(process.cwd(), 'manager.json');
+    const managersData = await readFile(managersFilePath, 'utf-8');
+    const managers = JSON.parse(managersData);
+
+    // Check if credentials match
+    const manager = managers.find(
+      (m: { username: string; password: string }) =>
+        m.username === username && m.password === password
+    );
+
+    return !!manager;
+  } catch (error) {
+    console.error('Manager auth validation error:', error);
+    return false;
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -95,6 +127,17 @@ export async function middleware(request: NextRequest) {
     if (!request.cookies.has('user_email')) {
       const url = request.nextUrl.clone();
       url.pathname = '/legal/documents/gate';
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // Manager authentication gate for /manage routes
+  if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
+    const isAuthenticated = await isManagerAuthenticated(request);
+
+    if (!isAuthenticated) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/manage/login';
       return NextResponse.redirect(url);
     }
   }

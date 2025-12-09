@@ -2,7 +2,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarProvider, SidebarMenuItem } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare, Import, ArrowRightLeft } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare, Import, ArrowRightLeft, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 import { AutoHideScrollbar } from "@/components/ui/AutoHideScrollbar";
@@ -15,6 +15,17 @@ export default function ManageLayout({
     const userName = "Admin";
     const userHandle = "happymountain";
     const pathname = usePathname();
+
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/manager-auth', {
+                method: 'DELETE',
+            });
+            window.location.href = '/manage/login';
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
 
     return (
         <SidebarProvider>
@@ -115,6 +126,12 @@ export default function ManageLayout({
                                                 <SidebarMenuButton href="/manage/redirects" isActive={pathname.startsWith('/manage/redirects')} tooltip="Redirects">
                                                     <ArrowRightLeft />
                                                     <span>Redirects</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
+                                                    <LogOut />
+                                                    <span>Logout</span>
                                                 </SidebarMenuButton>
                                             </SidebarMenuItem>
                                             <SidebarMenuItem>
