@@ -124,18 +124,27 @@ export default function LogsPage() {
     const exportLogs = () => {
         const csv = [
             ['Timestamp', 'Cookie ID', 'Page', 'Type', 'Method', 'Status', 'User Agent', 'IP', 'Is Bot', 'Referrer'].join(','),
-            ...logs.map(log => [
-                log.timestamp ? format(new Date((log.timestamp as any).toDate()), 'yyyy-MM-dd HH:mm:ss') : '',
-                log.cookieId,
-                log.pageAccessed,
-                log.resourceType,
-                log.method || '',
-                log.statusCode || '',
-                `"${log.userAgent}"`,
-                log.ipAddress || '',
-                log.isBot ? 'Yes' : 'No',
-                log.referrer || '',
-            ].join(','))
+            ...logs.map(log => {
+                // Handle timestamp as either Firestore Timestamp or ISO string
+                const timestamp = typeof log.timestamp === 'string'
+                    ? new Date(log.timestamp)
+                    : typeof (log.timestamp as any).toDate === 'function'
+                        ? (log.timestamp as any).toDate()
+                        : new Date();
+
+                return [
+                    format(timestamp, 'yyyy-MM-dd HH:mm:ss'),
+                    log.cookieId,
+                    log.pageAccessed,
+                    log.resourceType,
+                    log.method || '',
+                    log.statusCode || '',
+                    `"${log.userAgent}"`,
+                    log.ipAddress || '',
+                    log.isBot ? 'Yes' : 'No',
+                    log.referrer || '',
+                ].join(',');
+            })
         ].join('\n');
 
         const blob = new Blob([csv], { type: 'text/csv' });
@@ -308,7 +317,14 @@ export default function LogsPage() {
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-medium">Time:</span>
                                                     <span className="text-xs">
-                                                        {format(new Date((log.timestamp as any).toDate()), 'PPpp')}
+                                                        {format(
+                                                            typeof log.timestamp === 'string'
+                                                                ? new Date(log.timestamp)
+                                                                : typeof (log.timestamp as any).toDate === 'function'
+                                                                    ? (log.timestamp as any).toDate()
+                                                                    : new Date(),
+                                                            'PPpp'
+                                                        )}
                                                     </span>
                                                 </div>
                                             )}

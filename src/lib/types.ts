@@ -234,7 +234,7 @@ export interface Log {
   referrer?: string; // Where the user came from
   userAgent: string; // Browser/bot user agent
   ipAddress?: string; // Client IP address
-  timestamp: Timestamp; // When the access occurred
+  timestamp: Timestamp | string; // When the access occurred (Timestamp in DB, string when serialized)
   isBot?: boolean; // Whether this appears to be a bot
   metadata?: Record<string, any>; // Any additional information
 }

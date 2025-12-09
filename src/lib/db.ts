@@ -1391,8 +1391,16 @@ export async function createLog(data: Omit<Log, 'id' | 'timestamp'>): Promise<vo
         return;
     }
     try {
+        // Filter out undefined values as Firestore doesn't accept them
+        const cleanedData = Object.entries(data).reduce((acc, [key, value]) => {
+            if (value !== undefined) {
+                acc[key] = value;
+            }
+            return acc;
+        }, {} as Record<string, any>);
+
         await addDoc(collection(firestore, 'logs'), {
-            ...data,
+            ...cleanedData,
             timestamp: serverTimestamp(),
         });
     } catch (error) {
@@ -1435,10 +1443,16 @@ export async function getLogs(options?: {
         q = query(q, firestoreLimit(limit + 1));
 
         const querySnapshot = await getDocs(q);
-        const logs = querySnapshot.docs.slice(0, limit).map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        } as Log));
+        const logs = querySnapshot.docs.slice(0, limit).map(doc => {
+            const data = doc.data();
+            // Convert Firestore Timestamp to ISO string for serialization
+            const timestamp = data.timestamp || Timestamp.now();
+            return {
+                id: doc.id,
+                ...data,
+                timestamp: timestamp.toDate().toISOString()
+            } as Log;
+        });
 
         const hasMore = querySnapshot.docs.length > limit;
 
