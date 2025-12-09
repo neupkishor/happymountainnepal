@@ -1411,13 +1411,16 @@ export async function createLog(data: Omit<Log, 'id' | 'timestamp'>): Promise<vo
 
 export async function getLogs(options?: {
     limit?: number;
-    lastDocId?: string | null;
+    page?: number;
     cookieId?: string;
     resourceType?: 'page' | 'api' | 'static' | 'redirect';
     isBot?: boolean;
-}): Promise<{ logs: Log[]; hasMore: boolean }> {
-    if (!firestore) return { logs: [], hasMore: false };
+}): Promise<{ logs: Log[]; hasMore: boolean; totalPages: number }> {
+    if (!firestore) return { logs: [], hasMore: false, totalPages: 0 };
     try {
+        const limit = options?.limit || 10;
+        const page = options?.page || 1;
+
         let q = query(collection(firestore, 'logs'), orderBy('timestamp', 'desc'));
 
         // Apply filters
@@ -1431,19 +1434,16 @@ export async function getLogs(options?: {
             q = query(q, where('isBot', '==', options.isBot));
         }
 
-        // Pagination
-        if (options?.lastDocId) {
-            const lastDoc = await getDoc(doc(firestore, 'logs', options.lastDocId));
-            if (lastDoc.exists()) {
-                q = query(q, startAfter(lastDoc));
-            }
-        }
+        // Get total count for pagination
+        const countSnapshot = await getDocs(q);
+        const totalCount = countSnapshot.size;
+        const totalPages = Math.ceil(totalCount / limit);
 
-        const limit = options?.limit || 50;
-        q = query(q, firestoreLimit(limit + 1));
+        // Calculate which documents to return for this page
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
 
-        const querySnapshot = await getDocs(q);
-        const logs = querySnapshot.docs.slice(0, limit).map(doc => {
+        const logs = countSnapshot.docs.slice(startIndex, endIndex).map(doc => {
             const data = doc.data();
             // Convert Firestore Timestamp to ISO string for serialization
             const timestamp = data.timestamp || Timestamp.now();
@@ -1454,13 +1454,13 @@ export async function getLogs(options?: {
             } as Log;
         });
 
-        const hasMore = querySnapshot.docs.length > limit;
+        const hasMore = page < totalPages;
 
-        return { logs, hasMore };
+        return { logs, hasMore, totalPages };
     } catch (error: any) {
         console.error("Error fetching logs:", error);
         await logError({ message: `Failed to fetch logs: ${error.message}`, stack: error.stack, pathname: '/manage/logs' });
-        return { logs: [], hasMore: false };
+        return { logs: [], hasMore: false, totalPages: 0 };
     }
 }
 

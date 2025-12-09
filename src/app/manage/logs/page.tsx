@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getLogs, getLogCount, deleteLog, clearOldLogs } from '@/lib/db';
 import { Log } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -9,16 +10,18 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Trash2, RefreshCw, Download, Filter, Bot, User, Globe, FileText, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
+import { Trash2, RefreshCw, Download, Filter, Bot, User, Globe, FileText, Link as LinkIcon, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LogsPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [logs, setLogs] = useState<Log[]>([]);
     const [loading, setLoading] = useState(true);
     const [totalCount, setTotalCount] = useState(0);
-    const [hasMore, setHasMore] = useState(false);
-    const [lastDocId, setLastDocId] = useState<string | null>(null);
+    const [totalPages, setTotalPages] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const { toast } = useToast();
 
     // Filters
@@ -26,12 +29,17 @@ export default function LogsPage() {
     const [botFilter, setBotFilter] = useState<'all' | 'bots' | 'humans'>('all');
     const [searchCookie, setSearchCookie] = useState('');
 
-    const fetchLogs = async (reset = false) => {
+    useEffect(() => {
+        const page = parseInt(searchParams.get('page') || '1', 10);
+        setCurrentPage(page);
+    }, [searchParams]);
+
+    const fetchLogs = async () => {
         setLoading(true);
         try {
             const options: any = {
-                limit: 50,
-                lastDocId: reset ? null : lastDocId,
+                limit: 10,
+                page: currentPage,
             };
 
             if (resourceTypeFilter !== 'all') {
@@ -46,17 +54,10 @@ export default function LogsPage() {
                 options.cookieId = searchCookie;
             }
 
-            const { logs: fetchedLogs, hasMore: more } = await getLogs(options);
+            const { logs: fetchedLogs, hasMore, totalPages: pages } = await getLogs(options);
 
-            if (reset) {
-                setLogs(fetchedLogs);
-                setLastDocId(fetchedLogs.length > 0 ? fetchedLogs[fetchedLogs.length - 1].id : null);
-            } else {
-                setLogs([...logs, ...fetchedLogs]);
-                setLastDocId(fetchedLogs.length > 0 ? fetchedLogs[fetchedLogs.length - 1].id : lastDocId);
-            }
-
-            setHasMore(more);
+            setLogs(fetchedLogs);
+            setTotalPages(pages);
 
             // Get total count
             const countOptions: any = {};
@@ -80,8 +81,8 @@ export default function LogsPage() {
     };
 
     useEffect(() => {
-        fetchLogs(true);
-    }, [resourceTypeFilter, botFilter, searchCookie]);
+        fetchLogs();
+    }, [currentPage, resourceTypeFilter, botFilter, searchCookie]);
 
     const handleDeleteLog = async (id: string) => {
         if (!confirm('Are you sure you want to delete this log?')) return;
@@ -111,7 +112,7 @@ export default function LogsPage() {
                 title: 'Success',
                 description: `Deleted ${deletedCount} old logs`,
             });
-            fetchLogs(true);
+            fetchLogs();
         } catch (error) {
             toast({
                 title: 'Error',
@@ -165,17 +166,33 @@ export default function LogsPage() {
         }
     };
 
+    const goToPage = (page: number) => {
+        router.push(`/manage/logs?page=${page}`);
+    };
+
+    const handlePrevious = () => {
+        if (currentPage > 1) {
+            goToPage(currentPage - 1);
+        }
+    };
+
+    const handleNext = () => {
+        if (currentPage < totalPages) {
+            goToPage(currentPage + 1);
+        }
+    };
+
     return (
         <div className="container mx-auto py-8 px-4">
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold">Access Logs</h1>
                     <p className="text-muted-foreground">
-                        Total: {totalCount} logs
+                        Total: {totalCount} logs | Page {currentPage} of {totalPages}
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => fetchLogs(true)} variant="outline">
+                    <Button onClick={fetchLogs} variant="outline">
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Refresh
                     </Button>
@@ -350,11 +367,54 @@ export default function LogsPage() {
                 )}
             </div>
 
-            {/* Load More */}
-            {hasMore && (
-                <div className="mt-6 text-center">
-                    <Button onClick={() => fetchLogs(false)} disabled={loading}>
-                        {loading ? 'Loading...' : 'Load More'}
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-center gap-2">
+                    <Button
+                        onClick={handlePrevious}
+                        disabled={currentPage === 1 || loading}
+                        variant="outline"
+                        size="sm"
+                    >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                                pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                            } else {
+                                pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                                <Button
+                                    key={pageNum}
+                                    onClick={() => goToPage(pageNum)}
+                                    variant={currentPage === pageNum ? 'default' : 'outline'}
+                                    size="sm"
+                                    disabled={loading}
+                                >
+                                    {pageNum}
+                                </Button>
+                            );
+                        })}
+                    </div>
+
+                    <Button
+                        onClick={handleNext}
+                        disabled={currentPage === totalPages || loading}
+                        variant="outline"
+                        size="sm"
+                    >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                 </div>
             )}
