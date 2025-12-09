@@ -132,19 +132,20 @@ function MobileMenuList({ setMenuOpen, navLinks }: { setMenuOpen: (open: boolean
 
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
-      {/* Header with back button */}
-      <div className="flex items-center px-6 py-4 border-b border-border/40">
-        {navigationStack.length > 1 && (
-          <button
-            onClick={navigateBack}
-            className="flex items-center text-primary hover:text-primary/80 transition-colors"
-          >
-            <ChevronRight className="h-5 w-5 rotate-180 mr-2" />
-            <span className="font-medium">Back</span>
-          </button>
-        )}
-        <h2 className="font-headline text-xl font-semibold ml-auto">{currentLevel.title}</h2>
-      </div>
+      {/* Header with back button and title (only show from level 2+) */}
+      {navigationStack.length > 1 && (
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={navigateBack}
+              className="flex items-center text-primary hover:text-primary/80 transition-colors"
+            >
+              <ChevronRight className="h-5 w-5 rotate-180" />
+            </button>
+            <h2 className="font-headline text-base font-semibold text-foreground">{currentLevel.title}</h2>
+          </div>
+        </div>
+      )}
 
       {/* Menu items */}
       <div className="flex-1 overflow-y-auto px-6 pt-4 pb-20">
@@ -356,10 +357,10 @@ export function HeaderV3() {
             {/* Mobile Only Burger (With Morphing Animation) */}
             <div className="md:hidden">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 onClick={() => setMenuOpen(!isMenuOpen)}
-                className="relative overflow-hidden border-none shadow-none hover:bg-transparent"
+                className="relative overflow-hidden border-2 border-border hover:border-primary transition-colors"
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {isMenuOpen ? (
@@ -371,7 +372,7 @@ export function HeaderV3() {
                       transition={{ duration: 0.2 }}
                       className="absolute inset-0 flex items-center justify-center"
                     >
-                      <X className="h-6 w-6" />
+                      <X className="h-6 w-6 text-foreground" />
                     </motion.div>
                   ) : (
                     <motion.div
@@ -382,7 +383,7 @@ export function HeaderV3() {
                       transition={{ duration: 0.2 }}
                       className="absolute inset-0 flex items-center justify-center"
                     >
-                      <Menu className="h-6 w-6" />
+                      <Menu className="h-6 w-6 text-foreground" />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -399,7 +400,7 @@ export function HeaderV3() {
               animate={{ height: "calc(100vh - 4rem)", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
-              className="md:hidden overflow-hidden bg-background absolute top-16 left-0 w-full"
+              className="md:hidden overflow-hidden bg-background absolute top-16 left-0 w-full border-t border-border"
             >
               <MobileMenuList setMenuOpen={setMenuOpen} navLinks={navLinks} />
             </motion.div>
