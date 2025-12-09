@@ -111,69 +111,100 @@ const navLinks: NavLink[] = [
 
 
 function MobileMenuList({ setMenuOpen }: { setMenuOpen: (open: boolean) => void }) {
-  const [openSubMenu, setOpenSubMenu] = React.useState<string | null>(null);
+  const [navigationStack, setNavigationStack] = React.useState<{ items: NavLink[], title: string }[]>([
+    { items: navLinks, title: 'Menu' }
+  ]);
 
-  const toggleSubMenu = (title: string) => {
-    setOpenSubMenu(prev => (prev === title ? null : title));
+  const currentLevel = navigationStack[navigationStack.length - 1];
+
+  const navigateForward = (link: NavLink) => {
+    if (link.children && link.children.length > 0) {
+      setNavigationStack([...navigationStack, { items: link.children, title: link.title }]);
+    }
   };
 
-  const renderLinks = (links: NavLink[], level = 0): React.ReactNode => {
-    return links.map(link => {
-      if (link.children) {
-        const isOpen = openSubMenu === link.title;
-        return (
-          <div key={link.title} className="text-lg border-b border-border/40 last:border-0">
-            <button
-              className="flex items-center justify-between w-full py-4 text-left group"
-              onClick={() => toggleSubMenu(link.title)}
-            >
-              <span className={cn("font-headline text-lg font-medium transition-colors", isOpen ? "text-primary" : "text-foreground")}>{link.title}</span>
-              <ChevronDown className={cn("h-5 w-5 transition-transform duration-300 text-muted-foreground group-hover:text-primary", isOpen && "rotate-180 text-primary")} />
-            </button>
-            <AnimatePresence>
-              {isOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="pb-4 pl-4 space-y-1 border-l-2 border-primary/20 ml-2">
-                    {renderLinks(link.children, level + 1)}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      }
-      return (
-        <Link
-          key={link.href}
-          href={link.href!}
-          className="block py-4 text-lg font-medium border-b border-border/40 last:border-0 hover:text-primary transition-colors"
-          onClick={() => setMenuOpen(false)}
-        >
-          {link.title}
-        </Link>
-      );
-    });
-  }
+  const navigateBack = () => {
+    if (navigationStack.length > 1) {
+      setNavigationStack(navigationStack.slice(0, -1));
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full bg-background px-6 pt-4 pb-20 overflow-y-auto">
-      <nav className="flex flex-col w-full max-w-lg mx-auto">
-        {renderLinks(navLinks)}
-        <div className="mt-8 pt-8 border-t space-y-4">
-          <Button variant="ghost" className="w-full justify-start text-lg h-12" asChild>
-            <Link href="/login" onClick={() => setMenuOpen(false)}><LogIn className="mr-3 h-5 w-5" /> Login</Link>
-          </Button>
-          <Button className="w-full justify-start text-lg h-12" asChild>
-            <Link href="/signup" onClick={() => setMenuOpen(false)}><User className="mr-3 h-5 w-5" /> Sign Up</Link>
-          </Button>
-        </div>
-      </nav>
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      {/* Header with back button */}
+      <div className="flex items-center px-6 py-4 border-b border-border/40">
+        {navigationStack.length > 1 && (
+          <button
+            onClick={navigateBack}
+            className="flex items-center text-primary hover:text-primary/80 transition-colors"
+          >
+            <ChevronRight className="h-5 w-5 rotate-180 mr-2" />
+            <span className="font-medium">Back</span>
+          </button>
+        )}
+        <h2 className="font-headline text-xl font-semibold ml-auto">{currentLevel.title}</h2>
+      </div>
+
+      {/* Menu items */}
+      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-20">
+        <nav className="flex flex-col w-full max-w-lg mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentLevel.title}
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -20, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {currentLevel.items.map(link => {
+                if (link.children && link.children.length > 0) {
+                  return (
+                    <button
+                      key={link.title}
+                      onClick={() => navigateForward(link)}
+                      className="flex items-center justify-between w-full py-4 text-left border-b border-border/40 last:border-0 group"
+                    >
+                      <div>
+                        <span className="font-headline text-lg font-medium text-foreground group-hover:text-primary transition-colors">
+                          {link.title}
+                        </span>
+                        {link.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{link.description}</p>
+                        )}
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </button>
+                  );
+                }
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href!}
+                    className="block py-4 border-b border-border/40 last:border-0 hover:text-primary transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <span className="font-headline text-lg font-medium">{link.title}</span>
+                    {link.description && (
+                      <p className="text-sm text-muted-foreground mt-1">{link.description}</p>
+                    )}
+                  </Link>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
+
+          {navigationStack.length === 1 && (
+            <div className="mt-8 pt-8 border-t space-y-4">
+              <Button variant="ghost" className="w-full justify-start text-lg h-12" asChild>
+                <Link href="/login" onClick={() => setMenuOpen(false)}><LogIn className="mr-3 h-5 w-5" /> Login</Link>
+              </Button>
+              <Button className="w-full justify-start text-lg h-12" asChild>
+                <Link href="/signup" onClick={() => setMenuOpen(false)}><User className="mr-3 h-5 w-5" /> Sign Up</Link>
+              </Button>
+            </div>
+          )}
+        </nav>
+      </div>
     </div>
   );
 }
@@ -182,9 +213,16 @@ const hasChildren = (item: NavLink): item is Required<Pick<NavLink, 'children'>>
   return Array.isArray(item.children) && item.children.length > 0;
 }
 
+// Check if any child has level 3 (grandchildren)
+const hasLevel3 = (children: NavLink[] | undefined): boolean => {
+  if (!children) return false;
+  return children.some(child => hasChildren(child));
+}
+
 export function HeaderV3() {
   const [isMenuOpen, setMenuOpen] = React.useState(false);
   const [activeSubMenu, setActiveSubMenu] = React.useState<NavLink | null>(null);
+  const [activeLevel2Item, setActiveLevel2Item] = React.useState<string | null>(null);
   const { user, isUserLoading } = useUser();
   const { profile } = useSiteProfile();
 
@@ -206,13 +244,26 @@ export function HeaderV3() {
   const handleMouseEnter = (item: NavLink) => {
     if (hasChildren(item)) {
       setActiveSubMenu(item);
+      // Auto-expand first level 2 item if it has level 3 children
+      const firstChildWithLevel3 = item.children?.find(child => hasChildren(child));
+      if (firstChildWithLevel3) {
+        setActiveLevel2Item(firstChildWithLevel3.title);
+      } else {
+        setActiveLevel2Item(null);
+      }
     } else {
       setActiveSubMenu(null);
+      setActiveLevel2Item(null);
     }
   };
 
   const handleMouseLeave = () => {
     setActiveSubMenu(null);
+    setActiveLevel2Item(null);
+  };
+
+  const handleLevel2Hover = (title: string) => {
+    setActiveLevel2Item(title);
   };
 
   const contactColumn: NavLink = {
@@ -350,6 +401,7 @@ export function HeaderV3() {
           )}
         </AnimatePresence>
 
+        {/* Desktop Mega Menu */}
         <AnimatePresence>
           {activeSubMenu && !isMenuOpen && (
             <motion.div
@@ -363,38 +415,123 @@ export function HeaderV3() {
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeSubMenu.title}
-                    layout
-                    className="grid grid-cols-4 gap-8"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {(activeSubMenu.title === 'About' && aboutMenuWithContact ? aboutMenuWithContact.children : activeSubMenu.children)?.map(child => (
-                      <div key={child.title}>
-                        {hasChildren(child) ? (
-                          <>
-                            <div className="font-headline text-lg font-semibold text-foreground mb-3">{child.title}</div>
-                            <ul className="space-y-2">
-                              {child.children?.map(subItem => (
-                                <li key={subItem.title}>
-                                  <Link href={subItem.href || '#'} target={subItem.target} className="group flex items-center gap-2 text-foreground/80 hover:text-primary transition-colors">
-                                    {subItem.icon && <subItem.icon className="h-4 w-4 shrink-0" />}
-                                    <span>{subItem.title}</span>
-                                    {subItem.target !== '_blank' && <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />}
-                                  </Link>
-                                </li>
+                    {(() => {
+                      const menuChildren = activeSubMenu.title === 'About' && aboutMenuWithContact
+                        ? aboutMenuWithContact.children
+                        : activeSubMenu.children;
+
+                      const hasAnyLevel3 = hasLevel3(menuChildren);
+
+                      // If there's level 3, use 2-column layout
+                      if (hasAnyLevel3) {
+                        return (
+                          <div className="grid grid-cols-[300px_1fr] gap-12">
+                            {/* Column 1: Level 2 items */}
+                            <div className="space-y-1">
+                              {menuChildren?.map(child => (
+                                <div
+                                  key={child.title}
+                                  onMouseEnter={() => handleLevel2Hover(child.title)}
+                                  className={cn(
+                                    "px-4 py-3 rounded-lg transition-colors cursor-pointer",
+                                    activeLevel2Item === child.title
+                                      ? "bg-secondary text-primary"
+                                      : "hover:bg-secondary/50"
+                                  )}
+                                >
+                                  {hasChildren(child) ? (
+                                    <div>
+                                      <div className="font-headline text-base font-semibold">{child.title}</div>
+                                      {child.description && (
+                                        <p className="text-sm text-muted-foreground mt-1">{child.description}</p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <Link href={child.href || '#'} className="block">
+                                      <div className="font-headline text-base font-semibold">{child.title}</div>
+                                      {child.description && (
+                                        <p className="text-sm text-muted-foreground mt-1">{child.description}</p>
+                                      )}
+                                    </Link>
+                                  )}
+                                </div>
                               ))}
-                            </ul>
-                          </>
-                        ) : (
-                          <Link href={child.href || '#'} className="group block">
-                            <p className="font-headline text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{child.title}</p>
-                            {child.description && <p className="text-sm text-muted-foreground mt-1">{child.description}</p>}
-                          </Link>
-                        )}
-                      </div>
-                    ))}
+                            </div>
+
+                            {/* Column 2: Level 3 items */}
+                            <div>
+                              <AnimatePresence mode="wait">
+                                {activeLevel2Item && menuChildren?.find(c => c.title === activeLevel2Item) && (
+                                  <motion.div
+                                    key={activeLevel2Item}
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    {(() => {
+                                      const activeItem = menuChildren.find(c => c.title === activeLevel2Item);
+                                      if (!activeItem || !hasChildren(activeItem)) return null;
+
+                                      return (
+                                        <div className="grid grid-cols-2 gap-6">
+                                          {activeItem.children?.map(subItem => (
+                                            <Link
+                                              key={subItem.title}
+                                              href={subItem.href || '#'}
+                                              target={subItem.target}
+                                              className="group block p-4 rounded-lg hover:bg-secondary/50 transition-colors"
+                                            >
+                                              <div className="flex items-start gap-2">
+                                                {subItem.icon && <subItem.icon className="h-5 w-5 shrink-0 mt-0.5 text-primary" />}
+                                                <div className="flex-1">
+                                                  <div className="font-headline text-base font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
+                                                    {subItem.title}
+                                                    <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                  </div>
+                                                  {subItem.description && (
+                                                    <p className="text-sm text-muted-foreground mt-1">{subItem.description}</p>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </Link>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        // If there's only level 2, show horizontally
+                        return (
+                          <div className="grid grid-cols-4 gap-8">
+                            {menuChildren?.map(child => (
+                              <Link
+                                key={child.title}
+                                href={child.href || '#'}
+                                className="group block p-4 rounded-lg hover:bg-secondary/50 transition-colors"
+                              >
+                                <p className="font-headline text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                                  {child.title}
+                                </p>
+                                {child.description && (
+                                  <p className="text-sm text-muted-foreground mt-1">{child.description}</p>
+                                )}
+                              </Link>
+                            ))}
+                          </div>
+                        );
+                      }
+                    })()}
                   </motion.div>
                 </AnimatePresence>
               </div>
