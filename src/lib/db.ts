@@ -1526,3 +1526,71 @@ export async function clearOldLogs(daysToKeep: number = 30): Promise<number> {
     }
 }
 
+export async function getUniquePageLogs(options?: {
+    limit?: number;
+    page?: number;
+    resourceType?: 'page' | 'api' | 'static' | 'redirect';
+    isBot?: boolean;
+}): Promise<{ logs: Log[]; hasMore: boolean; totalPages: number }> {
+    if (!firestore) return { logs: [], hasMore: false, totalPages: 0 };
+    try {
+        let q = query(collection(firestore, 'logs'), orderBy('timestamp', 'desc'));
+
+        // Apply filters
+        if (options?.resourceType) {
+            q = query(q, where('resourceType', '==', options.resourceType));
+        }
+        if (options?.isBot !== undefined) {
+            q = query(q, where('isBot', '==', options.isBot));
+        }
+
+        // Get all logs matching the filters
+        const snapshot = await getDocs(q);
+
+        // Group by pageAccessed and keep only the most recent one
+        const uniquePagesMap = new Map<string, Log>();
+
+        snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            const timestamp = data.timestamp || Timestamp.now();
+            const log: Log = {
+                id: doc.id,
+                ...data,
+                timestamp: timestamp.toDate().toISOString()
+            } as Log;
+
+            const pageKey = log.pageAccessed;
+
+            // Only add if we haven't seen this page or if this log is more recent
+            if (!uniquePagesMap.has(pageKey)) {
+                uniquePagesMap.set(pageKey, log);
+            }
+        });
+
+        // Convert map to array and sort by timestamp descending
+        const allUniqueLogs = Array.from(uniquePagesMap.values()).sort((a, b) => {
+            const timeA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : new Date().getTime();
+            const timeB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : new Date().getTime();
+            return timeB - timeA;
+        });
+
+        // Pagination
+        const limit = options?.limit || 10;
+        const page = options?.page || 1;
+        const totalCount = allUniqueLogs.length;
+        const totalPages = Math.ceil(totalCount / limit);
+
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const logs = allUniqueLogs.slice(startIndex, endIndex);
+
+        const hasMore = page < totalPages;
+
+        return { logs, hasMore, totalPages };
+    } catch (error: any) {
+        console.error("Error fetching unique page logs:", error);
+        await logError({ message: `Failed to fetch unique page logs: ${error.message}`, stack: error.stack, pathname: '/manage/logs' });
+        return { logs: [], hasMore: false, totalPages: 0 };
+    }
+}
+

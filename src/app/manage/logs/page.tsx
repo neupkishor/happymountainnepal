@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getLogs, getLogCount, deleteLog, clearOldLogs } from '@/lib/db';
+import { getLogs, getLogCount, deleteLog, clearOldLogs, getUniquePageLogs } from '@/lib/db';
 import { Log } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,7 @@ export default function LogsPage() {
     const [resourceTypeFilter, setResourceTypeFilter] = useState<'all' | 'page' | 'api' | 'static' | 'redirect'>('all');
     const [botFilter, setBotFilter] = useState<'all' | 'bots' | 'humans'>('all');
     const [searchCookie, setSearchCookie] = useState('');
+    const [showUniquePages, setShowUniquePages] = useState(false);
 
     useEffect(() => {
         const page = parseInt(searchParams.get('page') || '1', 10);
@@ -54,20 +55,29 @@ export default function LogsPage() {
                 options.cookieId = searchCookie;
             }
 
-            const { logs: fetchedLogs, hasMore, totalPages: pages } = await getLogs(options);
+            // Use getUniquePageLogs if showUniquePages is enabled, but not with cookieId filter
+            const { logs: fetchedLogs, hasMore, totalPages: pages } = showUniquePages && !searchCookie
+                ? await getUniquePageLogs(options)
+                : await getLogs(options);
 
             setLogs(fetchedLogs);
             setTotalPages(pages);
 
             // Get total count
-            const countOptions: any = {};
-            if (resourceTypeFilter !== 'all') countOptions.resourceType = resourceTypeFilter;
-            if (botFilter === 'bots') countOptions.isBot = true;
-            else if (botFilter === 'humans') countOptions.isBot = false;
-            if (searchCookie) countOptions.cookieId = searchCookie;
+            if (showUniquePages && !searchCookie) {
+                // For unique pages, the count is already calculated in getUniquePageLogs
+                // We can estimate it from the pagination info
+                setTotalCount(fetchedLogs.length + (pages - currentPage) * limit);
+            } else {
+                const countOptions: any = {};
+                if (resourceTypeFilter !== 'all') countOptions.resourceType = resourceTypeFilter;
+                if (botFilter === 'bots') countOptions.isBot = true;
+                else if (botFilter === 'humans') countOptions.isBot = false;
+                if (searchCookie) countOptions.cookieId = searchCookie;
 
-            const count = await getLogCount(countOptions);
-            setTotalCount(count);
+                const count = await getLogCount(countOptions);
+                setTotalCount(count);
+            }
         } catch (error) {
             console.error('Error fetching logs:', error);
             toast({
@@ -82,7 +92,7 @@ export default function LogsPage() {
 
     useEffect(() => {
         fetchLogs();
-    }, [currentPage, resourceTypeFilter, botFilter, searchCookie]);
+    }, [currentPage, resourceTypeFilter, botFilter, searchCookie, showUniquePages]);
 
     const handleDeleteLog = async (id: string) => {
         if (!confirm('Are you sure you want to delete this log?')) return;
@@ -186,12 +196,24 @@ export default function LogsPage() {
         <div className="container mx-auto py-8 px-4">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold">Access Logs</h1>
+                    <h1 className="text-3xl font-bold">
+                        {showUniquePages ? 'Unique Pages Visited' : 'Access Logs'}
+                    </h1>
                     <p className="text-muted-foreground">
-                        Total: {totalCount} logs | Page {currentPage} of {totalPages}
+                        {showUniquePages
+                            ? `Showing ${totalCount} unique pages | Page ${currentPage} of ${totalPages}`
+                            : `Total: ${totalCount} logs | Page ${currentPage} of ${totalPages}`
+                        }
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <Button
+                        onClick={() => setShowUniquePages(!showUniquePages)}
+                        variant={showUniquePages ? "default" : "outline"}
+                    >
+                        <Globe className="h-4 w-4 mr-2" />
+                        {showUniquePages ? 'Show All Logs' : 'Unique Pages Only'}
+                    </Button>
                     <Button onClick={fetchLogs} variant="outline">
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Refresh
