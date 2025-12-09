@@ -7,23 +7,86 @@ import redirects from './redirects.json';
 const COOKIE_NAME = 'temp_account';
 const PUBLIC_FILE = /\.(.*)$/;
 
+// Bot detection helper
+function isBot(userAgent: string): boolean {
+  const botPatterns = [
+    /bot/i, /crawler/i, /spider/i, /crawling/i,
+    /googlebot/i, /bingbot/i, /slurp/i, /duckduckbot/i,
+    /baiduspider/i, /yandexbot/i, /facebookexternalhit/i,
+    /twitterbot/i, /rogerbot/i, /linkedinbot/i,
+    /embedly/i, /quora link preview/i, /showyoubot/i,
+    /outbrain/i, /pinterest/i, /slackbot/i, /vkShare/i,
+    /W3C_Validator/i, /redditbot/i, /applebot/i, /whatsapp/i,
+    /flipboard/i, /tumblr/i, /bitlybot/i, /skypeuripreview/i,
+    /nuzzel/i, /discordbot/i, /qwantify/i, /pinterestbot/i,
+    /telegrambot/i, /semrushbot/i, /ahrefsbot/i, /dotbot/i,
+  ];
+  return botPatterns.some(pattern => pattern.test(userAgent));
+}
+
+// Helper to determine resource type
+function getResourceType(pathname: string): 'page' | 'api' | 'static' {
+  if (pathname.startsWith('/api')) return 'api';
+  if (PUBLIC_FILE.test(pathname)) return 'static';
+  return 'page';
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const userAgent = request.headers.get('user-agent') || 'Unknown';
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    request.headers.get('x-real-ip') ??
+    '127.0.0.1';
+  const referrer = request.headers.get('referer') || undefined;
+  const method = request.method;
 
-  // Exclude static files and API routes
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    PUBLIC_FILE.test(pathname)
-  ) {
-    return NextResponse.next();
+  // Get or create cookie ID
+  let accountId = request.cookies.get(COOKIE_NAME)?.value;
+  let isNewAccount = false;
+
+  if (!accountId) {
+    accountId = uuidv4();
+    isNewAccount = true;
   }
+
+  const isBotRequest = isBot(userAgent);
+
+  // Exclude Next.js internal routes from logging
+  const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
 
   // Handle redirects from the JSON file
   const foundRedirect = redirects.find((r: any) => r.source === pathname);
 
   if (foundRedirect) {
     const statusCode = foundRedirect.permanent ? 308 : 307;
+
+    // Log redirect
+    if (shouldLog) {
+      try {
+        await fetch(`${request.nextUrl.origin}/api/log`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cookieId: accountId,
+            pageAccessed: pathname,
+            resourceType: 'redirect',
+            method,
+            statusCode,
+            referrer,
+            userAgent,
+            ipAddress: ip,
+            isBot: isBotRequest,
+            metadata: {
+              destination: foundRedirect.destination,
+              permanent: foundRedirect.permanent,
+            },
+          }),
+        }).catch(err => console.error('Failed to log redirect:', err));
+      } catch (error) {
+        console.error('Error logging redirect:', error);
+      }
+    }
+
     return NextResponse.redirect(new URL(foundRedirect.destination, request.url), statusCode);
   }
 
@@ -37,24 +100,42 @@ export async function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
-  let accountId = request.cookies.get(COOKIE_NAME)?.value;
-  // Use x-forwarded-for header to get the client IP, or a fallback
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? '127.0.0.1';
-  let isNewAccount = false;
 
-  // If no cookie, generate a new accountId
-  if (!accountId) {
-    accountId = uuidv4();
-    isNewAccount = true;
-  }
-
-  // If it was a new account, set the cookie in the response.
+  // Set cookie if new account
   if (isNewAccount) {
     response.cookies.set(COOKIE_NAME, accountId, {
       httpOnly: true,
       path: '/',
       maxAge: 60 * 60 * 24 * 365, // 1 year
     });
+  }
+
+  // Log the request (non-blocking)
+  if (shouldLog) {
+    const resourceType = getResourceType(pathname);
+
+    // Use setTimeout to make it truly non-blocking
+    setTimeout(async () => {
+      try {
+        await fetch(`${request.nextUrl.origin}/api/log`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cookieId: accountId,
+            pageAccessed: pathname,
+            resourceType,
+            method,
+            statusCode: 200,
+            referrer,
+            userAgent,
+            ipAddress: ip,
+            isBot: isBotRequest,
+          }),
+        }).catch(err => console.error('Failed to log request:', err));
+      } catch (error) {
+        console.error('Error logging request:', error);
+      }
+    }, 0);
   }
 
   return response;

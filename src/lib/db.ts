@@ -5,7 +5,7 @@ import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orde
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData, Redirect } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData, Redirect, Log } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -1381,6 +1381,134 @@ export async function deleteRedirect(id: string): Promise<void> {
         console.error("Error deleting redirect: ", error);
         await logError({ message: `Failed to delete redirect ${id}: ${error.message}`, stack: error.stack, pathname: `/manage/redirects`, context: { redirectId: id } });
         throw new Error("Could not delete redirect.");
+    }
+}
+
+// Logging functions
+export async function createLog(data: Omit<Log, 'id' | 'timestamp'>): Promise<void> {
+    if (!firestore) {
+        console.error("Firestore is not initialized. Cannot create log.");
+        return;
+    }
+    try {
+        await addDoc(collection(firestore, 'logs'), {
+            ...data,
+            timestamp: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error('Failed to create log in Firestore:', error);
+        // Don't throw, as logging should not break the main flow
+    }
+}
+
+export async function getLogs(options?: {
+    limit?: number;
+    lastDocId?: string | null;
+    cookieId?: string;
+    resourceType?: 'page' | 'api' | 'static' | 'redirect';
+    isBot?: boolean;
+}): Promise<{ logs: Log[]; hasMore: boolean }> {
+    if (!firestore) return { logs: [], hasMore: false };
+    try {
+        let q = query(collection(firestore, 'logs'), orderBy('timestamp', 'desc'));
+
+        // Apply filters
+        if (options?.cookieId) {
+            q = query(collection(firestore, 'logs'), where('cookieId', '==', options.cookieId), orderBy('timestamp', 'desc'));
+        }
+        if (options?.resourceType) {
+            q = query(q, where('resourceType', '==', options.resourceType));
+        }
+        if (options?.isBot !== undefined) {
+            q = query(q, where('isBot', '==', options.isBot));
+        }
+
+        // Pagination
+        if (options?.lastDocId) {
+            const lastDoc = await getDoc(doc(firestore, 'logs', options.lastDocId));
+            if (lastDoc.exists()) {
+                q = query(q, startAfter(lastDoc));
+            }
+        }
+
+        const limit = options?.limit || 50;
+        q = query(q, firestoreLimit(limit + 1));
+
+        const querySnapshot = await getDocs(q);
+        const logs = querySnapshot.docs.slice(0, limit).map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as Log));
+
+        const hasMore = querySnapshot.docs.length > limit;
+
+        return { logs, hasMore };
+    } catch (error: any) {
+        console.error("Error fetching logs:", error);
+        await logError({ message: `Failed to fetch logs: ${error.message}`, stack: error.stack, pathname: '/manage/logs' });
+        return { logs: [], hasMore: false };
+    }
+}
+
+export async function getLogCount(options?: {
+    cookieId?: string;
+    resourceType?: 'page' | 'api' | 'static' | 'redirect';
+    isBot?: boolean;
+}): Promise<number> {
+    if (!firestore) return 0;
+    try {
+        let q = query(collection(firestore, 'logs'));
+
+        if (options?.cookieId) {
+            q = query(q, where('cookieId', '==', options.cookieId));
+        }
+        if (options?.resourceType) {
+            q = query(q, where('resourceType', '==', options.resourceType));
+        }
+        if (options?.isBot !== undefined) {
+            q = query(q, where('isBot', '==', options.isBot));
+        }
+
+        const snapshot = await getDocs(q);
+        return snapshot.size;
+    } catch (error) {
+        console.error("Error counting logs:", error);
+        return 0;
+    }
+}
+
+export async function deleteLog(id: string): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        await deleteDoc(doc(firestore, 'logs', id));
+    } catch (error: any) {
+        console.error("Error deleting log:", error);
+        await logError({ message: `Failed to delete log ${id}: ${error.message}`, stack: error.stack, pathname: `/manage/logs`, context: { logId: id } });
+        throw new Error("Could not delete log.");
+    }
+}
+
+export async function clearOldLogs(daysToKeep: number = 30): Promise<number> {
+    if (!firestore) throw new Error("Database not available.");
+    try {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+        const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
+
+        const q = query(
+            collection(firestore, 'logs'),
+            where('timestamp', '<', cutoffTimestamp)
+        );
+
+        const snapshot = await getDocs(q);
+        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+
+        return snapshot.size;
+    } catch (error: any) {
+        console.error("Error clearing old logs:", error);
+        await logError({ message: `Failed to clear old logs: ${error.message}`, stack: error.stack, pathname: `/manage/logs`, context: { daysToKeep } });
+        throw new Error("Could not clear old logs.");
     }
 }
 

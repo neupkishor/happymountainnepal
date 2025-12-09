@@ -9,5 +9,12 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true;
     }
+
+    // Logs collection - only allow server-side writes (via Admin SDK)
+    // Client reads are restricted to authenticated admin users
+    match /logs/{logId} {
+      allow read: if false; // Disable client reads, use server actions
+      allow write: if false; // Disable client writes, use server actions via API
+    }
   }
 }

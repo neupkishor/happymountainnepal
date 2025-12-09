@@ -9,6 +9,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Chatbot } from '@/components/Chatbot'; // New import
 import 'quill/dist/quill.snow.css'; // Import Quill's CSS
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
+import { PageViewTracker } from '@/lib/client-logger';
 
 export const metadata: Metadata = {
   title: {
@@ -67,6 +68,7 @@ export default function RootLayout({
             </div>
             <Chatbot />
             <Toaster />
+            <PageViewTracker />
           </WishlistProvider>
         </FirebaseClientProvider>
       </body>

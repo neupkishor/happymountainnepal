@@ -223,3 +223,18 @@ export interface Redirect {
   permanent: boolean;
   createdAt?: Timestamp | string;
 }
+
+export interface Log {
+  id: string;
+  cookieId: string; // The temp_account cookie ID
+  pageAccessed: string; // The path that was accessed
+  resourceType: 'page' | 'api' | 'static' | 'redirect'; // Type of resource
+  method?: string; // HTTP method (GET, POST, etc.)
+  statusCode?: number; // Response status code
+  referrer?: string; // Where the user came from
+  userAgent: string; // Browser/bot user agent
+  ipAddress?: string; // Client IP address
+  timestamp: Timestamp; // When the access occurred
+  isBot?: boolean; // Whether this appears to be a bot
+  metadata?: Record<string, any>; // Any additional information
+}
