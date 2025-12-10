@@ -308,7 +308,7 @@ export function HeaderV3() {
     <>
       <header
         className={cn(
-          "fixed top-0 z-40 w-full bg-background shadow-md transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "fixed top-0 z-40 w-full bg-background shadow-md transition-all duration-700 ease-smooth",
           isMenuOpen ? "h-screen" : "h-16"
         )}
         onMouseLeave={handleMouseLeave}

@@ -1,5 +1,5 @@
 
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -62,6 +62,9 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      transitionTimingFunction: {
+        'smooth': 'cubic-bezier(0.32, 0.72, 0, 1)',
       },
       gridTemplateRows: {
         '[auto,auto,1fr]': 'auto auto 1fr',
