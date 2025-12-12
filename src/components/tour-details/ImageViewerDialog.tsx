@@ -1,17 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect, useCallback } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogOverlay,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getFileNameFromUrl } from '@/lib/utils';
 
 interface ImageViewerDialogProps {
@@ -29,91 +20,172 @@ export function ImageViewerDialog({
   onClose,
   initialIndex,
 }: ImageViewerDialogProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(initialIndex);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const captionRef = useRef<HTMLParagraphElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
+  // Update index when dialog opens
   useEffect(() => {
-    if (isOpen) setCurrentImageIndex(initialIndex);
-  }, [initialIndex, isOpen]);
+    if (isOpen) {
+      setCurrentIndex(initialIndex);
+      setCaptionExpanded(false);
+    }
+  }, [isOpen, initialIndex]);
 
-  const goToNextImage = useCallback(() => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  }, [images.length]);
-
-  const goToPreviousImage = useCallback(() => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  }, [images.length]);
-
+  // Check if caption is truncated
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isOpen) return;
-      if (event.key === 'ArrowRight') goToNextImage();
-      else if (event.key === 'ArrowLeft') goToPreviousImage();
-      else if (event.key === 'Escape') onClose();
+    if (captionRef.current && !captionExpanded) {
+      const element = captionRef.current;
+      setIsTruncated(element.scrollHeight > element.clientHeight);
+    }
+  }, [currentIndex, captionExpanded]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowLeft') {
+        handlePrevious();
+      } else if (e.key === 'ArrowRight') {
+        handleNext();
+      }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, goToNextImage, goToPreviousImage, onClose]);
 
-  if (!isOpen || images.length === 0) return null;
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isOpen, currentIndex, images.length]);
 
-  const currentImage = images[currentImageIndex];
-  const currentImageName = getFileNameFromUrl(currentImage);
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setCaptionExpanded(false);
+  };
+
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCaptionExpanded(false);
+  };
+
+  // Touch swipe handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (images.length <= 1) return;
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50; // minimum distance for a swipe
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        // Swiped left - go to next
+        handleNext();
+      } else {
+        // Swiped right - go to previous
+        handlePrevious();
+      }
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const currentImage = images[currentIndex];
+  const imageName = getFileNameFromUrl(currentImage);
+  // TODO: Replace with actual caption from database
+  const caption = `${tourName} - ${imageName}`;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogOverlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9998]" />
-      <DialogContent className="fixed inset-0 z-[9999] flex items-center justify-center p-0 border-none bg-transparent">
-        <DialogHeader>
-          <DialogTitle className="sr-only">Image Viewer</DialogTitle>
-          <DialogDescription className="sr-only">
-            Viewing image {currentImageIndex + 1} of {images.length}: {currentImageName}
-          </DialogDescription>
-        </DialogHeader>
+    <div
+      className="fixed inset-0 z-[9999] bg-black/95"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+        aria-label="Close"
+      >
+        <X className="w-6 h-6" />
+      </button>
 
-        {/* Close Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
-          onClick={onClose}
-        >
-          <X className="h-6 w-6" />
-        </Button>
+      {/* Image Counter */}
+      {images.length > 1 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/60 text-white text-sm">
+          {currentIndex + 1} / {images.length}
+        </div>
+      )}
 
-        {/* Image Navigation */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute left-4 z-50 text-white hover:bg-white/20"
-          onClick={goToPreviousImage}
+      {/* Previous Button */}
+      {images.length > 1 && (
+        <button
+          onClick={handlePrevious}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+          aria-label="Previous image"
         >
-          <ChevronLeft className="h-10 w-10" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 z-50 text-white hover:bg-white/20"
-          onClick={goToNextImage}
-        >
-          <ChevronRight className="h-10 w-10" />
-        </Button>
+          <ChevronLeft className="w-8 h-8" />
+        </button>
+      )}
 
-        {/* Image Display */}
-        <div className="relative w-full h-full flex items-center justify-center">
-          <div className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
-            <Image
-              src={currentImage}
-              alt={`${tourName} - ${currentImageName}`}
-              fill
-              className="object-contain rounded-lg"
-              priority
-            />
-          </div>
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-md text-sm">
-            {currentImageName}
+      {/* Next Button */}
+      {images.length > 1 && (
+        <button
+          onClick={handleNext}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+          aria-label="Next image"
+        >
+          <ChevronRight className="w-8 h-8" />
+        </button>
+      )}
+
+      {/* Main Image Container with margins and rounded corners */}
+      <div className="absolute inset-0 flex items-center justify-center p-4 md:p-8">
+        <div className="relative w-full h-full overflow-hidden rounded-2xl">
+          <Image
+            src={currentImage}
+            alt={caption}
+            fill
+            className="object-contain"
+            priority
+            sizes="100vw"
+            quality={95}
+          />
+        </div>
+      </div>
+
+      {/* Caption Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 z-50 pointer-events-none">
+        <div className="bg-gradient-to-t from-black/90 via-black/70 to-transparent pt-24 pb-8 px-6 pointer-events-auto">
+          <div className="max-w-5xl mx-auto">
+            <p
+              ref={captionRef}
+              className={`text-white text-lg font-medium leading-relaxed ${captionExpanded ? '' : 'line-clamp-1'
+                }`}
+            >
+              {caption}
+            </p>
+            {isTruncated && (
+              <button
+                onClick={() => setCaptionExpanded(!captionExpanded)}
+                className="text-white/80 hover:text-white text-sm mt-2 transition-colors underline decoration-dotted"
+              >
+                {captionExpanded ? 'Show less' : '...more'}
+              </button>
+            )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

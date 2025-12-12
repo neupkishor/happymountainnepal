@@ -849,6 +849,97 @@ export async function getTourBySlug(slug: string): Promise<Tour | null> {
     return getDocBySlug<Tour>('packages', slug);
 }
 
+export async function getPackagesPaginated(options: {
+    page: number;
+    limit: number;
+}): Promise<{
+    packages: Tour[];
+    pagination: {
+        currentPage: number;
+        totalPages: number;
+        totalCount: number;
+        limit: number;
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+    };
+}> {
+    if (!firestore) {
+        return {
+            packages: [],
+            pagination: {
+                currentPage: 1,
+                totalPages: 0,
+                totalCount: 0,
+                limit: options.limit,
+                hasNextPage: false,
+                hasPreviousPage: false,
+            },
+        };
+    }
+
+    try {
+        const { page, limit } = options;
+        const packagesRef = collection(firestore, 'packages');
+
+        // Get total count using aggregate
+        const countSnapshot = await getDocs(query(packagesRef));
+        const totalCount = countSnapshot.size;
+
+        // Calculate pagination
+        const totalPages = Math.ceil(totalCount / limit);
+        const offset = (page - 1) * limit;
+
+        // Get paginated packages
+        let q = query(
+            packagesRef,
+            orderBy('name', 'asc'),
+            firestoreLimit(limit)
+        );
+
+        // Apply offset by skipping documents
+        if (offset > 0) {
+            const offsetQuery = query(packagesRef, orderBy('name', 'asc'), firestoreLimit(offset));
+            const offsetSnapshot = await getDocs(offsetQuery);
+            if (offsetSnapshot.docs.length > 0) {
+                const lastDoc = offsetSnapshot.docs[offsetSnapshot.docs.length - 1];
+                q = query(
+                    packagesRef,
+                    orderBy('name', 'asc'),
+                    startAfter(lastDoc),
+                    firestoreLimit(limit)
+                );
+            }
+        }
+
+        const querySnapshot = await getDocs(q);
+        const packages = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as Tour));
+
+        return {
+            packages,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalCount,
+                limit,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1,
+            },
+        };
+    } catch (error: any) {
+        console.error('Error fetching paginated packages:', error);
+        await logError({
+            message: `Failed to fetch paginated packages: ${error.message}`,
+            stack: error.stack,
+            pathname: '/manage/packages'
+        });
+        throw new Error('Could not fetch packages from the database.');
+    }
+}
+
+
 export async function getAllBlogPosts(): Promise<BlogPost[]> {
     if (!firestore) return [];
     try {

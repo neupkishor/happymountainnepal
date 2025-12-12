@@ -33,6 +33,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 export default function TeamManagementPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [teamGroups, setTeamGroups] = useState<TeamGroup[]>([]);
+  const [originalTeamMembers, setOriginalTeamMembers] = useState<TeamMember[]>([]);
+  const [originalTeamGroups, setOriginalTeamGroups] = useState<TeamGroup[]>([]);
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [loading, setLoading] = useState(true);
   const [draggedMember, setDraggedMember] = useState<TeamMember | null>(null);
   const [draggedGroup, setDraggedGroup] = useState<TeamGroup | null>(null);
@@ -68,6 +71,9 @@ export default function TeamManagementPage() {
 
       setTeamMembers(members);
       setTeamGroups(groups);
+      setOriginalTeamMembers(members);
+      setOriginalTeamGroups(groups);
+      setHasPendingChanges(false);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({

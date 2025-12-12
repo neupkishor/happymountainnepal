@@ -8,7 +8,23 @@
             "title": "Trekking",
             "href": "/tours?type=trek",
             "description": "Journey through stunning mountain trails.",
-            "children": []
+            "children": [
+              {
+                "title": "Everest Base Camp Trekking",
+                "href": "https://v2.happymountainnepal.com/tours/everest-base-camp-trek",
+                "description": ""
+              },
+              {
+                "title": "Annapurna Base Camp Trekking",
+                "href": "https://v2.happymountainnepal.com/tours/annapurna-base-camp-trek-abc",
+                "description": ""
+              },
+              {
+                "title": "New Link",
+                "href": "#",
+                "description": ""
+              }
+            ]
           },
           {
             "title": "Tour",
