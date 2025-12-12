@@ -44,12 +44,12 @@ interface CreatePackageFormProps {
 }
 
 const ImportSelector = ({ sectionName, onToggle, isSelected }: { sectionName: string, onToggle: (checked: boolean) => void, isSelected: boolean }) => (
-    <div className="flex items-center space-x-2 my-2">
-        <Checkbox id={`import-${sectionName}`} checked={isSelected} onCheckedChange={onToggle} />
-        <label htmlFor={`import-${sectionName}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Apply imported <span className="font-bold">{sectionName}</span>
-        </label>
-    </div>
+  <div className="flex items-center space-x-2 my-2">
+    <Checkbox id={`import-${sectionName}`} checked={isSelected} onCheckedChange={onToggle} />
+    <label htmlFor={`import-${sectionName}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+      Apply imported <span className="font-bold">{sectionName}</span>
+    </label>
+  </div>
 );
 
 export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
@@ -72,38 +72,38 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
       description: '',
     } as any,
   });
-  
+
   useEffect(() => {
     if (importedData) {
       const initialSelections: Record<string, boolean> = {};
       const resetValues: Partial<FormValues> = {};
 
       if (importedData.name) {
-          initialSelections.basic = true;
-          resetValues.name = importedData.name;
-          resetValues.slug = slugify(importedData.name);
-          resetValues.description = importedData.description;
-          resetValues.duration = importedData.duration;
-          resetValues.difficulty = importedData.difficulty;
-          resetValues.region = Array.isArray(importedData.region) ? importedData.region.join(', ') : '';
+        initialSelections.basic = true;
+        resetValues.name = importedData.name;
+        resetValues.slug = slugify(importedData.name);
+        resetValues.description = importedData.description;
+        resetValues.duration = importedData.duration;
+        resetValues.difficulty = importedData.difficulty;
+        resetValues.region = Array.isArray(importedData.region) ? importedData.region.join(', ') : '';
       }
-      
+
       form.reset(resetValues);
       setSelectedImports(initialSelections);
     }
   }, [importedData, form]);
 
   const handleToggleImport = (section: string, isSelected: boolean) => {
-    setSelectedImports(prev => ({...prev, [section]: isSelected}));
+    setSelectedImports(prev => ({ ...prev, [section]: isSelected }));
     if (isSelected && importedData) {
-       if (section === 'basic') {
-            form.setValue('name', importedData.name);
-            form.setValue('slug', slugify(importedData.name));
-            form.setValue('description', importedData.description);
-            form.setValue('duration', importedData.duration);
-            form.setValue('difficulty', importedData.difficulty);
-            form.setValue('region', Array.isArray(importedData.region) ? importedData.region.join(', ') : '');
-       }
+      if (section === 'basic') {
+        form.setValue('name', importedData.name);
+        form.setValue('slug', slugify(importedData.name));
+        form.setValue('description', importedData.description);
+        form.setValue('duration', importedData.duration);
+        form.setValue('difficulty', importedData.difficulty);
+        form.setValue('region', Array.isArray(importedData.region) ? importedData.region.join(', ') : '');
+      }
     }
   };
 
@@ -161,7 +161,7 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
         if (!newId) throw new Error('Failed to create package');
 
         toast({ title: 'Success', description: 'Package created. You can now edit the full details.' });
-        router.push(`/manage/packages/${newId}/edit/basic-info`);
+        router.push(`/manage/packages/${newId}/basics`);
       } catch (error: any) {
         console.error("Failed to create package:", error);
         await logError({ message: `Failed to create package: ${error.message}`, stack: error.stack, pathname, context: { values } });
@@ -180,19 +180,19 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {importedData && (
-                <div className="p-4 border rounded-md bg-secondary/50 space-y-2">
-                    <h3 className="font-semibold text-lg">Apply Imported Data</h3>
-                    <p className="text-sm text-muted-foreground">Select which sections to apply from the imported content.</p>
-                    <ImportSelector sectionName="basic" onToggle={(c) => handleToggleImport('basic', c)} isSelected={!!selectedImports.basic} />
-                    <ImportSelector sectionName="itinerary" onToggle={(c) => handleToggleImport('itinerary', c)} isSelected={!!selectedImports.itinerary} />
-                    <ImportSelector sectionName="price" onToggle={(c) => handleToggleImport('price', c)} isSelected={!!selectedImports.price} />
-                    <ImportSelector sectionName="inclusions" onToggle={(c) => handleToggleImport('inclusions', c)} isSelected={!!selectedImports.inclusions} />
-                    <ImportSelector sectionName="exclusions" onToggle={(c) => handleToggleImport('exclusions', c)} isSelected={!!selectedImports.exclusions} />
-                    <ImportSelector sectionName="faq" onToggle={(c) => handleToggleImport('faq', c)} isSelected={!!selectedImports.faq} />
-                    <ImportSelector sectionName="additionalInfo" onToggle={(c) => handleToggleImport('additionalInfo', c)} isSelected={!!selectedImports.additionalInfo} />
-                </div>
+              <div className="p-4 border rounded-md bg-secondary/50 space-y-2">
+                <h3 className="font-semibold text-lg">Apply Imported Data</h3>
+                <p className="text-sm text-muted-foreground">Select which sections to apply from the imported content.</p>
+                <ImportSelector sectionName="basic" onToggle={(c) => handleToggleImport('basic', c)} isSelected={!!selectedImports.basic} />
+                <ImportSelector sectionName="itinerary" onToggle={(c) => handleToggleImport('itinerary', c)} isSelected={!!selectedImports.itinerary} />
+                <ImportSelector sectionName="price" onToggle={(c) => handleToggleImport('price', c)} isSelected={!!selectedImports.price} />
+                <ImportSelector sectionName="inclusions" onToggle={(c) => handleToggleImport('inclusions', c)} isSelected={!!selectedImports.inclusions} />
+                <ImportSelector sectionName="exclusions" onToggle={(c) => handleToggleImport('exclusions', c)} isSelected={!!selectedImports.exclusions} />
+                <ImportSelector sectionName="faq" onToggle={(c) => handleToggleImport('faq', c)} isSelected={!!selectedImports.faq} />
+                <ImportSelector sectionName="additionalInfo" onToggle={(c) => handleToggleImport('additionalInfo', c)} isSelected={!!selectedImports.additionalInfo} />
+              </div>
             )}
-            
+
             <FormField
               control={form.control}
               name="name"

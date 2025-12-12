@@ -55,7 +55,7 @@ export function AIAssistPageComponent({ tour }: AIAssistPageComponentProps) {
     setFetchedData(null);
     setSelectedSections({});
     const sourceIsUrl = isUrl(values.source);
-    
+
     try {
       const inputData = sourceIsUrl ? { url: values.source } : { text: values.source };
       const data = await importTourData(inputData);
@@ -63,16 +63,16 @@ export function AIAssistPageComponent({ tour }: AIAssistPageComponentProps) {
       toast({ title: 'Data Fetched', description: 'Review the extracted information below and select what to import.' });
     } catch (error: any) {
       console.error("Fetch failed:", error);
-      logError({ 
-        message: `Failed to fetch from ${sourceIsUrl ? 'URL' : 'Text'}: ${error.message}`, 
-        stack: error.stack, 
-        pathname, 
-        context: { values, tourId: tour.id } 
+      logError({
+        message: `Failed to fetch from ${sourceIsUrl ? 'URL' : 'Text'}: ${error.message}`,
+        stack: error.stack,
+        pathname,
+        context: { values, tourId: tour.id }
       });
-      toast({ 
-        variant: 'destructive', 
-        title: 'Fetch Failed', 
-        description: error.message || 'Could not fetch or parse data.' 
+      toast({
+        variant: 'destructive',
+        title: 'Fetch Failed',
+        description: error.message || 'Could not fetch or parse data.'
       });
     } finally {
       setIsFetching(false);
@@ -88,37 +88,37 @@ export function AIAssistPageComponent({ tour }: AIAssistPageComponentProps) {
     setIsImporting(true);
 
     const dataToImport = Object.keys(selectedSections).reduce((acc, key) => {
-        if (selectedSections[key as keyof ImportedTourData]) {
-            // @ts-ignore
-            acc[key] = fetchedData[key];
-        }
-        return acc;
+      if (selectedSections[key as keyof ImportedTourData]) {
+        // @ts-ignore
+        acc[key] = fetchedData[key];
+      }
+      return acc;
     }, {} as Partial<ImportedTourData>);
-    
+
     if (Object.keys(dataToImport).length === 0) {
-        toast({ variant: 'destructive', title: 'Nothing Selected', description: 'Please select at least one section to import.' });
-        setIsImporting(false);
-        return;
+      toast({ variant: 'destructive', title: 'Nothing Selected', description: 'Please select at least one section to import.' });
+      setIsImporting(false);
+      return;
     }
 
     try {
-        await updateTourWithAiData(tour.id, dataToImport);
-        toast({ title: 'Import Successful', description: 'Selected sections have been updated.' });
-        router.refresh(); // Refresh the page or navigate away
+      await updateTourWithAiData(tour.id, dataToImport);
+      toast({ title: 'Import Successful', description: 'Selected sections have been updated.' });
+      router.refresh(); // Refresh the page or navigate away
     } catch (error: any) {
-        console.error("Import failed:", error);
-        logError({
-            message: `Failed to import selected data for tour ${tour.id}: ${error.message}`,
-            stack: error.stack,
-            pathname,
-            context: { tourId: tour.id, dataToImport }
-        });
-        toast({ variant: 'destructive', title: 'Import Failed', description: 'Could not update the package. Please try again.' });
+      console.error("Import failed:", error);
+      logError({
+        message: `Failed to import selected data for tour ${tour.id}: ${error.message}`,
+        stack: error.stack,
+        pathname,
+        context: { tourId: tour.id, dataToImport }
+      });
+      toast({ variant: 'destructive', title: 'Import Failed', description: 'Could not update the package. Please try again.' });
     } finally {
-        setIsImporting(false);
+      setIsImporting(false);
     }
   };
-  
+
   const renderDataPreview = (key: string, data: any) => {
     if (!data || (Array.isArray(data) && data.length === 0)) {
       return <p className="text-sm text-muted-foreground italic">Nothing found for this section.</p>;
@@ -128,19 +128,19 @@ export function AIAssistPageComponent({ tour }: AIAssistPageComponentProps) {
     }
     return <p className="text-sm text-muted-foreground truncate">{String(data)}</p>;
   };
-  
+
   return (
     <div className="space-y-8">
       <div className="mb-8">
         <Button asChild variant="outline" size="sm" className="mb-4">
-            <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Editor
-            </Link>
+          <Link href={`/manage/packages/${tour.id}/basics`}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Editor
+          </Link>
         </Button>
         <h1 className="text-3xl font-bold !font-headline flex items-center gap-2">
-            <Wand2 className="h-8 w-8" />
-            AI Assist
+          <Wand2 className="h-8 w-8" />
+          AI Assist
         </h1>
         <p className="text-muted-foreground mt-2">
           Import and merge data from a URL or text to update "{tour.name}".
@@ -153,33 +153,33 @@ export function AIAssistPageComponent({ tour }: AIAssistPageComponentProps) {
           <CardDescription>Paste a URL or raw text content to extract tour details from.</CardDescription>
         </CardHeader>
         <CardContent>
-            <FormProvider {...form}>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleFetchData)} className="space-y-4">
-                        <FormField
-                        control={form.control}
-                        name="source"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormControl>
-                                <Textarea
-                                placeholder="https://example.com/tour-details or paste raw text here..."
-                                {...field}
-                                disabled={isFetching}
-                                rows={8}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
+          <FormProvider {...form}>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleFetchData)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          placeholder="https://example.com/tour-details or paste raw text here..."
+                          {...field}
+                          disabled={isFetching}
+                          rows={8}
                         />
-                        <Button type="submit" disabled={isFetching} className="w-full sm:w-auto">
-                        {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                        Fetch & Analyze
-                        </Button>
-                    </form>
-                </Form>
-            </FormProvider>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={isFetching} className="w-full sm:w-auto">
+                  {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                  Fetch & Analyze
+                </Button>
+              </form>
+            </Form>
+          </FormProvider>
         </CardContent>
       </Card>
 

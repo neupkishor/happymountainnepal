@@ -72,7 +72,7 @@ export function PackageTableRow({ tour }: PackageTableRowProps) {
                   <Link href={`/tours/${tour.slug}`} target="_blank">View Public Page</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={`/manage/packages/${tour.id}/edit/basic-info`}>Edit</Link>
+                  <Link href={`/manage/packages/${tour.id}/basics`}>Edit</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DeletePackageDialog tour={tour}>

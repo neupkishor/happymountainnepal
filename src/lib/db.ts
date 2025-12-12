@@ -1529,7 +1529,7 @@ export async function updateTourWithAiData(tourId: string, data: Partial<Importe
         await logError({
             message: `Failed to update tour ${tourId} with AI data: ${error.message}`,
             stack: error.stack,
-            pathname: `/manage/packages/${tourId}/edit/assist`,
+            pathname: `/manage/packages/${tourId}/assist`,
             context: { tourId, data }
         });
         throw new Error("Could not update tour with imported data.");
