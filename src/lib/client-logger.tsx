@@ -32,7 +32,7 @@ function isBot(): boolean {
 export async function logPageView(pathname: string) {
     try {
         const cookieId = getCookieId();
-        if (!cookieId) return; // Cookie not set yet
+        // if (!cookieId) return; // REMOVED: Cookie is HttpOnly, so client JS can't read it. Server will extract it.
 
         await fetch('/api/log', {
             method: 'POST',

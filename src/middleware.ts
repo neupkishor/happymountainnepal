@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextRequest, NextFetchEvent } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import redirects from './redirects.json';
 
@@ -58,7 +58,7 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl;
   const userAgent = request.headers.get('user-agent') || 'Unknown';
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
@@ -152,8 +152,8 @@ export async function middleware(request: NextRequest) {
   if (shouldLog) {
     const resourceType = getResourceType(pathname);
 
-    // Use setTimeout to make it truly non-blocking
-    setTimeout(async () => {
+    // Use event.waitUntil to ensure the logging request completes even after the response is sent
+    const logPromise = async () => {
       try {
         await fetch(`${request.nextUrl.origin}/api/log`, {
           method: 'POST',
@@ -169,11 +169,13 @@ export async function middleware(request: NextRequest) {
             ipAddress: ip,
             isBot: isBotRequest,
           }),
-        }).catch(err => console.error('Failed to log request:', err));
+        });
       } catch (error) {
         console.error('Error logging request:', error);
       }
-    }, 0);
+    };
+
+    event.waitUntil(logPromise());
   }
 
   return response;

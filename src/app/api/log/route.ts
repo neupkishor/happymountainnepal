@@ -17,12 +17,25 @@ export async function POST(request: NextRequest) {
             metadata
         } = body;
 
-        if (!cookieId || !pageAccessed || !resourceType || !userAgent) {
+        let finalCookieId = cookieId;
+
+        // If cookieId is not provided in body, try to get it from cookies
+        if (!finalCookieId) {
+            finalCookieId = request.cookies.get('temp_account')?.value;
+        }
+
+        // Fallback if cookie is completely missing (e.g. cookies blocked)
+        if (!finalCookieId) {
+            finalCookieId = "notdefined";
+        }
+
+        if (!pageAccessed || !resourceType || !userAgent) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         await createLog({
-            cookieId,
+            cookieId: finalCookieId,
+
             pageAccessed,
             resourceType,
             method,
