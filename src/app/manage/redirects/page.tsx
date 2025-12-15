@@ -121,6 +121,19 @@ export default function RedirectsPage() {
         </AlertDescription>
       </Alert>
 
+      <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+        <Info className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <AlertDescription className="text-green-800 dark:text-green-200">
+          <strong>Pattern Matching:</strong> You can use <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">{'{{variable}}'}</code> syntax for dynamic redirects.
+          <br />
+          <span className="text-sm mt-2 block">
+            Example: <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/tours/{'{{slug}}'}</code> → <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/trips/{'{{slug}}'}</code>
+            <br />
+            This will redirect <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/tours/langtang-trek</code> to <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/trips/langtang-trek</code>
+          </span>
+        </AlertDescription>
+      </Alert>
+
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Add New Redirect</CardTitle>
@@ -138,7 +151,7 @@ export default function RedirectsPage() {
                       <FormItem>
                         <FormLabel>From (Source Path)</FormLabel>
                         <FormControl>
-                          <Input placeholder="/old-blog-post" {...field} disabled={isPending} />
+                          <Input placeholder="/tours/{{slug}} or /old-blog-post" {...field} disabled={isPending} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -151,7 +164,7 @@ export default function RedirectsPage() {
                       <FormItem>
                         <FormLabel>To (Destination URL)</FormLabel>
                         <FormControl>
-                          <Input placeholder="/new-post or https://example.com" {...field} disabled={isPending} />
+                          <Input placeholder="/trips/{{slug}} or /new-post" {...field} disabled={isPending} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

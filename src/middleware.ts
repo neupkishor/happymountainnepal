@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest, NextFetchEvent } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import redirects from './redirects.json';
+import { matchRedirect } from './lib/redirect-matcher';
 
 const COOKIE_NAME = 'temp_account';
 const MANAGER_COOKIE_NAME = 'manager_auth';
@@ -81,11 +82,11 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // Exclude Next.js internal routes from logging
   const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
 
-  // Handle redirects from the JSON file
-  const foundRedirect = redirects.find((r: any) => r.source === pathname);
+  // Handle redirects from the JSON file with pattern matching support
+  const matchResult = matchRedirect(pathname, redirects as any);
 
-  if (foundRedirect) {
-    const statusCode = foundRedirect.permanent ? 308 : 307;
+  if (matchResult?.matched) {
+    const statusCode = matchResult.permanent ? 308 : 307;
 
     // Log redirect
     if (shouldLog) {
@@ -104,8 +105,8 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
             ipAddress: ip,
             isBot: isBotRequest,
             metadata: {
-              destination: foundRedirect.destination,
-              permanent: foundRedirect.permanent,
+              destination: matchResult.destination,
+              permanent: matchResult.permanent,
             },
           }),
         }).catch(err => console.error('Failed to log redirect:', err));
@@ -114,7 +115,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
       }
     }
 
-    return NextResponse.redirect(new URL(foundRedirect.destination, request.url), statusCode);
+    return NextResponse.redirect(new URL(matchResult.destination, request.url), statusCode);
   }
 
   // Paywall for /legal/documents

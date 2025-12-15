@@ -46,3 +46,6 @@ firestore-debug.log
 
 # manager credentials
 manager.json
+
+# public data
+/public
