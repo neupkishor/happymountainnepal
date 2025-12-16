@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
 const MANAGER_COOKIE_NAME = 'manager_auth';
 
@@ -14,24 +16,33 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get manager credentials from environment variable
-        if (!process.env.MANAGER_CREDENTIALS) {
-            console.error('MANAGER_CREDENTIALS environment variable not set');
-            return NextResponse.json(
-                { error: 'Manager credentials not configured' },
-                { status: 500 }
-            );
-        }
-
+        // Get manager credentials from file (local) or environment variable (production)
         let managers;
+
         try {
-            managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
-        } catch (error) {
-            console.error('Failed to parse MANAGER_CREDENTIALS:', error);
-            return NextResponse.json(
-                { error: 'Server configuration error' },
-                { status: 500 }
-            );
+            // Try reading from file first (for local development)
+            const managersFilePath = join(process.cwd(), 'src', 'manager.json');
+            const managersData = await readFile(managersFilePath, 'utf-8');
+            managers = JSON.parse(managersData);
+        } catch (fileError) {
+            // Fall back to environment variable (for production)
+            if (process.env.MANAGER_CREDENTIALS) {
+                try {
+                    managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
+                } catch (error) {
+                    console.error('Failed to parse MANAGER_CREDENTIALS:', error);
+                    return NextResponse.json(
+                        { error: 'Server configuration error' },
+                        { status: 500 }
+                    );
+                }
+            } else {
+                console.error('Manager credentials not found in file or environment variable');
+                return NextResponse.json(
+                    { error: 'Manager credentials not configured' },
+                    { status: 500 }
+                );
+            }
         }
 
         // Check if credentials match
@@ -96,18 +107,27 @@ export async function GET(request: NextRequest) {
 
         const { username, password } = JSON.parse(managerCookie);
 
-        // Get manager credentials from environment variable
-        if (!process.env.MANAGER_CREDENTIALS) {
-            console.error('MANAGER_CREDENTIALS environment variable not set');
-            return NextResponse.json({ valid: false }, { status: 200 });
-        }
-
+        // Get manager credentials from file (local) or environment variable (production)
         let managers;
+
         try {
-            managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
-        } catch (error) {
-            console.error('Failed to parse MANAGER_CREDENTIALS:', error);
-            return NextResponse.json({ valid: false }, { status: 200 });
+            // Try reading from file first (for local development)
+            const managersFilePath = join(process.cwd(), 'src', 'manager.json');
+            const managersData = await readFile(managersFilePath, 'utf-8');
+            managers = JSON.parse(managersData);
+        } catch (fileError) {
+            // Fall back to environment variable (for production)
+            if (process.env.MANAGER_CREDENTIALS) {
+                try {
+                    managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
+                } catch (error) {
+                    console.error('Failed to parse MANAGER_CREDENTIALS:', error);
+                    return NextResponse.json({ valid: false }, { status: 200 });
+                }
+            } else {
+                console.error('Manager credentials not found in file or environment variable');
+                return NextResponse.json({ valid: false }, { status: 200 });
+            }
         }
 
         // Check if credentials match

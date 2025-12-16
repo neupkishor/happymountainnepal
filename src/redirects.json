@@ -1,16 +1,23 @@
 [
   {
-    "source": "/favicon.ico",
-    "destination": "https://happymountainnepal.com/favicon.ico",
+    "source": "/kishor",
+    "destination": "/bhawani",
     "permanent": true,
-    "id": "1765174561476",
-    "createdAt": "2025-12-08T06:16:01.476Z"
+    "id": "W6gZimKOW6W9QgoKfDTp",
+    "createdAt": "2025-12-16T01:43:28.708Z"
   },
   {
-    "source": "/tours/{{slug}}",
-    "destination": "/trips/{{slug}}",
+    "source": "/trip/{{slug}}",
+    "destination": "/tours/{{slug}}",
     "permanent": true,
-    "id": "1734238800000",
-    "createdAt": "2025-12-15T02:26:40.000Z"
+    "id": "etGL5DpSBcv4I7IB4Aol",
+    "createdAt": "2025-12-15T19:58:48.399Z"
+  },
+  {
+    "source": "/favicon",
+    "destination": "/hello",
+    "permanent": true,
+    "id": "etGL5DpSBcv4I7IB4Aol",
+    "createdAt": "2025-12-15T19:58:48.399Z"
   }
 ]

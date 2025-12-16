@@ -13,7 +13,7 @@ interface NavigationData {
 
 export async function getNavigationData(): Promise<NavigationData> {
     try {
-        const filePath = join(process.cwd(), 'navigation-components.json');
+        const filePath = join(process.cwd(), 'src', 'navigation-components.json');
         const data = await readFile(filePath, 'utf-8');
         return JSON.parse(data);
     } catch (error) {
