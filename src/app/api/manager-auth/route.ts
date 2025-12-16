@@ -16,10 +16,34 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Read manager credentials from manager.json
-        const managersFilePath = join(process.cwd(), 'manager.json');
-        const managersData = await readFile(managersFilePath, 'utf-8');
-        const managers = JSON.parse(managersData);
+        // Get manager credentials from environment variable or file
+        let managers;
+
+        // First try environment variable (for production)
+        if (process.env.MANAGER_CREDENTIALS) {
+            try {
+                managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
+            } catch (error) {
+                console.error('Failed to parse MANAGER_CREDENTIALS:', error);
+                return NextResponse.json(
+                    { error: 'Server configuration error' },
+                    { status: 500 }
+                );
+            }
+        } else {
+            // Fall back to file (for local development)
+            try {
+                const managersFilePath = join(process.cwd(), 'manager.json');
+                const managersData = await readFile(managersFilePath, 'utf-8');
+                managers = JSON.parse(managersData);
+            } catch (error) {
+                console.error('Failed to read manager credentials:', error);
+                return NextResponse.json(
+                    { error: 'Manager credentials not configured' },
+                    { status: 500 }
+                );
+            }
+        }
 
         // Check if credentials match
         const manager = managers.find(
@@ -43,7 +67,7 @@ export async function POST(request: NextRequest) {
         // Set httpOnly cookie with credentials (plain text as requested)
         response.cookies.set(MANAGER_COOKIE_NAME, JSON.stringify({ username, password }), {
             httpOnly: true,
-            secure: true, // HTTPS only
+            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
             sameSite: 'strict',
             path: '/',
             maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -83,10 +107,28 @@ export async function GET(request: NextRequest) {
 
         const { username, password } = JSON.parse(managerCookie);
 
-        // Read manager credentials from manager.json
-        const managersFilePath = join(process.cwd(), 'manager.json');
-        const managersData = await readFile(managersFilePath, 'utf-8');
-        const managers = JSON.parse(managersData);
+        // Get manager credentials from environment variable or file
+        let managers;
+
+        // First try environment variable (for production)
+        if (process.env.MANAGER_CREDENTIALS) {
+            try {
+                managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
+            } catch (error) {
+                console.error('Failed to parse MANAGER_CREDENTIALS:', error);
+                return NextResponse.json({ valid: false }, { status: 200 });
+            }
+        } else {
+            // Fall back to file (for local development)
+            try {
+                const managersFilePath = join(process.cwd(), 'manager.json');
+                const managersData = await readFile(managersFilePath, 'utf-8');
+                managers = JSON.parse(managersData);
+            } catch (error) {
+                console.error('Failed to read manager credentials:', error);
+                return NextResponse.json({ valid: false }, { status: 200 });
+            }
+        }
 
         // Check if credentials match
         const manager = managers.find(

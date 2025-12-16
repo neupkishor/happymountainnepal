@@ -1,1 +1,23 @@
-[]
+[
+    {
+        "source": "/kishor",
+        "destination": "/bhawani",
+        "permanent": true,
+        "id": "W6gZimKOW6W9QgoKfDTp",
+        "createdAt": "2025-12-16T01:43:28.708Z"
+    },
+    {
+        "source": "/trip/{{slug}}",
+        "destination": "/tours/{{slug}}",
+        "permanent": true,
+        "id": "etGL5DpSBcv4I7IB4Aol",
+        "createdAt": "2025-12-15T19:58:48.399Z"
+    },
+    {
+        "source": "/favicon",
+        "destination": "/hello",
+        "permanent": true,
+        "id": "etGL5DpSBcv4I7IB4Aol",
+        "createdAt": "2025-12-15T19:58:48.399Z"
+    }
+]

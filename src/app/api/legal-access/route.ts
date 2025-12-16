@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
             return new NextResponse('Invalid email address', { status: 400 });
         }
 
-        const response = NextResponse.redirect(new URL('/legal/documents', request.url), 303); // 303 See Other is correct for POST->GET redirect
+        // Use nextUrl.clone() to preserve the correct host/origin in production
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = '/legal/documents';
+        const response = NextResponse.redirect(redirectUrl, 303); // 303 See Other is correct for POST->GET redirect
 
         // Set the cookie
         // Secure means it should only be sent over HTTPS (good for prod, localhost might be lenient)
