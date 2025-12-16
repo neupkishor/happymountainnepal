@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
 
 const MANAGER_COOKIE_NAME = 'manager_auth';
 
@@ -16,33 +14,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get manager credentials from environment variable or file
-        let managers;
+        // Get manager credentials from environment variable
+        if (!process.env.MANAGER_CREDENTIALS) {
+            console.error('MANAGER_CREDENTIALS environment variable not set');
+            return NextResponse.json(
+                { error: 'Manager credentials not configured' },
+                { status: 500 }
+            );
+        }
 
-        // First try environment variable (for production)
-        if (process.env.MANAGER_CREDENTIALS) {
-            try {
-                managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
-            } catch (error) {
-                console.error('Failed to parse MANAGER_CREDENTIALS:', error);
-                return NextResponse.json(
-                    { error: 'Server configuration error' },
-                    { status: 500 }
-                );
-            }
-        } else {
-            // Fall back to file (for local development)
-            try {
-                const managersFilePath = join(process.cwd(), 'manager.json');
-                const managersData = await readFile(managersFilePath, 'utf-8');
-                managers = JSON.parse(managersData);
-            } catch (error) {
-                console.error('Failed to read manager credentials:', error);
-                return NextResponse.json(
-                    { error: 'Manager credentials not configured' },
-                    { status: 500 }
-                );
-            }
+        let managers;
+        try {
+            managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
+        } catch (error) {
+            console.error('Failed to parse MANAGER_CREDENTIALS:', error);
+            return NextResponse.json(
+                { error: 'Server configuration error' },
+                { status: 500 }
+            );
         }
 
         // Check if credentials match
@@ -107,27 +96,18 @@ export async function GET(request: NextRequest) {
 
         const { username, password } = JSON.parse(managerCookie);
 
-        // Get manager credentials from environment variable or file
-        let managers;
+        // Get manager credentials from environment variable
+        if (!process.env.MANAGER_CREDENTIALS) {
+            console.error('MANAGER_CREDENTIALS environment variable not set');
+            return NextResponse.json({ valid: false }, { status: 200 });
+        }
 
-        // First try environment variable (for production)
-        if (process.env.MANAGER_CREDENTIALS) {
-            try {
-                managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
-            } catch (error) {
-                console.error('Failed to parse MANAGER_CREDENTIALS:', error);
-                return NextResponse.json({ valid: false }, { status: 200 });
-            }
-        } else {
-            // Fall back to file (for local development)
-            try {
-                const managersFilePath = join(process.cwd(), 'manager.json');
-                const managersData = await readFile(managersFilePath, 'utf-8');
-                managers = JSON.parse(managersData);
-            } catch (error) {
-                console.error('Failed to read manager credentials:', error);
-                return NextResponse.json({ valid: false }, { status: 200 });
-            }
+        let managers;
+        try {
+            managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
+        } catch (error) {
+            console.error('Failed to parse MANAGER_CREDENTIALS:', error);
+            return NextResponse.json({ valid: false }, { status: 200 });
         }
 
         // Check if credentials match
