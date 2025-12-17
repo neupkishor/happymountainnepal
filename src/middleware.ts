@@ -37,18 +37,18 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
 
 function isManagerAuthenticated(request: NextRequest): boolean {
   console.log('[Auth] Checking manager authentication in middleware...');
-  
+
   const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
   const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
   const deviceId = request.cookies.get(`${SESSION_COOKIE_PREFIX}device`)?.value;
   const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
-  
+
   console.log(`[Auth] Found cookies: session=${!!sessionId}, legacy=${!!managerCookie}`);
 
   if (sessionId && sessionKey && deviceId) {
     try {
       const sessions: SessionData[] = getSessionData();
-      const session = sessions.find(s => 
+      const session = sessions.find(s =>
         s.session_id === sessionId &&
         s.session_key === sessionKey &&
         s.device_id === deviceId
@@ -106,7 +106,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
   // 1. HTTPS enforcement
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
-    if (request.nextUrl.protocol !== 'https:' && process.env.NODE_ENV=="production") {
+    if (request.nextUrl.protocol !== 'https:' && process.env.NODE_ENV == "production") {
       const redirectUrl = new URL('/', origin);
       redirectUrl.searchParams.set('loginError', 'unsafeProtocol');
 
@@ -215,3 +215,6 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
+
+// Force Node.js runtime instead of Edge runtime for AWS server deployment
+export const runtime = 'nodejs';
