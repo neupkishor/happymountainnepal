@@ -72,6 +72,13 @@ export default function RedirectsPage() {
       } else {
         throw new Error('Failed to fetch redirects');
       }
+      const response = await fetch('/api/redirects');
+      if (response.ok) {
+        const data = await response.json();
+        setRedirects(data);
+      } else {
+        throw new Error('Failed to fetch redirects');
+      }
     } catch (error) {
       console.error("Failed to load redirects", error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not load redirects.' });
@@ -82,11 +89,15 @@ export default function RedirectsPage() {
 
   useEffect(() => {
     fetchRedirects();
-  }, []);
+  }, [toast]);
 
   const handleAddRedirect = (values: FormValues) => {
     startTransition(async () => {
       try {
+        await fetch('/api/redirects', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'add', data: {...values, permanent: values.permanent === 'true'}}),
         await fetch('/api/redirects', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -104,6 +115,11 @@ export default function RedirectsPage() {
   const handleDelete = (id: string) => {
     startTransition(async () => {
       try {
+        await fetch('/api/redirects', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'delete', id: id}),
+        });
         await fetch('/api/redirects', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -127,7 +143,7 @@ export default function RedirectsPage() {
       <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <AlertDescription className="text-blue-800 dark:text-blue-200">
-          <strong>Important:</strong> After adding or deleting redirects, you may need to redeploy your application for the changes to take effect in production.
+          <strong>Important:</strong> After adding or deleting redirects, you must restart your development server to see the changes take effect.
         </AlertDescription>
       </Alert>
 

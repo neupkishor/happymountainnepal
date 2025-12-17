@@ -1,7 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { readBaseFile } from '@/lib/base';
-import { matchRedirect } from '@/lib/redirect-matcher';
+import { matchRedirect } from '@/lib/redirect-matcher'; // This now uses the Node.js version
 
 // GET - Match a path against redirects
 export async function GET(request: NextRequest) {
@@ -16,15 +15,10 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        try {
-            const redirects = await readBaseFile('redirects.json');
-            const matchResult = matchRedirect(path, redirects as any);
+        const matchResult = await matchRedirect(path);
 
-            return NextResponse.json(matchResult || { matched: false }, { status: 200 });
-        } catch (error) {
-            // No redirects file or invalid
-            return NextResponse.json({ matched: false }, { status: 200 });
-        }
+        return NextResponse.json(matchResult || { matched: false }, { status: 200 });
+
     } catch (error) {
         console.error('Error matching redirect:', error);
         return NextResponse.json(
