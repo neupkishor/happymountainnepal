@@ -1,12 +1,8 @@
+// Node.js runtime only - uses fs and path modules
+// For API routes, Server Components, etc.
 
 import fs from 'fs/promises';
 import path from 'path';
-
-// Credential files (Edge runtime compatible) - in /src/base
-import managerData from '../base/manager.json';
-
-// Configuration files (Node.js only) - in /base
-// These will be read using fs in Node.js runtime
 
 // Paths for different file types
 const SRC_BASE_PATH = path.join(process.cwd(), 'src', 'base'); // For credentials
@@ -48,12 +44,6 @@ export async function baseFileExists(file: string): Promise<boolean> {
     } catch {
         return false;
     }
-}
-
-// Functions to make credential JSON data available in Edge runtime
-// These import directly from /src/base and work in Edge runtime
-export function getManagerData() {
-    return managerData;
 }
 
 // Functions to get configuration data (Node.js runtime only)
