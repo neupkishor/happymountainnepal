@@ -37,7 +37,7 @@ import { Loader2, PlusCircle, Trash2, ArrowRight, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Redirect } from '@/lib/types';
-import { readBaseFile, writeBaseFile } from '@/lib/base';
+import { Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   source: z.string().min(1, 'Source path is required.').refine(val => val.startsWith('/'), { message: 'Source must start with a /' }),
@@ -82,7 +82,7 @@ export default function RedirectsPage() {
 
   useEffect(() => {
     fetchRedirects();
-  }, []);
+  }, [toast]);
 
   const handleAddRedirect = (values: FormValues) => {
     startTransition(async () => {
@@ -127,7 +127,7 @@ export default function RedirectsPage() {
       <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <AlertDescription className="text-blue-800 dark:text-blue-200">
-          <strong>Important:</strong> After adding or deleting redirects, you may need to redeploy your application for the changes to take effect in production.
+          <strong>Important:</strong> After adding or deleting redirects, you must restart your development server to see the changes take effect.
         </AlertDescription>
       </Alert>
 

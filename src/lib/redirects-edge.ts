@@ -1,9 +1,13 @@
-// src/lib/redirect-matcher.ts - This file is for Node.js runtime only.
+// src/lib/redirects-edge.ts - This file is for Edge runtime only.
 import { match } from 'path-to-regexp';
-import { readBaseFile } from '@/lib/base';
-import type { Redirect } from '@/lib/types';
+import redirectsData from '@/base/redirects.json';
 
-export interface RedirectRule extends Redirect {}
+// Define types locally as we can't import from types.ts if it has non-edge compatible code
+interface RedirectRule {
+    source: string;
+    destination: string;
+    permanent: boolean;
+}
 
 export interface MatchResult {
     destination: string;
@@ -11,16 +15,13 @@ export interface MatchResult {
     matched: boolean;
 }
 
-/**
- * Convert /name/{{name}} -> /name/:name for path-to-regexp
- */
+// Directly use the imported JSON data
+const redirects: RedirectRule[] = redirectsData as RedirectRule[];
+
 function convertPatternToPathRegexp(pattern: string): string {
     return pattern.replace(/\{\{([^}]+)\}\}/g, ':$1');
 }
 
-/**
- * Replace {{variable}} in destination with actual values
- */
 function replaceVariables(destination: string, params: Record<string, string>): string {
     let result = destination;
     for (const [key, value] of Object.entries(params)) {
@@ -29,65 +30,45 @@ function replaceVariables(destination: string, params: Record<string, string>): 
     return result;
 }
 
-/**
- * Match a pathname with a pattern using path-to-regexp v8
- */
 function matchPattern(pattern: string, pathname: string): Record<string, string> | null {
     try {
         const matchFn = match(pattern, { decode: decodeURIComponent });
         const result = matchFn(pathname);
-
-        if (!result) return null;
+        if (!result || !result.params || typeof result.params !== 'object') return null;
 
         const params: Record<string, string> = {};
-        if (result.params && typeof result.params === 'object') {
-            for (const [key, value] of Object.entries(result.params)) {
-                if (typeof value === 'string') {
-                    params[key] = value;
-                }
+        for (const [key, value] of Object.entries(result.params)) {
+            if (typeof value === 'string') {
+                params[key] = value;
             }
         }
         return params;
     } catch (error) {
-        console.error(`Error matching pattern ${pattern}:`, error);
         return null;
     }
 }
 
-/**
- * Normalize trailing slash (except root)
- */
 function normalizePath(pathname: string): string {
     if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1);
     return pathname;
 }
 
 /**
- * Match a pathname against the redirect rules by reading from the filesystem.
- * This is for server-side (Node.js) environments only.
+ * Match a pathname against the redirect rules using imported JSON.
+ * This is safe for the Edge runtime.
  * @param rawPathname - The pathname to match
  */
-export async function matchRedirect(rawPathname: string): Promise<MatchResult | null> {
+export function matchRedirectEdge(rawPathname: string): MatchResult | null {
     const pathname = normalizePath(rawPathname);
-    let redirects: RedirectRule[] = [];
-
-    try {
-        redirects = await readBaseFile('redirects.json');
-    } catch (error) {
-        // If file doesn't exist, there are no redirects.
-        return null;
-    }
 
     for (const redirect of redirects) {
         try {
             const source = normalizePath(redirect.source);
 
-            // Exact match first
             if (source === pathname) {
                 return { destination: redirect.destination, permanent: redirect.permanent, matched: true };
             }
 
-            // Pattern match with variables
             const pathRegexpPattern = convertPatternToPathRegexp(source);
             const params = matchPattern(pathRegexpPattern, pathname);
 
@@ -96,7 +77,6 @@ export async function matchRedirect(rawPathname: string): Promise<MatchResult | 
                 return { destination: finalDestination, permanent: redirect.permanent, matched: true };
             }
         } catch (error) {
-            console.error(`Invalid redirect pattern: ${redirect.source}`, error);
             continue;
         }
     }
