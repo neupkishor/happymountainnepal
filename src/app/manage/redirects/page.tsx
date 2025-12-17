@@ -37,7 +37,7 @@ import { Loader2, PlusCircle, Trash2, ArrowRight, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Redirect } from '@/lib/types';
-import { readBaseFile, writeBaseFile } from '@/lib/base';
+import { Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
   source: z.string().min(1, 'Source path is required.').refine(val => val.startsWith('/'), { message: 'Source must start with a /' }),
@@ -72,13 +72,6 @@ export default function RedirectsPage() {
       } else {
         throw new Error('Failed to fetch redirects');
       }
-      const response = await fetch('/api/redirects');
-      if (response.ok) {
-        const data = await response.json();
-        setRedirects(data);
-      } else {
-        throw new Error('Failed to fetch redirects');
-      }
     } catch (error) {
       console.error("Failed to load redirects", error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not load redirects.' });
@@ -98,10 +91,6 @@ export default function RedirectsPage() {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({action: 'add', data: {...values, permanent: values.permanent === 'true'}}),
-        await fetch('/api/redirects', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: 'add', data: {...values, permanent: values.permanent === 'true'}}),
         });
         toast({ title: 'Success', description: 'Redirect created.' });
         form.reset();
@@ -115,11 +104,6 @@ export default function RedirectsPage() {
   const handleDelete = (id: string) => {
     startTransition(async () => {
       try {
-        await fetch('/api/redirects', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: 'delete', id: id}),
-        });
         await fetch('/api/redirects', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},

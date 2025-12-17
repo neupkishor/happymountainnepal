@@ -3,10 +3,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest, NextFetchEvent } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { matchRedirectEdge } from '@/lib/redirects-edge'; // Use the Edge-safe version
-import { matchRedirect } from '@/lib/redirect-matcher';
-import { readBaseFile } from '@/lib/base';
-import type { RedirectRule } from '@/lib/redirect-matcher';
-
 
 const COOKIE_NAME = 'temp_account';
 const MANAGER_COOKIE_NAME = 'manager_auth';
@@ -111,45 +107,37 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   // 3️⃣ Handle redirects
   // -----------------------------
-  try {
-    const redirects = await readBaseFile('redirects.json') as RedirectRule[];
-    const matchResult = matchRedirect(pathname, redirects);
+  const matchResult = matchRedirectEdge(pathname);
+  if (matchResult?.matched) {
+    const statusCode = matchResult.permanent ? 308 : 307;
 
-    if (matchResult?.matched) {
-      const statusCode = matchResult.permanent ? 308 : 307;
-
-      if (shouldLog) {
-        event.waitUntil(
-          fetch(`${origin}/api/log`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              cookieId: accountId,
-              pageAccessed: pathname,
-              resourceType: 'redirect',
-              method,
-              statusCode,
-              referrer,
-              userAgent,
-              ipAddress: ip,
-              isBot: isBotRequest,
-              metadata: {
-                destination: matchResult.destination,
-                permanent: matchResult.permanent,
-              },
-            }),
-          }).catch(err => console.error('Failed to log redirect:', err))
-        );
-      }
-
-      return NextResponse.redirect(new URL(matchResult.destination, request.url), statusCode);
+    if (shouldLog) {
+      event.waitUntil(
+        fetch(`${origin}/api/log`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cookieId: accountId,
+            pageAccessed: pathname,
+            resourceType: 'redirect',
+            method,
+            statusCode,
+            referrer,
+            userAgent,
+            ipAddress: ip,
+            isBot: isBotRequest,
+            metadata: {
+              destination: matchResult.destination,
+              permanent: matchResult.permanent,
+            },
+          }),
+        }).catch(err => console.error('Failed to log redirect:', err))
+      );
     }
-  } catch (error: any) {
-    if (error.code !== 'ENOENT') {
-      console.error('Redirect matching error:', error);
-    }
-    // If file doesn't exist, just continue without redirecting.
+
+    return NextResponse.redirect(new URL(matchResult.destination, request.url), statusCode);
   }
+
 
   // -----------------------------
   // 4️⃣ Paywall for /legal/documents
