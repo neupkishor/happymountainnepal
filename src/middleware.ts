@@ -35,29 +35,35 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
 
 // Validate manager auth
 async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
+  // Action: Check for new session cookies first
   const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
   const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
   const deviceId = request.cookies.get(`${SESSION_COOKIE_PREFIX}device`)?.value;
+  // Action: Check for old auth cookie for backward compatibility
   const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
 
+  // Condition: If no auth cookies are found at all, user is not authenticated.
   if (!managerCookie && (!sessionId || !sessionKey || !deviceId)) return false;
-  console.error("Cookies have not been defined!");
 
   try {
+    // Action: Construct the cookie header to forward to the internal API for validation
     const cookies = [];
     if (managerCookie) cookies.push(`${MANAGER_COOKIE_NAME}=${managerCookie}`);
     if (sessionId) cookies.push(`${SESSION_COOKIE_PREFIX}id=${sessionId}`);
     if (sessionKey) cookies.push(`${SESSION_COOKIE_PREFIX}key=${sessionKey}`);
     if (deviceId) cookies.push(`${SESSION_COOKIE_PREFIX}device=${deviceId}`);
 
+    // Action: Call the internal API route to validate the session cookies
     const response = await fetch(`${request.nextUrl.origin}/api/manager-auth`, {
       method: 'GET',
       headers: { Cookie: cookies.join('; ') },
     });
 
     const data = await response.json();
+    // Condition: The API will return { valid: true } if the session is valid.
     return data.valid === true;
   } catch (error) {
+    // If the API call fails, assume authentication is invalid for security.
     console.error('Manager auth validation error:', error);
     return false;
   }
@@ -77,12 +83,13 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   // 1️⃣ HTTPS enforcement for /manage
   // -----------------------------
+  // Condition: If accessing the manage section in production without HTTPS.
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
     if (request.nextUrl.protocol !== 'https:' && process.env.NODE_ENV=="production") {
+      // Action: Redirect to homepage with an error and invalidate auth cookies.
       const redirectUrl = new URL('/', origin);
       redirectUrl.searchParams.set('loginError', 'unsafeProtocol'); // pass warning flag
 
-      // Invalidate cookies
       const response = NextResponse.redirect(redirectUrl);
       response.cookies.set(COOKIE_NAME, '', { maxAge: 0, path: '/' });
       response.cookies.set(MANAGER_COOKIE_NAME, '', { maxAge: 0, path: '/' });
@@ -99,7 +106,9 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   let accountId = request.cookies.get(COOKIE_NAME)?.value;
   let isNewAccount = false;
+  // Condition: If the user doesn't have an anonymous tracking cookie.
   if (!accountId) {
+    // Action: Create a new unique ID for them.
     accountId = uuidv4();
     isNewAccount = true;
   }
@@ -108,9 +117,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // 3️⃣ Handle redirects
   // -----------------------------
   const matchResult = matchRedirectEdge(pathname);
+  // Condition: If the requested path matches a rule in redirects.json.
   if (matchResult?.matched) {
     const statusCode = matchResult.permanent ? 308 : 307;
-
+    // Action: Log the redirect event.
     if (shouldLog) {
       event.waitUntil(
         fetch(`${origin}/api/log`, {
@@ -134,7 +144,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
         }).catch(err => console.error('Failed to log redirect:', err))
       );
     }
-
+    // Action: Perform the redirect.
     return NextResponse.redirect(new URL(matchResult.destination, request.url), statusCode);
   }
 
@@ -142,7 +152,9 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   // 4️⃣ Paywall for /legal/documents
   // -----------------------------
+  // Condition: If a user tries to access the legal documents index page without providing an email first.
   if (pathname === '/legal/documents' && !request.cookies.has('user_email')) {
+    // Action: Redirect them to the gate page to enter their email.
     const url = request.nextUrl.clone();
     url.pathname = '/legal/documents/gate';
     return NextResponse.redirect(url);
@@ -151,9 +163,13 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   // 5️⃣ Manager authentication
   // -----------------------------
+  // Condition: If the user is trying to access any page under /manage, except the login page itself.
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
+    // Action: Call the authentication check function.
     const isAuthenticated = await isManagerAuthenticated(request);
+    // Condition: If the user is NOT authenticated.
     if (!isAuthenticated) {
+      // Action: Redirect them to the login page.
       const url = request.nextUrl.clone();
       url.pathname = '/manage/login';
       return NextResponse.redirect(url);
@@ -163,8 +179,11 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   // 6️⃣ Response & set temp account cookie
   // -----------------------------
+  // Action: Allow the request to proceed to the page.
   const response = NextResponse.next();
+  // Condition: If this is a new visitor.
   if (isNewAccount) {
+    // Action: Set the anonymous tracking cookie in their browser.
     response.cookies.set(COOKIE_NAME, accountId, {
       httpOnly: true,
       secure: true,   // always secure
@@ -177,8 +196,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   // 7️⃣ Logging
   // -----------------------------
+  // Condition: If the request is not for a Next.js internal file.
   if (shouldLog) {
     const resourceType = getResourceType(pathname);
+    // Action: Log the page view event asynchronously.
     event.waitUntil(
       fetch(`${origin}/api/log`, {
         method: 'POST',
