@@ -1,6 +1,7 @@
 
 import { match } from 'path-to-regexp';
-import { getRedirectsData } from './base';
+// Import redirects directly from /base for Edge runtime
+import redirectsData from '../../base/redirects.json';
 
 interface RedirectRule {
     source: string;
@@ -14,7 +15,7 @@ export interface MatchResult {
     matched: boolean;
 }
 
-const redirects: RedirectRule[] = getRedirectsData() as RedirectRule[];
+const redirects: RedirectRule[] = redirectsData as RedirectRule[];
 
 function convertPatternToPathRegexp(pattern: string): string {
     return pattern.replace(/\{\{([^}]+)\}\}/g, ':$1');

@@ -45,8 +45,10 @@ firebase-debug.log
 firestore-debug.log
 
 # base storage (runtime-editable data)
-# Keep template files in git, but ignore actual data files
-/src/base/*.json
+# Credentials in /src/base are gitignored (Edge runtime compatible)
+/src/base/manager.json
+/src/base/session.json
+# Keep templates
 !/src/base/*.template.json
 
 # public data

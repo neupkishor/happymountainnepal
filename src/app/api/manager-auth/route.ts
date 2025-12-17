@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { readBaseFile } from '@/lib/base';
+import { readCredentialFile } from '@/lib/base';
 
 // Login endpoint
 export async function POST(request: NextRequest) {
@@ -15,10 +15,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Get manager credentials from base storage
-        let managers;
+        let managers: { username: string; password: string }[];
 
         try {
-            managers = await readBaseFile('manager.json');
+            managers = await readCredentialFile('manager.json');
         } catch (fileError) {
             console.error('Manager credentials not found in base storage');
             return NextResponse.json(
