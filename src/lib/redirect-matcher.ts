@@ -1,4 +1,4 @@
-import { match } from 'path-to-regexp';
+import { pathToRegexp, Key } from 'path-to-regexp';
 
 export interface RedirectRule {
     source: string;
@@ -26,17 +26,39 @@ function convertPatternToPathRegexp(pattern: string): string {
  * Replaces variables in destination with actual values from params
  * Example: /trips/{{name}}/world with {name: 'kishor'} -> /trips/kishor/world
  */
-function replaceVariables(destination: string, params: Record<string, string | string[]>): string {
+function replaceVariables(destination: string, params: Record<string, string>): string {
     let result = destination;
 
     for (const [key, value] of Object.entries(params)) {
-        // Handle array values (shouldn't happen in our case, but just in case)
-        const stringValue = Array.isArray(value) ? value[0] : value;
         // Replace {{key}} with the actual value
-        result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), stringValue);
+        result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
     }
 
     return result;
+}
+
+/**
+ * Attempts to match a pathname against a pattern using path-to-regexp
+ */
+function matchPattern(pattern: string, pathname: string): Record<string, string> | null {
+    const keys: Key[] = [];
+    const regexp = pathToRegexp(pattern, keys);
+    const match = regexp.exec(pathname);
+
+    if (!match) {
+        return null;
+    }
+
+    const params: Record<string, string> = {};
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const value = match[i + 1];
+        if (value !== undefined && key.name) {
+            params[String(key.name)] = decodeURIComponent(value);
+        }
+    }
+
+    return params;
 }
 
 /**
@@ -57,13 +79,9 @@ export function matchRedirect(pathname: string, redirects: RedirectRule[]): Matc
 
             // Try pattern matching
             const pathRegexpPattern = convertPatternToPathRegexp(redirect.source);
-            const matcher = match(pathRegexpPattern, { decode: decodeURIComponent });
-            const result = matcher(pathname);
+            const params = matchPattern(pathRegexpPattern, pathname);
 
-            if (result) {
-                // Extract parameters from the matched path
-                const params = result.params as Record<string, string | string[]>;
-
+            if (params) {
                 // Replace variables in destination with actual values
                 const finalDestination = replaceVariables(redirect.destination, params);
 
@@ -89,7 +107,8 @@ export function matchRedirect(pathname: string, redirects: RedirectRule[]): Matc
 export function validateRedirectPattern(source: string): { valid: boolean; error?: string } {
     try {
         const pathRegexpPattern = convertPatternToPathRegexp(source);
-        match(pathRegexpPattern);
+        const keys: Key[] = [];
+        pathToRegexp(pathRegexpPattern, keys);
         return { valid: true };
     } catch (error) {
         return {
