@@ -4,7 +4,6 @@ import path from 'path';
 
 // Credential files (Edge runtime compatible) - in /src/base
 import managerData from '../base/manager.json';
-import sessionData from '../base/session.json';
 
 // Configuration files (Node.js only) - in /base
 // These will be read using fs in Node.js runtime
@@ -55,10 +54,6 @@ export async function baseFileExists(file: string): Promise<boolean> {
 // These import directly from /src/base and work in Edge runtime
 export function getManagerData() {
     return managerData;
-}
-
-export function getSessionData() {
-    return sessionData;
 }
 
 // Functions to get configuration data (Node.js runtime only)
