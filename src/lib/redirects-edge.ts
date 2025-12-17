@@ -1,8 +1,7 @@
-// src/lib/redirects-edge.ts - This file is for Edge runtime only.
-import { match } from 'path-to-regexp';
-import redirectsData from '../../base/redirects.json';
 
-// Define types locally as we can't import from types.ts if it has non-edge compatible code
+import { match } from 'path-to-regexp';
+import { getRedirectsData } from './base';
+
 interface RedirectRule {
     source: string;
     destination: string;
@@ -15,8 +14,7 @@ export interface MatchResult {
     matched: boolean;
 }
 
-// Directly use the imported JSON data
-const redirects: RedirectRule[] = redirectsData as RedirectRule[];
+const redirects: RedirectRule[] = getRedirectsData() as RedirectRule[];
 
 function convertPatternToPathRegexp(pattern: string): string {
     return pattern.replace(/\{\{([^}]+)\}\}/g, ':$1');
@@ -53,11 +51,6 @@ function normalizePath(pathname: string): string {
     return pathname;
 }
 
-/**
- * Match a pathname against the redirect rules using imported JSON.
- * This is safe for the Edge runtime.
- * @param rawPathname - The pathname to match
- */
 export function matchRedirectEdge(rawPathname: string): MatchResult | null {
     const pathname = normalizePath(rawPathname);
 

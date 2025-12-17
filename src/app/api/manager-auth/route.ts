@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createSession, type SessionData } from '@/lib/session-utils';
 import { readBaseFile, writeBaseFile } from '@/lib/base';
@@ -159,88 +160,4 @@ export async function DELETE(request: NextRequest) {
     response.cookies.delete(`${SESSION_COOKIE_PREFIX}device`);
 
     return response;
-}
-
-// Validation endpoint (for middleware)
-export async function GET(request: NextRequest) {
-    try {
-        // Check for session cookies first
-        const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
-        const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
-        const deviceId = request.cookies.get(`${SESSION_COOKIE_PREFIX}device`)?.value;
-
-        if (sessionId && sessionKey && deviceId) {
-            // Validate against base storage
-            try {
-                const sessions: SessionData[] = await readBaseFile('session.json');
-
-                // Find matching session
-                const session = sessions.find(
-                    (s) =>
-                        s.session_id === sessionId &&
-                        s.session_key === sessionKey &&
-                        s.device_id === deviceId
-                );
-
-                if (session) {
-                    // Check if session is manually expired/invalidated
-                    if (session.isExpired === 1) {
-                        return NextResponse.json({ valid: false }, { status: 200 });
-                    }
-
-                    // Check if session is expired by date
-                    const expiresAt = new Date(session.expires_at);
-                    const now = new Date();
-
-                    if (expiresAt > now) {
-                        return NextResponse.json({ valid: true, username: session.username }, { status: 200 });
-                    }
-                }
-            } catch (error) {
-                // Session file doesn't exist or is invalid, fall through to old method
-                console.log('Session file not found or invalid, checking old cookie method');
-            }
-        }
-
-        // Fall back to old cookie method for backward compatibility
-        const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
-
-        if (!managerCookie) {
-            return NextResponse.json({ valid: false }, { status: 200 });
-        }
-
-        const { username, password } = JSON.parse(managerCookie);
-
-        // Get manager credentials from file (local) or environment variable (production)
-        let managers;
-
-        try {
-            // Try reading from base storage first (for local development)
-            managers = await readBaseFile('manager.json');
-        } catch (fileError) {
-            // Fall back to environment variable (for production)
-            if (process.env.MANAGER_CREDENTIALS) {
-                try {
-                    managers = JSON.parse(process.env.MANAGER_CREDENTIALS);
-                } catch (error) {
-                    console.error('Failed to parse MANAGER_CREDENTIALS:', error);
-                    return NextResponse.json({ valid: false }, { status: 200 });
-                }
-            } else {
-                console.error('Manager credentials not found in file or environment variable');
-                return NextResponse.json({ valid: false }, { status: 200 });
-            }
-        }
-
-        // Check if credentials match
-        const manager = managers.find(
-            (m: { username: string; password: string }) =>
-                m.username === username && m.password === password
-        );
-
-        return NextResponse.json({ valid: !!manager }, { status: 200 });
-    } catch (error) {
-        console.error('Manager auth validation error:', error);
-        return NextResponse.json({ valid: false }, { status: 200 });
-    }
 }
