@@ -35,6 +35,7 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
 
 // Validate manager auth
 async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
+  console.log('[Auth] Checking manager authentication...');
   // Action: Check for new session cookies first
   const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
   const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
@@ -43,7 +44,12 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
   const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
 
   // Condition: If no auth cookies are found at all, user is not authenticated.
-  if (!managerCookie && (!sessionId || !sessionKey || !deviceId)) return false;
+  if (!managerCookie && (!sessionId || !sessionKey || !deviceId)) {
+    console.log('[Auth] No session or manager cookies found. User is not authenticated.');
+    return false;
+  }
+  console.log(`[Auth] Found cookies: session=${!!sessionId}, legacy=${!!managerCookie}`);
+
 
   try {
     // Action: Construct the cookie header to forward to the internal API for validation
@@ -53,6 +59,7 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
     if (sessionKey) cookies.push(`${SESSION_COOKIE_PREFIX}key=${sessionKey}`);
     if (deviceId) cookies.push(`${SESSION_COOKIE_PREFIX}device=${deviceId}`);
 
+    console.log('[Auth] Calling internal API to validate session...');
     // Action: Call the internal API route to validate the session cookies
     const response = await fetch(`${request.nextUrl.origin}/api/manager-auth`, {
       method: 'GET',
@@ -60,11 +67,12 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
     });
 
     const data = await response.json();
+    console.log(`[Auth] API validation response: ${JSON.stringify(data)}`);
     // Condition: The API will return { valid: true } if the session is valid.
     return data.valid === true;
   } catch (error) {
     // If the API call fails, assume authentication is invalid for security.
-    console.error('Manager auth validation error:', error);
+    console.error('[Auth] Manager auth validation API call failed:', error);
     return false;
   }
 }
@@ -167,8 +175,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
     // Action: Call the authentication check function.
     const isAuthenticated = await isManagerAuthenticated(request);
+    console.log(`[Auth] Final authentication status for ${pathname}: ${isAuthenticated}`);
     // Condition: If the user is NOT authenticated.
     if (!isAuthenticated) {
+      console.log(`[Auth] Redirecting unauthenticated user to /manage/login`);
       // Action: Redirect them to the login page.
       const url = request.nextUrl.clone();
       url.pathname = '/manage/login';
