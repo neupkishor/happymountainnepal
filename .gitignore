@@ -45,9 +45,9 @@ firebase-debug.log
 firestore-debug.log
 
 # base storage (runtime-editable data)
-# Keep redirects and navigation in git, but ignore session/auth data
-/src/base/manager.json
-/src/base/session.json
+# Keep template files in git, but ignore actual data files
+/src/base/*.json
+!/src/base/*.template.json
 
 # public data
 /public

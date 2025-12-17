@@ -1,10 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  experimental: {
-    nodeMiddleware: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },

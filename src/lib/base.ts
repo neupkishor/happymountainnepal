@@ -1,13 +1,13 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import managerData from '../../base/manager.json';
-import sessionData from '../../base/session.json';
-import navigationComponentsData from '../../base/navigation-components.json';
-import redirectsData from '../../base/redirects.json';
+import managerData from '../base/manager.json';
+import sessionData from '../base/session.json';
+import navigationComponentsData from '../base/navigation-components.json';
+import redirectsData from '../base/redirects.json';
 
 // For server-side Node.js environment
-const BASE_PATH = path.join(process.cwd(), 'base');
+const BASE_PATH = path.join(process.cwd(), 'src', 'base');
 
 export async function readBaseFile<T>(file: string): Promise<T> {
     const filePath = path.join(BASE_PATH, file);

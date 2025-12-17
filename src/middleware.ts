@@ -3,12 +3,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest, NextFetchEvent } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { matchRedirectEdge } from '@/lib/redirects-edge';
-import { getManagerData, getSessionData } from '@/lib/base';
-import type { SessionData } from '@/lib/session-utils';
+import { getManagerData } from '@/lib/base';
 
 const COOKIE_NAME = 'temp_account';
-const MANAGER_COOKIE_NAME = 'manager_auth';
-const SESSION_COOKIE_PREFIX = 'manager_session_';
 const PUBLIC_FILE = /\.(.*)$/;
 
 // Bot detection
@@ -35,62 +32,38 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
   return 'page';
 }
 
+// Simple cookie-based authentication
 function isManagerAuthenticated(request: NextRequest): boolean {
   console.log('[Auth] Checking manager authentication in middleware...');
 
-  const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
-  const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
-  const deviceId = request.cookies.get(`${SESSION_COOKIE_PREFIX}device`)?.value;
-  const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
+  const username = request.cookies.get('manager_username')?.value;
+  const password = request.cookies.get('manager_password')?.value;
 
-  console.log(`[Auth] Found cookies: session=${!!sessionId}, legacy=${!!managerCookie}`);
+  console.log(`[Auth] Found cookies: username=${!!username}, password=${!!password}`);
 
-  if (sessionId && sessionKey && deviceId) {
-    try {
-      const sessions: SessionData[] = getSessionData();
-      const session = sessions.find(s =>
-        s.session_id === sessionId &&
-        s.session_key === sessionKey &&
-        s.device_id === deviceId
-      );
-
-      if (session) {
-        if (session.isExpired === 1) {
-          console.log('[Auth] Session found but marked as expired.');
-          return false;
-        }
-        const expiresAt = new Date(session.expires_at);
-        if (expiresAt > new Date()) {
-          console.log('[Auth] Valid session found.');
-          return true;
-        }
-        console.log('[Auth] Session found but has expired by date.');
-      }
-    } catch (e) {
-      console.log('[Auth] Could not read session data file, falling back to legacy cookie.');
-    }
+  if (!username || !password) {
+    console.log('[Auth] Missing username or password cookie.');
+    return false;
   }
 
-  if (managerCookie) {
-    try {
-      const { username, password } = JSON.parse(managerCookie);
-      const managers = getManagerData();
-      const manager = managers.find(
-        (m: { username: string; password: string }) =>
-          m.username === username && m.password === password
-      );
-      if (manager) {
-        console.log('[Auth] Valid legacy cookie found.');
-        return true;
-      }
-    } catch (e) {
-      console.log('[Auth] Error parsing legacy manager cookie.');
-      return false;
-    }
-  }
+  try {
+    const managers = getManagerData();
+    const manager = managers.find(
+      (m: { username: string; password: string }) =>
+        m.username === username && m.password === password
+    );
 
-  console.log('[Auth] No valid session or cookie found.');
-  return false;
+    if (manager) {
+      console.log('[Auth] Valid manager credentials found.');
+      return true;
+    }
+
+    console.log('[Auth] Invalid credentials.');
+    return false;
+  } catch (e) {
+    console.log('[Auth] Error reading manager data:', e);
+    return false;
+  }
 }
 
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
@@ -112,10 +85,8 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
       const response = NextResponse.redirect(redirectUrl);
       response.cookies.set(COOKIE_NAME, '', { maxAge: 0, path: '/' });
-      response.cookies.set(MANAGER_COOKIE_NAME, '', { maxAge: 0, path: '/' });
-      response.cookies.set(`${SESSION_COOKIE_PREFIX}id`, '', { maxAge: 0, path: '/' });
-      response.cookies.set(`${SESSION_COOKIE_PREFIX}key`, '', { maxAge: 0, path: '/' });
-      response.cookies.set(`${SESSION_COOKIE_PREFIX}device`, '', { maxAge: 0, path: '/' });
+      response.cookies.set('manager_username', '', { maxAge: 0, path: '/' });
+      response.cookies.set('manager_password', '', { maxAge: 0, path: '/' });
 
       return response;
     }
@@ -215,6 +186,3 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
-
-// Force Node.js runtime instead of Edge runtime for AWS server deployment
-export const runtime = 'nodejs';
