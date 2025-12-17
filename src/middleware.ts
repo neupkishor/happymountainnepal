@@ -41,6 +41,7 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
   const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
 
   if (!managerCookie && (!sessionId || !sessionKey || !deviceId)) return false;
+  console.error("Cookies have not been defined!");
 
   try {
     const cookies = [];
@@ -76,10 +77,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // -----------------------------
   // 1️⃣ HTTPS enforcement for /manage
   // -----------------------------
-  if (pathname.startsWith('/manage')) {
-    if (request.nextUrl.protocol !== 'https:') {
-      const redirectUrl = new URL('/manage/login', origin);
-      redirectUrl.searchParams.set('unsafe', '1'); // pass warning flag
+  if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
+    if (request.nextUrl.protocol !== 'https:' && process.env.NODE_ENV=="production") {
+      const redirectUrl = new URL('/', origin);
+      redirectUrl.searchParams.set('loginError', 'unsafeProtocol'); // pass warning flag
 
       // Invalidate cookies
       const response = NextResponse.redirect(redirectUrl);
