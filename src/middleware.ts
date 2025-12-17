@@ -7,7 +7,7 @@ const MANAGER_COOKIE_NAME = 'manager_auth';
 const SESSION_COOKIE_PREFIX = 'manager_session_';
 const PUBLIC_FILE = /\.(.*)$/;
 
-// Bot detection helper
+// Bot detection
 function isBot(userAgent: string): boolean {
   const botPatterns = [
     /bot/i, /crawler/i, /spider/i, /crawling/i,
@@ -24,14 +24,14 @@ function isBot(userAgent: string): boolean {
   return botPatterns.some(pattern => pattern.test(userAgent));
 }
 
-// Helper to determine resource type
+// Resource type
 function getResourceType(pathname: string): 'page' | 'api' | 'static' {
   if (pathname.startsWith('/api')) return 'api';
   if (PUBLIC_FILE.test(pathname)) return 'static';
   return 'page';
 }
 
-// Helper to validate manager authentication
+// Validate manager auth
 async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
   const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
   const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
@@ -61,14 +61,39 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
 }
 
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
-  const { pathname } = request.nextUrl;
+  const { pathname, origin } = request.nextUrl;
   const userAgent = request.headers.get('user-agent') || 'Unknown';
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     request.headers.get('x-real-ip') ?? '127.0.0.1';
   const referrer = request.headers.get('referer') || undefined;
   const method = request.method;
 
-  // Get or create cookie ID
+  const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
+  const isBotRequest = isBot(userAgent);
+
+  // -----------------------------
+  // 1️⃣ HTTPS enforcement for /manage
+  // -----------------------------
+  if (pathname.startsWith('/manage')) {
+    if (request.nextUrl.protocol !== 'https:') {
+      const redirectUrl = new URL('/manage/login', origin);
+      redirectUrl.searchParams.set('unsafe', '1'); // pass warning flag
+
+      // Invalidate cookies
+      const response = NextResponse.redirect(redirectUrl);
+      response.cookies.set(COOKIE_NAME, '', { maxAge: 0, path: '/' });
+      response.cookies.set(MANAGER_COOKIE_NAME, '', { maxAge: 0, path: '/' });
+      response.cookies.set(`${SESSION_COOKIE_PREFIX}id`, '', { maxAge: 0, path: '/' });
+      response.cookies.set(`${SESSION_COOKIE_PREFIX}key`, '', { maxAge: 0, path: '/' });
+      response.cookies.set(`${SESSION_COOKIE_PREFIX}device`, '', { maxAge: 0, path: '/' });
+
+      return response;
+    }
+  }
+
+  // -----------------------------
+  // 2️⃣ Get or create temp account cookie
+  // -----------------------------
   let accountId = request.cookies.get(COOKIE_NAME)?.value;
   let isNewAccount = false;
   if (!accountId) {
@@ -76,23 +101,21 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     isNewAccount = true;
   }
 
-  const isBotRequest = isBot(userAgent);
-  const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
-
-  // Handle redirects
+  // -----------------------------
+  // 3️⃣ Handle redirects
+  // -----------------------------
   try {
     const redirectsResponse = await fetch(
-      `${request.nextUrl.origin}/api/redirects/match?path=${encodeURIComponent(pathname)}`
+      `${origin}/api/redirects/match?path=${encodeURIComponent(pathname)}`
     );
     if (redirectsResponse.ok) {
       const matchResult = await redirectsResponse.json();
       if (matchResult?.matched) {
         const statusCode = matchResult.permanent ? 308 : 307;
 
-        // Log redirect
         if (shouldLog) {
           event.waitUntil(
-            fetch(`${request.nextUrl.origin}/api/log`, {
+            fetch(`${origin}/api/log`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -121,14 +144,18 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     console.error('Redirect matching error:', error);
   }
 
-  // Paywall for /legal/documents
+  // -----------------------------
+  // 4️⃣ Paywall for /legal/documents
+  // -----------------------------
   if (pathname === '/legal/documents' && !request.cookies.has('user_email')) {
     const url = request.nextUrl.clone();
     url.pathname = '/legal/documents/gate';
     return NextResponse.redirect(url);
   }
 
-  // Manager auth gate
+  // -----------------------------
+  // 5️⃣ Manager authentication
+  // -----------------------------
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
     const isAuthenticated = await isManagerAuthenticated(request);
     if (!isAuthenticated) {
@@ -138,24 +165,27 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     }
   }
 
+  // -----------------------------
+  // 6️⃣ Response & set temp account cookie
+  // -----------------------------
   const response = NextResponse.next();
-
-  // Set account cookie if new
   if (isNewAccount) {
     response.cookies.set(COOKIE_NAME, accountId, {
       httpOnly: true,
-      secure: true,        // Always secure for HTTPS
+      secure: true,   // always secure
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
+      maxAge: 60 * 60 * 24 * 365,
     });
   }
 
-  // Log requests
+  // -----------------------------
+  // 7️⃣ Logging
+  // -----------------------------
   if (shouldLog) {
     const resourceType = getResourceType(pathname);
     event.waitUntil(
-      fetch(`${request.nextUrl.origin}/api/log`, {
+      fetch(`${origin}/api/log`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
