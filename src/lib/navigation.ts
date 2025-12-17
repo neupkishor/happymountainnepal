@@ -1,6 +1,5 @@
-import { readFile } from 'fs/promises';
-import { join } from 'path';
 import type { NavLink } from '@/components/layout/HeaderV3Nav';
+import { readBaseFile } from './base';
 
 interface NavigationData {
     header: {
@@ -13,9 +12,7 @@ interface NavigationData {
 
 export async function getNavigationData(): Promise<NavigationData> {
     try {
-        const filePath = join(process.cwd(), 'src', 'navigation-components.json');
-        const data = await readFile(filePath, 'utf-8');
-        return JSON.parse(data);
+        return await readBaseFile<NavigationData>('navigation-components.json');
     } catch (error) {
         console.error('Error loading navigation data:', error);
         // Return default structure if file doesn't exist

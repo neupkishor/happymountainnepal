@@ -196,12 +196,9 @@ function MobileMenuList({ setMenuOpen, navLinks }: { setMenuOpen: (open: boolean
           </AnimatePresence>
 
           {navigationStack.length === 1 && (
-            <div className="mt-8 pt-8 border-t space-y-4">
-              <Button variant="ghost" className="w-full justify-start text-lg h-12" asChild>
-                <Link href="/login" onClick={() => setMenuOpen(false)}><LogIn className="mr-3 h-5 w-5" /> Login</Link>
-              </Button>
+            <div className="mt-8 pt-8 border-t">
               <Button className="w-full justify-start text-lg h-12" asChild>
-                <Link href="/signup" onClick={() => setMenuOpen(false)}><User className="mr-3 h-5 w-5" /> Sign Up</Link>
+                <Link href="/login" onClick={() => setMenuOpen(false)}><LogIn className="mr-3 h-5 w-5" /> Get Started</Link>
               </Button>
             </div>
           )}
@@ -343,14 +340,9 @@ export function HeaderV3() {
                   </Link>
                 </Button>
               ) : (
-                <>
-                  <Button variant="ghost" asChild>
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
-                </>
+                <Button asChild>
+                  <Link href="/login">Get Started</Link>
+                </Button>
               )}
             </div>
 

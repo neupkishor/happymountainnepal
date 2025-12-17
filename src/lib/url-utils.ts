@@ -34,7 +34,21 @@ export function getFullUrl(file: FileUpload, baseUrl?: string): string {
 
     // For relative paths, handle {{basePath}} template
     if (file.pathType === 'relative' && file.path) {
-        return replaceBasePath(file.path, baseUrl);
+        const resolvedPath = replaceBasePath(file.path, baseUrl);
+
+        // If the resolved path doesn't start with http/https, make it absolute
+        if (!resolvedPath.startsWith('http')) {
+            // Use baseUrl if available, otherwise use current origin (if in browser)
+            const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+            if (base) {
+                // Ensure base doesn't end with slash and path starts with slash
+                const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+                const cleanPath = resolvedPath.startsWith('/') ? resolvedPath : '/' + resolvedPath;
+                return cleanBase + cleanPath;
+            }
+        }
+
+        return resolvedPath;
     }
 
     return file.url;

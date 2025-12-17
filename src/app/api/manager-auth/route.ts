@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { createSession, type SessionData } from '@/lib/session-utils';
+import { readBaseFile, writeBaseFile } from '@/lib/base';
 
 const MANAGER_COOKIE_NAME = 'manager_auth';
+const SESSION_COOKIE_PREFIX = 'manager_session_';
 
 // Login endpoint
 export async function POST(request: NextRequest) {
@@ -16,14 +17,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get manager credentials from file (local) or environment variable (production)
+        // Get manager credentials from base storage or environment variable (production)
         let managers;
 
         try {
-            // Try reading from file first (for local development)
-            const managersFilePath = join(process.cwd(), 'src', 'manager.json');
-            const managersData = await readFile(managersFilePath, 'utf-8');
-            managers = JSON.parse(managersData);
+            // Try reading from base storage first (for local development)
+            managers = await readBaseFile('manager.json');
         } catch (fileError) {
             // Fall back to environment variable (for production)
             if (process.env.MANAGER_CREDENTIALS) {
@@ -37,7 +36,7 @@ export async function POST(request: NextRequest) {
                     );
                 }
             } else {
-                console.error('Manager credentials not found in file or environment variable');
+                console.error('Manager credentials not found in base storage or environment variable');
                 return NextResponse.json(
                     { error: 'Manager credentials not configured' },
                     { status: 500 }
@@ -58,20 +57,55 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Create new session
+        const session = createSession(username);
+
+        // Save session to base storage
+        try {
+            let sessions: SessionData[] = [];
+
+            // Try to read existing sessions
+            try {
+                sessions = await readBaseFile('session.json');
+                if (!Array.isArray(sessions)) {
+                    sessions = [];
+                }
+            } catch {
+                // File doesn't exist or is invalid, start fresh
+                sessions = [];
+            }
+
+            // Add new session
+            sessions.push(session);
+
+            // Write back to file
+            await writeBaseFile('session.json', sessions);
+        } catch (error) {
+            console.error('Failed to save session:', error);
+            // Continue anyway - cookies will still work
+        }
+
         // Create response with success
         const response = NextResponse.json(
             { success: true, message: 'Authentication successful' },
             { status: 200 }
         );
 
-        // Set httpOnly cookie with credentials (plain text as requested)
-        response.cookies.set(MANAGER_COOKIE_NAME, JSON.stringify({ username, password }), {
+        // Set session cookies
+        const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict' as const,
             path: '/',
             maxAge: 60 * 60 * 24 * 7, // 7 days
-        });
+        };
+
+        response.cookies.set(`${SESSION_COOKIE_PREFIX}id`, session.session_id, cookieOptions);
+        response.cookies.set(`${SESSION_COOKIE_PREFIX}key`, session.session_key, cookieOptions);
+        response.cookies.set(`${SESSION_COOKIE_PREFIX}device`, session.device_id, cookieOptions);
+
+        // Keep the old cookie for backward compatibility
+        response.cookies.set(MANAGER_COOKIE_NAME, JSON.stringify({ username, password }), cookieOptions);
 
         return response;
     } catch (error) {
@@ -85,13 +119,44 @@ export async function POST(request: NextRequest) {
 
 // Logout endpoint
 export async function DELETE(request: NextRequest) {
+    // Get session cookies to invalidate the session
+    const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
+    const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
+    const deviceId = request.cookies.get(`${SESSION_COOKIE_PREFIX}device`)?.value;
+
+    // Invalidate session in base storage if session cookies exist
+    if (sessionId && sessionKey && deviceId) {
+        try {
+            const sessions: SessionData[] = await readBaseFile('session.json');
+
+            // Find and invalidate the session
+            const sessionIndex = sessions.findIndex(
+                (s) =>
+                    s.session_id === sessionId &&
+                    s.session_key === sessionKey &&
+                    s.device_id === deviceId
+            );
+
+            if (sessionIndex !== -1) {
+                sessions[sessionIndex].isExpired = 1;
+                await writeBaseFile('session.json', sessions);
+            }
+        } catch (error) {
+            console.error('Failed to invalidate session in base storage:', error);
+            // Continue with logout even if session invalidation fails
+        }
+    }
+
     const response = NextResponse.json(
         { success: true, message: 'Logged out successfully' },
         { status: 200 }
     );
 
-    // Clear the cookie
+    // Clear all cookies
     response.cookies.delete(MANAGER_COOKIE_NAME);
+    response.cookies.delete(`${SESSION_COOKIE_PREFIX}id`);
+    response.cookies.delete(`${SESSION_COOKIE_PREFIX}key`);
+    response.cookies.delete(`${SESSION_COOKIE_PREFIX}device`);
 
     return response;
 }
@@ -99,6 +164,45 @@ export async function DELETE(request: NextRequest) {
 // Validation endpoint (for middleware)
 export async function GET(request: NextRequest) {
     try {
+        // Check for session cookies first
+        const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
+        const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
+        const deviceId = request.cookies.get(`${SESSION_COOKIE_PREFIX}device`)?.value;
+
+        if (sessionId && sessionKey && deviceId) {
+            // Validate against base storage
+            try {
+                const sessions: SessionData[] = await readBaseFile('session.json');
+
+                // Find matching session
+                const session = sessions.find(
+                    (s) =>
+                        s.session_id === sessionId &&
+                        s.session_key === sessionKey &&
+                        s.device_id === deviceId
+                );
+
+                if (session) {
+                    // Check if session is manually expired/invalidated
+                    if (session.isExpired === 1) {
+                        return NextResponse.json({ valid: false }, { status: 200 });
+                    }
+
+                    // Check if session is expired by date
+                    const expiresAt = new Date(session.expires_at);
+                    const now = new Date();
+
+                    if (expiresAt > now) {
+                        return NextResponse.json({ valid: true, username: session.username }, { status: 200 });
+                    }
+                }
+            } catch (error) {
+                // Session file doesn't exist or is invalid, fall through to old method
+                console.log('Session file not found or invalid, checking old cookie method');
+            }
+        }
+
+        // Fall back to old cookie method for backward compatibility
         const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
 
         if (!managerCookie) {
@@ -111,10 +215,8 @@ export async function GET(request: NextRequest) {
         let managers;
 
         try {
-            // Try reading from file first (for local development)
-            const managersFilePath = join(process.cwd(), 'src', 'manager.json');
-            const managersData = await readFile(managersFilePath, 'utf-8');
-            managers = JSON.parse(managersData);
+            // Try reading from base storage first (for local development)
+            managers = await readBaseFile('manager.json');
         } catch (fileError) {
             // Fall back to environment variable (for production)
             if (process.env.MANAGER_CREDENTIALS) {

@@ -2,11 +2,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest, NextFetchEvent } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import redirects from './redirects.json';
-import { matchRedirect } from './lib/redirect-matcher';
 
 const COOKIE_NAME = 'temp_account';
 const MANAGER_COOKIE_NAME = 'manager_auth';
+const SESSION_COOKIE_PREFIX = 'manager_session_';
 const PUBLIC_FILE = /\.(.*)$/;
 
 // Bot detection helper
@@ -35,19 +34,38 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
 
 // Helper to validate manager authentication
 async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
+  // Get session cookies
+  const sessionId = request.cookies.get(`${SESSION_COOKIE_PREFIX}id`)?.value;
+  const sessionKey = request.cookies.get(`${SESSION_COOKIE_PREFIX}key`)?.value;
+  const deviceId = request.cookies.get(`${SESSION_COOKIE_PREFIX}device`)?.value;
   const managerCookie = request.cookies.get(MANAGER_COOKIE_NAME)?.value;
 
-  if (!managerCookie) {
+  // If no cookies at all, not authenticated
+  if (!managerCookie && (!sessionId || !sessionKey || !deviceId)) {
     return false;
   }
 
   try {
-    // Call the validation API endpoint instead of reading file directly
-    // This avoids Edge Runtime limitations with fs/path modules
+    // Build cookie header with all available cookies
+    const cookies = [];
+    if (managerCookie) {
+      cookies.push(`${MANAGER_COOKIE_NAME}=${managerCookie}`);
+    }
+    if (sessionId) {
+      cookies.push(`${SESSION_COOKIE_PREFIX}id=${sessionId}`);
+    }
+    if (sessionKey) {
+      cookies.push(`${SESSION_COOKIE_PREFIX}key=${sessionKey}`);
+    }
+    if (deviceId) {
+      cookies.push(`${SESSION_COOKIE_PREFIX}device=${deviceId}`);
+    }
+
+    // Call the validation API endpoint
     const response = await fetch(`${request.nextUrl.origin}/api/manager-auth`, {
       method: 'GET',
       headers: {
-        'Cookie': `${MANAGER_COOKIE_NAME}=${managerCookie}`,
+        'Cookie': cookies.join('; '),
       },
     });
 
@@ -82,40 +100,48 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // Exclude Next.js internal routes from logging
   const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
 
-  // Handle redirects from the JSON file with pattern matching support
-  const matchResult = matchRedirect(pathname, redirects as any);
+  // Handle redirects - fetch from API to avoid Edge Runtime limitations
+  try {
+    const redirectsResponse = await fetch(`${request.nextUrl.origin}/api/redirects/match?path=${encodeURIComponent(pathname)}`);
+    if (redirectsResponse.ok) {
+      const matchResult = await redirectsResponse.json();
 
-  if (matchResult?.matched) {
-    const statusCode = matchResult.permanent ? 308 : 307;
+      if (matchResult?.matched) {
+        const statusCode = matchResult.permanent ? 308 : 307;
 
-    // Log redirect
-    if (shouldLog) {
-      try {
-        await fetch(`${request.nextUrl.origin}/api/log`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            cookieId: accountId,
-            pageAccessed: pathname,
-            resourceType: 'redirect',
-            method,
-            statusCode,
-            referrer,
-            userAgent,
-            ipAddress: ip,
-            isBot: isBotRequest,
-            metadata: {
-              destination: matchResult.destination,
-              permanent: matchResult.permanent,
-            },
-          }),
-        }).catch(err => console.error('Failed to log redirect:', err));
-      } catch (error) {
-        console.error('Error logging redirect:', error);
+        // Log redirect
+        if (shouldLog) {
+          try {
+            await fetch(`${request.nextUrl.origin}/api/log`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                cookieId: accountId,
+                pageAccessed: pathname,
+                resourceType: 'redirect',
+                method,
+                statusCode,
+                referrer,
+                userAgent,
+                ipAddress: ip,
+                isBot: isBotRequest,
+                metadata: {
+                  destination: matchResult.destination,
+                  permanent: matchResult.permanent,
+                },
+              }),
+            }).catch(err => console.error('Failed to log redirect:', err));
+          } catch (error) {
+            console.error('Error logging redirect:', error);
+          }
+        }
+
+        return NextResponse.redirect(new URL(matchResult.destination, request.url), statusCode);
       }
     }
-
-    return NextResponse.redirect(new URL(matchResult.destination, request.url), statusCode);
+  } catch (error) {
+    // Silently fail redirects to avoid breaking the middleware
+    console.error('Redirect matching error:', error);
   }
 
   // Paywall for /legal/documents

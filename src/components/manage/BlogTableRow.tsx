@@ -25,7 +25,11 @@ interface BlogTableRowProps {
 }
 
 export function BlogTableRow({ post }: BlogTableRowProps) {
-  const displayDate = post.date instanceof Timestamp ? post.date.toDate().toLocaleDateString() : post.date;
+  const displayDate = post.date instanceof Timestamp
+    ? post.date.toDate().toLocaleDateString()
+    : typeof post.date === 'string'
+      ? new Date(post.date).toLocaleDateString()
+      : post.date;
 
   return (
     <TableRow>

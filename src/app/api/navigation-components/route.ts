@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
+import { readBaseFile, writeBaseFile } from '@/lib/base';
 
 export async function POST(request: NextRequest) {
     try {
@@ -14,9 +13,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Write to navigation-components.json in the src folder
-        const filePath = join(process.cwd(), 'src', 'navigation-components.json');
-        await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        // Write to navigation-components.json in base storage
+        await writeBaseFile('navigation-components.json', data);
 
         return NextResponse.json({
             success: true,
@@ -33,13 +31,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
     try {
-        const { readFile } = await import('fs/promises');
-        const { join } = await import('path');
-
-        const filePath = join(process.cwd(), 'src', 'navigation-components.json');
-        const data = await readFile(filePath, 'utf-8');
-
-        return NextResponse.json(JSON.parse(data));
+        const data = await readBaseFile('navigation-components.json');
+        return NextResponse.json(data);
     } catch (error) {
         console.error('Error reading navigation data:', error);
         return NextResponse.json(

@@ -440,10 +440,15 @@ export async function getBlogPosts(options?: {
         q = query(q, firestoreLimit(limit + 1));
 
         const querySnapshot = await getDocs(q);
-        const posts = querySnapshot.docs.slice(0, limit).map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        } as BlogPost));
+        const posts = querySnapshot.docs.slice(0, limit).map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                // Convert Firestore Timestamp to ISO string for React serialization
+                date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date
+            } as BlogPost;
+        });
 
         const hasMore = querySnapshot.docs.length > limit;
 

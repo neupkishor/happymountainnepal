@@ -34,6 +34,43 @@ export function UploadsContent() {
     const { profile } = useSiteProfile();
     const { toast } = useToast();
 
+    // Helper function to safely get view URL with error handling
+    const getSafeViewUrl = (item: FileUpload): string => {
+        try {
+            const url = getFullUrl(item, profile?.baseUrl);
+
+            // Check for unresolved template variables
+            if (url.includes('{{basePath}}')) {
+                console.error('Invalid image URL: Unresolved {{basePath}} template for file', item.fileName, '- Please configure baseUrl in site settings');
+                // Return a placeholder image URL for Next.js Image component
+                return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd"/%3E%3C/svg%3E';
+            }
+
+            // Validate that we have a proper URL
+            if (!url || url.trim() === '') {
+                console.error('Invalid image URL: Empty URL for file', item.fileName);
+                return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd"/%3E%3C/svg%3E';
+            }
+
+            // If it's a relative path and we don't have a base URL, construct one
+            if (!url.startsWith('http') && !url.startsWith('//')) {
+                if (typeof window !== 'undefined') {
+                    const base = window.location.origin;
+                    const cleanPath = url.startsWith('/') ? url : '/' + url;
+                    return base + cleanPath;
+                }
+                // On server side, return the relative path as-is
+                // The Link component will handle it
+                return url;
+            }
+
+            return url;
+        } catch (error) {
+            console.error('Invalid image URL: Failed to construct URL for file', item.fileName, error);
+            return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd"/%3E%3C/svg%3E';
+        }
+    };
+
     const handleDelete = async (fileId: string) => {
         if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
             return;
@@ -178,7 +215,7 @@ export function UploadsContent() {
                                 <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                                     {item.fileType?.startsWith('image/') ? (
                                         <Image
-                                            src={item.pathType === 'relative' ? item.path : item.url}
+                                            src={getSafeViewUrl(item)}
                                             alt={item.fileName}
                                             fill
                                             className="object-cover"
@@ -219,7 +256,7 @@ export function UploadsContent() {
                                     )}
                                 </div>
                                 <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
-                                    <Link href={getFullUrl(item, profile?.baseUrl)} target="_blank" rel="noopener noreferrer">
+                                    <Link href={getSafeViewUrl(item)} target="_blank" rel="noopener noreferrer">
                                         <ExternalLink className="h-4 w-4 mr-2" />
                                         View
                                     </Link>
@@ -275,3 +312,4 @@ export function UploadsContent() {
         </div>
     );
 }
+

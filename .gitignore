@@ -44,8 +44,9 @@ next-env.d.ts
 firebase-debug.log
 firestore-debug.log
 
-# manager credentials (only in root, src/manager.json is tracked for deployment)
-/manager.json
+# base storage (runtime-editable data, not committed)
+/base/manager.json
+/base/session.json
 
 # public data
 /public

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,31 @@ export default function ManagerLoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [checking, setChecking] = useState(true);
+
+    // Check if user is already authenticated on mount
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const response = await fetch('/api/manager-auth', {
+                    method: 'GET',
+                });
+                const data = await response.json();
+
+                if (data.valid) {
+                    // User is already authenticated, redirect to dashboard
+                    router.push('/manage');
+                    return;
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            } finally {
+                setChecking(false);
+            }
+        };
+
+        checkAuth();
+    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,6 +69,21 @@ export default function ManagerLoginPage() {
             setLoading(false);
         }
     };
+
+    // Show loading state while checking authentication
+    if (checking) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
+                <Card className="w-full max-w-md">
+                    <CardContent className="py-8">
+                        <div className="text-center text-muted-foreground">
+                            Checking authentication...
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
