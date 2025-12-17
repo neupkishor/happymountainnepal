@@ -44,9 +44,10 @@ next-env.d.ts
 firebase-debug.log
 firestore-debug.log
 
-# base storage (runtime-editable data, not committed)
-/base/manager.json
-/base/session.json
+# base storage (runtime-editable data)
+# Keep redirects and navigation in git, but ignore session/auth data
+/src/base/manager.json
+/src/base/session.json
 
 # public data
 /public

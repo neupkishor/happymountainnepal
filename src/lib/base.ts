@@ -3,13 +3,13 @@ import path from 'path';
 
 /**
  * Base storage path - top-level directory for mutable runtime data
- * This directory is outside src/ and public/ for:
- * - No rebuild needed on changes
- * - Survives deploys (VPS/Docker)
- * - Editable without rebuild
+ * This directory is inside src/ for:
+ * - Included in build output
+ * - Deployed with the application
+ * - Works in production (Firebase App Hosting, Vercel, etc.)
  * - Acts as lightweight local DB
  */
-const BASE_PATH = path.join(process.cwd(), 'base');
+const BASE_PATH = path.join(process.cwd(), 'src', 'base');
 
 /**
  * Read a JSON file from the base storage
