@@ -1,19 +1,20 @@
+
 'use server';
 
-import { promises as fs } from 'fs';
-import path from 'path';
+import { readBaseFile, writeBaseFile } from '@/lib/base';
 import type { Redirect } from './types';
 
-const REDIRECTS_FILE_PATH = path.join(process.cwd(), 'src', 'redirects.json');
+const REDIRECTS_FILE_NAME = 'redirects.json';
 
 export async function getRedirects(): Promise<Redirect[]> {
     try {
-        const fileContent = await fs.readFile(REDIRECTS_FILE_PATH, 'utf-8');
-        const redirects = JSON.parse(fileContent);
-        return redirects;
+        const redirects = await readBaseFile(REDIRECTS_FILE_NAME);
+        return Array.isArray(redirects) ? redirects : [];
     } catch (error: any) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return []; // File doesn't exist, return empty array
+        }
         console.error("Error reading redirects:", error);
-        // If file doesn't exist or is invalid, return empty array
         return [];
     }
 }
@@ -28,7 +29,7 @@ export async function addRedirect(data: Omit<Redirect, 'id' | 'createdAt'>): Pro
         };
 
         redirects.push(newRedirect);
-        await fs.writeFile(REDIRECTS_FILE_PATH, JSON.stringify(redirects, null, 2), 'utf-8');
+        await writeBaseFile(REDIRECTS_FILE_NAME, redirects);
 
         return newRedirect.id;
     } catch (error: any) {
@@ -41,7 +42,7 @@ export async function deleteRedirect(id: string): Promise<void> {
     try {
         const redirects = await getRedirects();
         const filteredRedirects = redirects.filter(r => r.id !== id);
-        await fs.writeFile(REDIRECTS_FILE_PATH, JSON.stringify(filteredRedirects, null, 2), 'utf-8');
+        await writeBaseFile(REDIRECTS_FILE_NAME, filteredRedirects);
     } catch (error: any) {
         console.error("Error deleting redirect:", error);
         throw new Error("Could not delete redirect.");
