@@ -1,6 +1,6 @@
 // src/lib/redirects-edge.ts - This file is for Edge runtime only.
 import { match } from 'path-to-regexp';
-import redirectsData from '@/base/redirects.json';
+import redirectsData from '../../base/redirects.json';
 
 // Define types locally as we can't import from types.ts if it has non-edge compatible code
 interface RedirectRule {
