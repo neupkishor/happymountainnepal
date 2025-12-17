@@ -72,7 +72,7 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
     return data.valid === true;
   } catch (error) {
     // If the API call fails, assume authentication is invalid for security.
-    console.error('[Auth] Manager auth validation API call failed:', error);
+    console.log('[Auth] Manager auth validation API call failed:', error);
     return false;
   }
 }
