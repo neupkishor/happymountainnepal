@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { readBaseFile, writeBaseFile } from '@/lib/base';
 
@@ -16,7 +17,19 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { action, data, id } = body;
 
-        let redirects: any[] = await readBaseFile('redirects.json');
+        let redirects: any[] = [];
+        try {
+            redirects = await readBaseFile('redirects.json');
+        } catch (e) {
+            // File might not exist yet, which is fine for the first add.
+            if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+                throw e;
+            }
+        }
+        
+        if (!Array.isArray(redirects)) {
+            redirects = [];
+        }
 
         if (action === 'add') {
             const newRedirect = {

@@ -33,11 +33,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { getRedirects, addRedirect, deleteRedirect } from '@/lib/redirects';
-import type { Redirect } from '@/lib/types';
 import { Loader2, PlusCircle, Trash2, ArrowRight, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { Redirect } from '@/lib/types';
+import { readBaseFile, writeBaseFile } from '@/lib/base';
 
 const formSchema = z.object({
   source: z.string().min(1, 'Source path is required.').refine(val => val.startsWith('/'), { message: 'Source must start with a /' }),
@@ -65,8 +65,13 @@ export default function RedirectsPage() {
   const fetchRedirects = async () => {
     setIsLoading(true);
     try {
-      const allRedirects = await getRedirects();
-      setRedirects(allRedirects);
+      const response = await fetch('/api/redirects');
+      if (response.ok) {
+        const data = await response.json();
+        setRedirects(data);
+      } else {
+        throw new Error('Failed to fetch redirects');
+      }
     } catch (error) {
       console.error("Failed to load redirects", error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not load redirects.' });
@@ -82,9 +87,10 @@ export default function RedirectsPage() {
   const handleAddRedirect = (values: FormValues) => {
     startTransition(async () => {
       try {
-        await addRedirect({
-          ...values,
-          permanent: values.permanent === 'true'
+        await fetch('/api/redirects', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'add', data: {...values, permanent: values.permanent === 'true'}}),
         });
         toast({ title: 'Success', description: 'Redirect created.' });
         form.reset();
@@ -98,7 +104,11 @@ export default function RedirectsPage() {
   const handleDelete = (id: string) => {
     startTransition(async () => {
       try {
-        await deleteRedirect(id);
+        await fetch('/api/redirects', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'delete', id: id}),
+        });
         toast({ title: 'Success', description: 'Redirect deleted.' });
         fetchRedirects();
       } catch (error) {
@@ -117,7 +127,7 @@ export default function RedirectsPage() {
       <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <AlertDescription className="text-blue-800 dark:text-blue-200">
-          <strong>Important:</strong> After adding or deleting redirects, you need to restart the dev server for changes to take effect in the middleware.
+          <strong>Important:</strong> After adding or deleting redirects, you may need to redeploy your application for the changes to take effect in production.
         </AlertDescription>
       </Alert>
 
@@ -128,8 +138,6 @@ export default function RedirectsPage() {
           <br />
           <span className="text-sm mt-2 block">
             Example: <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/tours/{'{{slug}}'}</code> → <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/trips/{'{{slug}}'}</code>
-            <br />
-            This will redirect <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/tours/langtang-trek</code> to <code className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900">/trips/langtang-trek</code>
           </span>
         </AlertDescription>
       </Alert>
