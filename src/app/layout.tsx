@@ -62,7 +62,9 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <WishlistProvider>
             <div className="flex flex-col min-h-screen">
-              <Header />
+              <div className="relative z-50">
+                <Header />
+              </div>
               <main className="flex-grow pt-16">{children}</main>
               <ConditionalFooter />
             </div>

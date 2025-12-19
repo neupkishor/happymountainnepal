@@ -65,7 +65,7 @@ export function TourNav({ tour, reviews }: TourNavProps) {
 
   return (
     <div className={cn(
-      "transition-all duration-300 z-40",
+      "transition-all duration-300 z-30",
       isSticky ? 'sticky top-16 shadow-md' : 'relative mt-8'
     )}>
       <div className="bg-secondary/80 backdrop-blur-sm">
@@ -92,4 +92,3 @@ export function TourNav({ tour, reviews }: TourNavProps) {
     </div>
   );
 }
-
