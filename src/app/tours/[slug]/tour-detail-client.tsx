@@ -143,6 +143,9 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       }
   }));
 
+  const currentYear = new Date().getFullYear();
+  const priceValidUntil = `${currentYear}-12-31`;
+
   const jsonLdSchema: any[] = [{
     "@context": "https://schema.org",
     "@type": "Product",
@@ -166,7 +169,8 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       "price": tour.price,
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "url": `https://happymountainnepal.com/tours/${tour.slug}`
+      "url": `https://happymountainnepal.com/tours/${tour.slug}`,
+      "priceValidUntil": priceValidUntil,
     },
     ...(itineraryItems && itineraryItems.length > 0 && {
         "itinerary": {
