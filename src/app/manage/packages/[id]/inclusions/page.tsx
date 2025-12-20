@@ -1,45 +1,14 @@
 
-'use client';
+import { getTourById } from '@/lib/db';
+import { notFound } from 'next/navigation';
+import { EditInclusionsClient } from '@/components/manage/EditInclusionsClient';
 
-import { EditPackageLayout } from '@/components/manage/EditPackageLayout';
-import { FormProvider, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import type { Tour } from '@/lib/types';
-import { useEffect } from 'react';
-import { InclusionsForm } from '@/components/manage/forms/InclusionsForm';
+export default async function EditInclusionsPage({ params }: { params: { id: string } }) {
+  const tour = await getTourById(params.id);
 
-interface InclusionsFormValues {
-  inclusions: string[];
-  exclusions: string[];
-}
+  if (!tour) {
+    notFound();
+  }
 
-const formSchema = z.object({
-  inclusions: z.array(z.string().min(1, "Inclusion cannot be empty.")),
-  exclusions: z.array(z.string().min(1, "Exclusion cannot be empty.")),
-});
-
-function EditInclusionsPageClient({ tour }: { tour: Tour }) {
-  const form = useForm<InclusionsFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      inclusions: tour.inclusions || [],
-      exclusions: tour.exclusions || [],
-    },
-  });
-
-  useEffect(() => {
-    form.reset({
-      inclusions: tour.inclusions || [],
-      exclusions: tour.exclusions || [],
-    });
-  }, [tour, form]);
-
-  return (
-    <FormProvider {...form}>
-      <EditPackageLayout tour={tour} currentStep="inclusions">
-        <InclusionsForm tour={tour} />
-      </EditPackageLayout>
-    </FormProvider>
-  );
+  return <EditInclusionsClient tour={tour} />;
 }
