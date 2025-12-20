@@ -1,3 +1,4 @@
+// This file is no longer used for redirects. Keeping for other base functions.
 // Node.js runtime only - uses fs and path modules
 // For API routes, Server Components, etc.
 
@@ -52,6 +53,9 @@ export async function getNavigationComponentsData() {
     return readBaseFile('navigation-components.json');
 }
 
+// getRedirectsData is no longer needed as redirects are fetched from an API
+/*
 export async function getRedirectsData() {
     return readBaseFile('redirects.json');
 }
+*/

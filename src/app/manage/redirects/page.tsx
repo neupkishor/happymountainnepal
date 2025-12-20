@@ -33,16 +33,15 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, ArrowRight, Info } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Redirect } from '@/lib/types';
-import { Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
-  source: z.string().min(1, 'Source path is required.').refine(val => val.startsWith('/'), { message: 'Source must start with a /' }),
-  destination: z.string().min(1, 'Destination is required.'),
-  permanent: z.enum(['true', 'false']),
+  from: z.string().min(1, 'Source path is required.').refine(val => val.startsWith('/'), { message: 'Source must start with a /' }),
+  to: z.string().min(1, 'Destination is required.'),
+  type: z.enum(['permanent', 'temporary']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -56,9 +55,9 @@ export default function RedirectsPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      source: '',
-      destination: '',
-      permanent: 'true',
+      from: '',
+      to: '',
+      type: 'permanent',
     },
   });
 
@@ -68,7 +67,8 @@ export default function RedirectsPage() {
       const response = await fetch('/api/redirects');
       if (response.ok) {
         const data = await response.json();
-        setRedirects(data);
+        // Assuming the API returns an object with a 'redirects' property which is an array
+        setRedirects(data.redirects || []);
       } else {
         throw new Error('Failed to fetch redirects');
       }
@@ -82,7 +82,7 @@ export default function RedirectsPage() {
 
   useEffect(() => {
     fetchRedirects();
-  }, [toast]);
+  }, []);
 
   const handleAddRedirect = (values: FormValues) => {
     startTransition(async () => {
@@ -90,7 +90,7 @@ export default function RedirectsPage() {
         await fetch('/api/redirects', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: 'add', data: {...values, permanent: values.permanent === 'true'}}),
+            body: JSON.stringify({action: 'add', data: values }),
         });
         toast({ title: 'Success', description: 'Redirect created.' });
         form.reset();
@@ -124,13 +124,6 @@ export default function RedirectsPage() {
         <p className="text-muted-foreground mt-2">Create and manage URL redirects for your site.</p>
       </div>
 
-      <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
-        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <AlertDescription className="text-blue-800 dark:text-blue-200">
-          <strong>Important:</strong> After adding or deleting redirects, you must restart your development server to see the changes take effect.
-        </AlertDescription>
-      </Alert>
-
       <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
         <Info className="h-4 w-4 text-green-600 dark:text-green-400" />
         <AlertDescription className="text-green-800 dark:text-green-200">
@@ -154,7 +147,7 @@ export default function RedirectsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="source"
+                    name="from"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>From (Source Path)</FormLabel>
@@ -167,7 +160,7 @@ export default function RedirectsPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="destination"
+                    name="to"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>To (Destination URL)</FormLabel>
@@ -181,7 +174,7 @@ export default function RedirectsPage() {
                 </div>
                 <FormField
                   control={form.control}
-                  name="permanent"
+                  name="type"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel>Redirect Type</FormLabel>
@@ -194,13 +187,13 @@ export default function RedirectsPage() {
                         >
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="true" />
+                              <RadioGroupItem value="permanent" />
                             </FormControl>
                             <FormLabel className="font-normal">Permanent (308)</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="false" />
+                              <RadioGroupItem value="temporary" />
                             </FormControl>
                             <FormLabel className="font-normal">Temporary (307)</FormLabel>
                           </FormItem>
@@ -237,18 +230,22 @@ export default function RedirectsPage() {
                   <TableHead>Source</TableHead>
                   <TableHead>Destination</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {redirects.map(redirect => (
                   <TableRow key={redirect.id}>
-                    <TableCell className="font-mono text-sm">{redirect.source}</TableCell>
-                    <TableCell className="font-mono text-sm truncate max-w-xs">{redirect.destination}</TableCell>
+                    <TableCell className="font-mono text-sm">{redirect.source || redirect.from}</TableCell>
+                    <TableCell className="font-mono text-sm truncate max-w-xs">{redirect.destination || redirect.to}</TableCell>
                     <TableCell>
                       <Badge variant={redirect.permanent ? 'default' : 'secondary'}>
                         {redirect.permanent ? 'Permanent' : 'Temporary'}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {redirect.created_on && formatDistanceToNow(new Date(redirect.created_on), { addSuffix: true })}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => handleDelete(redirect.id)} disabled={isPending}>

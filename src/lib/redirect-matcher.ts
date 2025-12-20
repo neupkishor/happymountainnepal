@@ -1,15 +1,60 @@
+
 // src/lib/redirect-matcher.ts - This file is for Node.js runtime only.
 import { match } from 'path-to-regexp';
-import { readBaseFile } from '@/lib/base';
-import type { Redirect } from '@/lib/types';
 
-export interface RedirectRule extends Redirect {}
+// Note: RedirectRule now uses 'from' and 'to' to match the API response
+export interface RedirectRule {
+    id: string;
+    from: string;
+    to: string;
+    type: 'permanent' | 'temporary';
+    created_on: string;
+}
 
 export interface MatchResult {
     destination: string;
     permanent: boolean;
     matched: boolean;
 }
+
+let cachedRedirects: RedirectRule[] | null = null;
+let lastFetchTimestamp = 0;
+const CACHE_DURATION = 60 * 1000; // 60 seconds
+
+const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects';
+const API_KEY = process.env.NEUP_API_KEY;
+
+async function fetchRedirects(): Promise<RedirectRule[]> {
+    if (!API_KEY) {
+        console.error("API key for redirects is not configured.");
+        return [];
+    }
+    
+    if (cachedRedirects && (Date.now() - lastFetchTimestamp < CACHE_DURATION)) {
+        return cachedRedirects;
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            headers: { 'x-api-key': API_KEY },
+            next: { revalidate: 60 } // Revalidate every 60 seconds
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch redirects: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        cachedRedirects = (data.redirects || []) as RedirectRule[];
+        lastFetchTimestamp = Date.now();
+        return cachedRedirects || [];
+    } catch (error) {
+        console.error('Error fetching redirects from external API:', error);
+        // Return stale cache if fetch fails
+        return cachedRedirects || [];
+    }
+}
+
 
 /**
  * Convert /name/{{name}} -> /name/:name for path-to-regexp
@@ -63,28 +108,23 @@ function normalizePath(pathname: string): string {
 }
 
 /**
- * Match a pathname against the redirect rules by reading from the filesystem.
+ * Match a pathname against the redirect rules by fetching from the API.
  * This is for server-side (Node.js) environments only.
  * @param rawPathname - The pathname to match
  */
 export async function matchRedirect(rawPathname: string): Promise<MatchResult | null> {
     const pathname = normalizePath(rawPathname);
-    let redirects: RedirectRule[] = [];
+    const redirects = await fetchRedirects();
 
-    try {
-        redirects = await readBaseFile('redirects.json');
-    } catch (error) {
-        // If file doesn't exist, there are no redirects.
-        return null;
-    }
+    if (!redirects) return null;
 
     for (const redirect of redirects) {
         try {
-            const source = normalizePath(redirect.source);
+            const source = normalizePath(redirect.from);
 
             // Exact match first
             if (source === pathname) {
-                return { destination: redirect.destination, permanent: redirect.permanent, matched: true };
+                return { destination: redirect.to, permanent: redirect.type === 'permanent', matched: true };
             }
 
             // Pattern match with variables
@@ -92,11 +132,11 @@ export async function matchRedirect(rawPathname: string): Promise<MatchResult | 
             const params = matchPattern(pathRegexpPattern, pathname);
 
             if (params) {
-                const finalDestination = replaceVariables(redirect.destination, params);
-                return { destination: finalDestination, permanent: redirect.permanent, matched: true };
+                const finalDestination = replaceVariables(redirect.to, params);
+                return { destination: finalDestination, permanent: redirect.type === 'permanent', matched: true };
             }
         } catch (error) {
-            console.error(`Invalid redirect pattern: ${redirect.source}`, error);
+            console.error(`Invalid redirect pattern: ${redirect.from}`, error);
             continue;
         }
     }

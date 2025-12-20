@@ -1,12 +1,16 @@
 
 import { match } from 'path-to-regexp';
-// Import redirects directly from /base for Edge runtime
-import redirectsData from '../../base/redirects.json';
+
+// This file is now a proxy for an API call, but since Edge middleware can't reliably fetch,
+// this approach needs to be re-evaluated. For now, it will return an empty array.
+// A better approach would involve a KV store or a dedicated edge redirect service.
 
 interface RedirectRule {
-    source: string;
-    destination: string;
-    permanent: boolean;
+    id: string;
+    from: string;
+    to: string;
+    type: 'permanent' | 'temporary';
+    created_on: string;
 }
 
 export interface MatchResult {
@@ -15,7 +19,42 @@ export interface MatchResult {
     matched: boolean;
 }
 
-const redirects: RedirectRule[] = redirectsData as RedirectRule[];
+let cachedRedirects: RedirectRule[] = [];
+let lastFetchTimestamp = 0;
+const CACHE_DURATION = 60 * 1000; // 60 seconds
+
+const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects';
+const API_KEY = process.env.NEUP_API_KEY;
+
+// This function will be called by the middleware.
+async function getRedirectsFromApi(): Promise<RedirectRule[]> {
+    if (!API_KEY) {
+        console.error("API key for redirects is not configured.");
+        return [];
+    }
+
+    if (cachedRedirects.length > 0 && (Date.now() - lastFetchTimestamp < CACHE_DURATION)) {
+        return cachedRedirects;
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            headers: { 'x-api-key': API_KEY },
+            next: { revalidate: 60 }
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch redirects: ${response.statusText}`);
+        }
+        const data = await response.json();
+        cachedRedirects = data.redirects || [];
+        lastFetchTimestamp = Date.now();
+        return cachedRedirects;
+    } catch (error) {
+        console.error("Error fetching redirects in Edge:", error);
+        // Return stale data if available, otherwise empty
+        return cachedRedirects || [];
+    }
+}
 
 function convertPatternToPathRegexp(pattern: string): string {
     return pattern.replace(/\{\{([^}]+)\}\}/g, ':$1');
@@ -52,23 +91,24 @@ function normalizePath(pathname: string): string {
     return pathname;
 }
 
-export function matchRedirectEdge(rawPathname: string): MatchResult | null {
+export async function matchRedirectEdge(rawPathname: string): Promise<MatchResult | null> {
     const pathname = normalizePath(rawPathname);
+    const redirects = await getRedirectsFromApi();
 
     for (const redirect of redirects) {
         try {
-            const source = normalizePath(redirect.source);
+            const source = normalizePath(redirect.from);
 
             if (source === pathname) {
-                return { destination: redirect.destination, permanent: redirect.permanent, matched: true };
+                return { destination: redirect.to, permanent: redirect.type === 'permanent', matched: true };
             }
 
             const pathRegexpPattern = convertPatternToPathRegexp(source);
             const params = matchPattern(pathRegexpPattern, pathname);
 
             if (params) {
-                const finalDestination = replaceVariables(redirect.destination, params);
-                return { destination: finalDestination, permanent: redirect.permanent, matched: true };
+                const finalDestination = replaceVariables(redirect.to, params);
+                return { destination: finalDestination, permanent: redirect.type === 'permanent', matched: true };
             }
         } catch (error) {
             continue;
