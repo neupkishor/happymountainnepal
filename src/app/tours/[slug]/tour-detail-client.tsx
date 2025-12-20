@@ -20,7 +20,6 @@ import { usePathname } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore';
 import { Chatbot } from '@/components/Chatbot';
 import { getTourChatMessage } from '@/lib/chat-messages';
-import { headers } from 'next/headers'; // This cannot be used in a client component
 
 interface TourDetailClientProps {
   tour: Tour;
