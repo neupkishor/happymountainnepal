@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -29,7 +29,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 10;
 
-export default function AccountsPage() {
+function AccountsContent() {
   const [users, setUsers] = useState<DisplayUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,5 +165,29 @@ export default function AccountsPage() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export default function AccountsPage() {
+  return (
+    <Suspense fallback={
+      <Card>
+        <CardHeader>
+          <CardTitle>Users</CardTitle>
+          <CardDescription>
+            A combined list of registered users and anonymous visitors.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    }>
+      <AccountsContent />
+    </Suspense>
   );
 }
