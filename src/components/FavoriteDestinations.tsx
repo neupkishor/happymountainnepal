@@ -76,13 +76,13 @@ export function FavoriteDestinations() {
         <section className="py-16 lg:py-24 relative overflow-hidden">
          <div className="container mx-auto relative">
             <div className="flex flex-col lg:flex-row gap-12 items-center">
-                <div className="lg:w-1/3 text-center lg:text-left">
-                    <Skeleton className="h-10 w-3/4" />
-                    <Skeleton className="h-4 w-full mt-4" />
-                    <Skeleton className="h-4 w-5/6 mt-2" />
-                    <Skeleton className="h-12 w-48 mt-6" />
+                <div className="lg:w-1/3 text-center lg:text-left space-y-4">
+                    <Skeleton className="h-10 w-3/4 mx-auto lg:mx-0" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6 mx-auto lg:mx-0" />
+                    <Skeleton className="h-12 w-48 mx-auto lg:mx-0" />
                 </div>
-                <div className="lg:w-2/3">
+                <div className="lg:w-2/3 w-full">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                         <Skeleton className="h-96 col-span-2 md:col-span-1 md:row-span-2 rounded-xl" />
                         <Skeleton className="h-48 rounded-xl" />

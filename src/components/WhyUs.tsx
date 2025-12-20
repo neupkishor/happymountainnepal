@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "./ui/skeleton";
@@ -21,14 +20,14 @@ export function WhyUs() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[...Array(4)].map((_, index) => (
-              <Card key={index} className="text-center bg-card">
-                <CardHeader className="items-center">
-                  <Skeleton className="h-14 w-14 rounded-full" />
+              <Card key={index} className="text-center bg-card p-6">
+                <CardHeader className="items-center p-0 mb-4">
+                  <Skeleton className="h-16 w-16 rounded-full" />
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <Skeleton className="h-6 w-3/4 mx-auto mb-2" />
                   <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6 mx-auto mt-1" />
+                  <Skeleton className="h-4 w-5/6 mx-auto mt-2" />
                 </CardContent>
               </Card>
             ))}

@@ -41,7 +41,7 @@ export function OurPartners() {
           </p>
         </div>
         {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
                 {[...Array(4)].map((_, i) => (
                     <div key={i} className="text-center">
                         <Skeleton className="h-32 w-full mb-4" />
@@ -51,7 +51,7 @@ export function OurPartners() {
                 ))}
             </div>
         ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
             {partners?.map(partner => (
                 <div key={partner.id} className="text-center">
                 <div className="bg-card p-8 rounded-lg flex justify-center items-center relative aspect-square mb-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">

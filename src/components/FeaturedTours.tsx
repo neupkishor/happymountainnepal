@@ -1,3 +1,4 @@
+
 'use client';
 import { TourCard } from './TourCard';
 import Link from 'next/link';
@@ -8,6 +9,7 @@ import { useFirestore } from '@/firebase';
 import { collection, query, limit, getDocs, where } from 'firebase/firestore'; // Added where
 import type { Tour } from '@/lib/types';
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export function FeaturedTours() {
   const firestore = useFirestore();
@@ -18,15 +20,20 @@ export function FeaturedTours() {
     if (!firestore) return;
     const fetchTours = async () => {
       setIsLoading(true);
-      const packagesQuery = query(
-        collection(firestore, 'packages'),
-        where('status', '==', 'published'), // Filter by published status
-        limit(3)
-      );
-      const querySnapshot = await getDocs(packagesQuery);
-      const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
-      setFeaturedTours(tours);
-      setIsLoading(false);
+      try {
+        const packagesQuery = query(
+          collection(firestore, 'packages'),
+          where('status', '==', 'published'), // Filter by published status
+          limit(3)
+        );
+        const querySnapshot = await getDocs(packagesQuery);
+        const tours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+        setFeaturedTours(tours);
+      } catch (error) {
+        console.error("Error fetching featured tours:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchTours();
   }, [firestore]);
@@ -43,7 +50,21 @@ export function FeaturedTours() {
         </div>
         {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[450px] w-full rounded-lg" />)}
+                {[...Array(3)].map((_, i) => (
+                    <Card key={i}>
+                        <CardContent className="p-0">
+                            <Skeleton className="h-48 w-full" />
+                            <div className="p-4 space-y-2">
+                                <Skeleton className="h-4 w-1/4" />
+                                <Skeleton className="h-6 w-3/4" />
+                                <Skeleton className="h-4 w-1/2" />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="p-4">
+                            <Skeleton className="h-10 w-24 ml-auto" />
+                        </CardFooter>
+                    </Card>
+                ))}
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -63,3 +84,8 @@ export function FeaturedTours() {
     </section>
   );
 }
+
+// Add Card, CardContent, CardFooter skeleton structure
+const Card = ({ children, className }: { children: React.ReactNode, className?: string }) => <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)}>{children}</div>;
+const CardContent = ({ children, className }: { children: React.ReactNode, className?: string }) => <div className={cn("p-6 pt-0", className)}>{children}</div>;
+const CardFooter = ({ children, className }: { children: React.ReactNode, className?: string }) => <div className={cn("flex items-center p-6 pt-0", className)}>{children}</div>;

@@ -1,5 +1,3 @@
-
-
 'use client';
 import { useFirestore } from '@/firebase';
 import type { ManagedReview } from '@/lib/types';
@@ -52,7 +50,7 @@ export function Testimonials() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
           <div className="lg:col-span-1 text-center lg:text-left">
             {isLoading ? (
-              <Skeleton className="h-12 w-32 mx-auto lg:mx-0 mb-4" />
+              <Skeleton className="h-16 w-32 mx-auto lg:mx-0 mb-4" />
             ) : (
               <h2 className="text-5xl md:text-6xl font-bold !font-headline text-primary mb-4">
                 {totalReviewCount !== null ? `${totalReviewCount}+` : '...'}
@@ -76,13 +74,15 @@ export function Testimonials() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4 mb-4">
-                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-12 w-12 rounded-full" />
                     <div className='space-y-2'>
                       <Skeleton className="h-4 w-24" />
                       <Skeleton className="h-4 w-16" />
                     </div>
                   </div>
-                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-full mt-2" />
+                  <Skeleton className="h-5 w-2/3 mt-2" />
                 </CardContent>
               </Card>
             ) : (
