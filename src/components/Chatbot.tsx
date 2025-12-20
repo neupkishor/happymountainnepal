@@ -34,7 +34,7 @@ export function Chatbot({ prefilledWhatsapp, prefilledEmail }: ChatbotProps) {
     const tempUserId = useCookie('temp_account');
 
     const finalMessages = useMemo(() => {
-        const userId = tempUserId || 'NotAvailable';
+        const userId = tempUserId || 'NotAvailable'; // Correctly use the cookie value
         const generalMessages = getGeneralChatMessage();
         return {
             whatsapp: (prefilledWhatsapp || generalMessages.whatsapp).replace('[userTempId]', userId),
