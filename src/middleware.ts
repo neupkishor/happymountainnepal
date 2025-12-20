@@ -148,8 +148,8 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const response = NextResponse.next();
   if (isNewAccount) {
     response.cookies.set(COOKIE_NAME, accountId, {
-      httpOnly: true,
-      secure: true,
+      httpOnly: false, // Make cookie readable by client-side JS
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 365,

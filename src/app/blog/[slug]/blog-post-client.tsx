@@ -1,9 +1,13 @@
+
 'use client';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Timestamp } from 'firebase/firestore';
 import type { BlogPost } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMemo } from 'react';
+import { Chatbot } from '@/components/Chatbot';
+import { getBlogChatMessage } from '@/lib/chat-messages';
 
 interface BlogPostClientProps {
   post: BlogPost;
@@ -42,46 +46,54 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
     }
   };
 
+  const chatMessages = useMemo(() => getBlogChatMessage(post.title), [post.title]);
+
   return (
-    <article>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
-      />
-      <header className="relative h-[40vh] md:h-[50vh] w-full">
-        <Image
-          src={post.image}
-          alt={post.title}
-          fill
-          className="object-cover"
-          priority
-          data-ai-hint="travel landscape"
+    <>
+      <article>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
-        <div className="container mx-auto h-full flex flex-col justify-end pb-12 relative z-10">
-          <h1 className="text-4xl md:text-6xl font-bold !font-headline text-white">{post.title}</h1>
-          <div className="mt-4 flex items-center gap-4 text-white/90">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={post.authorPhoto || `https://api.dicebear.com/7.x/initials/svg?seed=${post.author}`} />
-                <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span>{post.author}</span>
+        <header className="relative h-[40vh] md:h-[50vh] w-full">
+          <Image
+            src={post.image}
+            alt={post.title}
+            fill
+            className="object-cover"
+            priority
+            data-ai-hint="travel landscape"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+          <div className="container mx-auto h-full flex flex-col justify-end pb-12 relative z-10">
+            <h1 className="text-4xl md:text-6xl font-bold !font-headline text-white">{post.title}</h1>
+            <div className="mt-4 flex items-center gap-4 text-white/90">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={post.authorPhoto || `https://api.dicebear.com/7.x/initials/svg?seed=${post.author}`} />
+                  <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span>{post.author}</span>
+              </div>
+              <span>&bull;</span>
+              <time dateTime={isoDatePublished}>{displayDate}</time>
             </div>
-            <span>&bull;</span>
-            <time dateTime={isoDatePublished}>{displayDate}</time>
+          </div>
+        </header>
+
+        <div className="container mx-auto py-12">
+          <div className="max-w-3xl mx-auto">
+            <div
+              className="formatted-content max-w-none text-foreground"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
           </div>
         </div>
-      </header>
-
-      <div className="container mx-auto py-12">
-        <div className="max-w-3xl mx-auto">
-          <div
-            className="formatted-content max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-        </div>
-      </div>
-    </article>
+      </article>
+      <Chatbot
+        prefilledWhatsapp={chatMessages.whatsapp}
+        prefilledEmail={chatMessages.email}
+      />
+    </>
   );
 }

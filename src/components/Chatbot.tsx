@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Bot, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { cn } from '@/lib/utils';
 import { CustomizeTrip } from './CustomizeTrip';
+import { useCookie } from '@/hooks/use-cookie';
+import { getGeneralChatMessage } from '@/lib/chat-messages';
 
 const WhatsAppIcon = () => (
     <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current">
@@ -17,11 +19,32 @@ const WhatsAppIcon = () => (
     </svg>
 );
 
+interface ChatbotProps {
+  prefilledWhatsapp?: string;
+  prefilledEmail?: {
+    subject: string;
+    body: string;
+  };
+}
 
-export function Chatbot() {
+export function Chatbot({ prefilledWhatsapp, prefilledEmail }: ChatbotProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isChatting, setIsChatting] = useState(false);
     const { profile, isLoading } = useSiteProfile();
+    const tempUserId = useCookie('temp_account');
+
+    const finalMessages = useMemo(() => {
+        const userId = tempUserId || 'NotAvailable';
+        const generalMessages = getGeneralChatMessage();
+        return {
+            whatsapp: (prefilledWhatsapp || generalMessages.whatsapp).replace('[userTempId]', userId),
+            email: {
+                subject: (prefilledEmail?.subject || generalMessages.email.subject).replace('[userTempId]', userId),
+                body: (prefilledEmail?.body || generalMessages.email.body).replace('[userTempId]', userId),
+            }
+        };
+    }, [tempUserId, prefilledWhatsapp, prefilledEmail]);
+
 
     if (isLoading || !profile?.chatbot?.enabled) {
         return null;
@@ -53,6 +76,9 @@ export function Chatbot() {
         open: { opacity: 1, scale: 1, y: 0 },
         closed: { opacity: 0, scale: 0.95, y: isTop ? -20 : 20 },
     };
+
+    const whatsappLink = `https://wa.me/${whatsappNumber?.replace(/\D/g, '')}?text=${encodeURIComponent(finalMessages.whatsapp)}`;
+    const emailLink = `mailto:${emailAddress}?subject=${encodeURIComponent(finalMessages.email.subject)}&body=${encodeURIComponent(finalMessages.email.body)}`;
 
     if (isChatting) {
         return (
@@ -92,14 +118,14 @@ export function Chatbot() {
                                 </Button>
                                 {whatsappNumber && (
                                     <Button variant="outline" className="w-full justify-start" asChild>
-                                        <a href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                                             <WhatsAppIcon /> <span className='ml-2'>WhatsApp</span>
                                         </a>
                                     </Button>
                                 )}
                                 {emailAddress && (
                                     <Button variant="outline" className="w-full justify-start" asChild>
-                                        <a href={`mailto:${emailAddress}`}>
+                                        <a href={emailLink}>
                                             <Mail className="mr-2 h-5 w-5" /> Email Us
                                         </a>
                                     </Button>

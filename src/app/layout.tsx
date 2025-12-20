@@ -6,7 +6,6 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { HeaderV3 as Header } from '@/components/layout/HeaderV3';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { Chatbot } from '@/components/Chatbot'; // New import
 import 'quill/dist/quill.snow.css'; // Import Quill's CSS
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { PageViewTracker } from '@/lib/client-logger';
@@ -68,7 +67,7 @@ export default function RootLayout({
               <main className="flex-grow pt-16">{children}</main>
               <ConditionalFooter />
             </div>
-            <Chatbot />
+            {/* Chatbot removed from here, will be added to specific pages */}
             <Toaster />
             <PageViewTracker />
           </WishlistProvider>
