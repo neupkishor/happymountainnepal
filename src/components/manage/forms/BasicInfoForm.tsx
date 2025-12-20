@@ -18,7 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { type Tour } from '@/lib/types';
 import { checkSlugAvailability } from '@/lib/db';
 import { useState, useEffect } from 'react';
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, MoreHorizontal } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { slugify } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -120,7 +120,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
                       />
                     </FormControl>
                     {isSlugChecking && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
+                      <MoreHorizontal className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-pulse" />
                     )}
                     {!isSlugChecking && isSlugAvailable !== null && (
                       isSlugAvailable ? (
