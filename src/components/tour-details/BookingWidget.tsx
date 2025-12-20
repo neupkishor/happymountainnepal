@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Tour } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,10 +23,18 @@ export function BookingWidget({ tour }: BookingWidgetProps) {
   const departureDays = tour.departureDates.map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
   const guaranteedDays = tour.departureDates.filter(d => d.guaranteed).map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
   
-  const [date, setDate] = useState<Date | undefined>(departureDays.length > 0 ? departureDays[0] : new Date()); // Default to undefined if no dates
+  // Initialize date to undefined on server, set it on client mount
+  const [date, setDate] = useState<Date | undefined>(departureDays.length > 0 ? departureDays[0] : undefined);
   const { toast } = useToast();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const isWishlisted = isInWishlist(tour.id);
+
+  // Set default date on the client side to prevent hydration mismatch
+  useEffect(() => {
+    if (departureDays.length === 0 && !date) {
+      setDate(new Date());
+    }
+  }, [departureDays, date]);
 
   const handleInternalBooking = () => {
     if (!tour.anyDateAvailable && !date) {
