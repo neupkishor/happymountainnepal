@@ -148,14 +148,16 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
 
   const jsonLdSchema: any[] = [{
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": "TouristTrip",
     "name": tour.name,
     "description": tour.description,
     "image": tour.mainImage,
     "url": `https://happymountainnepal.com/tours/${tour.slug}`,
-    "brand": {
-      "@type": "Brand",
-      "name": "Happy Mountain Nepal"
+    "provider": {
+      "@type": "Organization",
+      "name": "Happy Mountain Nepal",
+      "url": "https://happymountainnepal.com",
+      "logo": "https://neupgroup.com/content/p3happymountainnepal/logo.png"
     },
     ...(averageRating > 0 && {
       "aggregateRating": {
