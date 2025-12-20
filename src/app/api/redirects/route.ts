@@ -21,7 +21,8 @@ export async function GET() {
             throw new Error(`Failed to fetch redirects: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const text = await response.text();
+        const data = JSON.parse(text);
         return NextResponse.json(data);
     } catch (error: any) {
         console.error('Error fetching redirects from external API:', error);
@@ -49,7 +50,8 @@ export async function POST(request: Request) {
                 body: JSON.stringify(data),
             });
             if (!response.ok) throw new Error('Failed to add redirect');
-            const result = await response.json();
+            const responseText = await response.text();
+            const result = JSON.parse(responseText);
             return NextResponse.json({ success: true, id: result.id });
 
         } else if (action === 'delete') {

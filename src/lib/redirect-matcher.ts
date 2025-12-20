@@ -44,7 +44,9 @@ async function fetchRedirects(): Promise<RedirectRule[]> {
             throw new Error(`Failed to fetch redirects: ${response.statusText}`);
         }
         
-        const data = await response.json();
+        const text = await response.text();
+        const data = JSON.parse(text);
+
         cachedRedirects = (data.redirects || []) as RedirectRule[];
         lastFetchTimestamp = Date.now();
         return cachedRedirects || [];
