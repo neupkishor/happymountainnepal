@@ -22,8 +22,12 @@ export async function GET() {
             throw new Error(`Failed to fetch redirects: ${response.statusText}`);
         }
 
-        const data = await response.json(); // Use .json() directly
-        return NextResponse.json(data);
+        const data = await response.json(); // API returns a direct array
+        
+        // The data is already in the format [{...}, {...}], so just return it.
+        // We need to wrap it in an object to match what the client-side table expects.
+        return NextResponse.json({ redirects: data });
+
     } catch (error: any) {
         console.error('Error fetching redirects from external API:', error);
         return NextResponse.json({ error: 'Failed to fetch redirects' }, { status: 500 });
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
                 body: JSON.stringify(data),
             });
             if (!response.ok) throw new Error('Failed to add redirect');
-            const result = await response.json(); // Use .json()
+            const result = await response.json();
             return NextResponse.json({ success: true, id: result.id });
 
         } else if (action === 'delete') {
