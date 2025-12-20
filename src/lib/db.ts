@@ -760,6 +760,7 @@ export async function addExternalMediaLink(url: string, userId: string): Promise
         let relativePath = url;
         try {
             const urlObj = new URL(url);
+            // Get the path part (everything after the domain)
             relativePath = urlObj.pathname;
         } catch (e) {
             // If URL parsing fails, use the full URL
@@ -1844,5 +1845,3 @@ export async function getAccounts(): Promise<Account[]> {
         return [];
     }
 }
-
-```
