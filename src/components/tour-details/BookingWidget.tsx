@@ -23,7 +23,7 @@ export function BookingWidget({ tour }: BookingWidgetProps) {
   const departureDays = tour.departureDates.map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
   const guaranteedDays = tour.departureDates.filter(d => d.guaranteed).map(d => d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date));
   
-  // Initialize date to undefined on server, set it on client mount
+  // Initialize date to undefined on server. We will set it on the client to avoid hydration mismatch.
   const [date, setDate] = useState<Date | undefined>(departureDays.length > 0 ? departureDays[0] : undefined);
   const { toast } = useToast();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
@@ -31,6 +31,8 @@ export function BookingWidget({ tour }: BookingWidgetProps) {
 
   // Set default date on the client side to prevent hydration mismatch
   useEffect(() => {
+    // If there are no departure days and no date is set yet, set it to today.
+    // This runs only on the client.
     if (departureDays.length === 0 && !date) {
       setDate(new Date());
     }
