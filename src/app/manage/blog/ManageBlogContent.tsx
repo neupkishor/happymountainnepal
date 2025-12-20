@@ -16,7 +16,7 @@ import {
     TableRow,
     TableCell,
 } from '@/components/ui/table';
-import { PlusCircle, Wand2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BlogTableRow } from '@/components/manage/BlogTableRow';
 import { getBlogPosts, getBlogPostCount } from '@/lib/db';
 import type { BlogPost } from '@/lib/types';
@@ -109,12 +109,6 @@ export function ManageBlogContent() {
                     <p className="text-muted-foreground mt-2">Create and manage your articles.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button asChild variant="outline">
-                        <Link href="/manage/import/blog">
-                            <Wand2 className="mr-2 h-4 w-4" />
-                            Import from URL
-                        </Link>
-                    </Button>
                     <Button asChild>
                         <Link href="/manage/blog/create">
                             <PlusCircle className="mr-2 h-4 w-4" />
