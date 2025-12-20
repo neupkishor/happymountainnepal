@@ -3,7 +3,8 @@
 
 import { NextResponse } from 'next/server';
 
-const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects';
+const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects.json';
+const API_URL_MUTATE = 'https://neupgroup.com/site/bridge/api/v1/redirects'; // For POST/DELETE
 const API_KEY = process.env.NEUP_API_KEY;
 
 // GET - Fetch all redirects from the external API
@@ -21,8 +22,7 @@ export async function GET() {
             throw new Error(`Failed to fetch redirects: ${response.statusText}`);
         }
 
-        const text = await response.text();
-        const data = JSON.parse(text);
+        const data = await response.json(); // Use .json() directly
         return NextResponse.json(data);
     } catch (error: any) {
         console.error('Error fetching redirects from external API:', error);
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         const { action, data, id } = body;
 
         if (action === 'add') {
-            const response = await fetch(API_URL, {
+            const response = await fetch(API_URL_MUTATE, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -50,14 +50,13 @@ export async function POST(request: Request) {
                 body: JSON.stringify(data),
             });
             if (!response.ok) throw new Error('Failed to add redirect');
-            const responseText = await response.text();
-            const result = JSON.parse(responseText);
+            const result = await response.json(); // Use .json()
             return NextResponse.json({ success: true, id: result.id });
 
         } else if (action === 'delete') {
             if (!id) return NextResponse.json({ success: false, error: 'ID is required for deletion' }, { status: 400 });
             
-            const response = await fetch(`${API_URL}?id=${id}`, {
+            const response = await fetch(`${API_URL_MUTATE}?id=${id}`, {
                 method: 'DELETE',
                 headers: { 'x-api-key': API_KEY },
             });

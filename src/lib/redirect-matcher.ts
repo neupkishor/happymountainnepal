@@ -21,7 +21,7 @@ let cachedRedirects: RedirectRule[] | null = null;
 let lastFetchTimestamp = 0;
 const CACHE_DURATION = 60 * 1000; // 60 seconds
 
-const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects';
+const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects.json';
 const API_KEY = process.env.NEUP_API_KEY;
 
 async function fetchRedirects(): Promise<RedirectRule[]> {
@@ -44,8 +44,7 @@ async function fetchRedirects(): Promise<RedirectRule[]> {
             throw new Error(`Failed to fetch redirects: ${response.statusText}`);
         }
         
-        const text = await response.text();
-        const data = JSON.parse(text);
+        const data = await response.json(); // Use .json() directly
 
         cachedRedirects = (data.redirects || []) as RedirectRule[];
         lastFetchTimestamp = Date.now();
