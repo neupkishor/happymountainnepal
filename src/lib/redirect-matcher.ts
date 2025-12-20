@@ -22,21 +22,16 @@ let lastFetchTimestamp = 0;
 const CACHE_DURATION = 60 * 1000; // 60 seconds
 
 const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects.json';
-const API_KEY = process.env.NEUP_API_KEY;
 
 async function fetchRedirects(): Promise<RedirectRule[]> {
-    if (!API_KEY) {
-        console.error("API key for redirects is not configured.");
-        return [];
-    }
-    
     if (cachedRedirects && (Date.now() - lastFetchTimestamp < CACHE_DURATION)) {
         return cachedRedirects;
     }
 
     try {
         const response = await fetch(API_URL, {
-            headers: { 'x-api-key': API_KEY },
+            // No API key needed for public endpoint
+            headers: { 'Content-Type': 'application/json' },
             next: { revalidate: 60 } // Revalidate every 60 seconds
         });
 

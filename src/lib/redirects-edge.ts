@@ -24,22 +24,16 @@ let lastFetchTimestamp = 0;
 const CACHE_DURATION = 60 * 1000; // 60 seconds
 
 const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects.json';
-const API_KEY = process.env.NEUP_API_KEY;
 
 // This function will be called by the middleware.
 async function getRedirectsFromApi(): Promise<RedirectRule[]> {
-    if (!API_KEY) {
-        console.error("API key for redirects is not configured.");
-        return [];
-    }
-
     if (cachedRedirects.length > 0 && (Date.now() - lastFetchTimestamp < CACHE_DURATION)) {
         return cachedRedirects;
     }
 
     try {
         const response = await fetch(API_URL, {
-            headers: { 'x-api-key': API_KEY },
+            headers: { 'Content-Type': 'application/json' },
             next: { revalidate: 60 }
         });
         if (!response.ok) {

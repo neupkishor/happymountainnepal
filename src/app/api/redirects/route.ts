@@ -9,12 +9,9 @@ const API_KEY = process.env.NEUP_API_KEY;
 
 // GET - Fetch all redirects from the external API
 export async function GET() {
-    if (!API_KEY) {
-        return NextResponse.json({ error: 'API key is not configured' }, { status: 500 });
-    }
     try {
         const response = await fetch(API_URL, {
-            headers: { 'x-api-key': API_KEY },
+            headers: { 'Content-Type': 'application/json' }, // Ensure we accept JSON
             next: { revalidate: 60 } // Cache for 60 seconds
         });
 
@@ -37,7 +34,7 @@ export async function GET() {
 // POST - Add or delete a redirect via the external API
 export async function POST(request: Request) {
     if (!API_KEY) {
-        return NextResponse.json({ error: 'API key is not configured' }, { status: 500 });
+        return NextResponse.json({ error: 'API key is not configured for write operations' }, { status: 500 });
     }
     
     try {
