@@ -1,15 +1,13 @@
 
 'use client';
 
-import { getTourById } from '@/lib/db';
-import { notFound } from 'next/navigation';
-import { InclusionsForm } from '@/components/manage/forms/InclusionsForm';
 import { EditPackageLayout } from '@/components/manage/EditPackageLayout';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Tour } from '@/lib/types';
 import { useEffect } from 'react';
+import { InclusionsForm } from '@/components/manage/forms/InclusionsForm';
 
 interface InclusionsFormValues {
   inclusions: string[];
@@ -44,14 +42,4 @@ function EditInclusionsPageClient({ tour }: { tour: Tour }) {
       </EditPackageLayout>
     </FormProvider>
   );
-}
-
-export default async function EditInclusionsPage({ params }: { params: { id: string } }) {
-  const tour = await getTourById(params.id);
-
-  if (!tour) {
-    notFound();
-  }
-
-  return <EditInclusionsPageClient tour={tour} />;
 }
