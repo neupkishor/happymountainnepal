@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -21,92 +22,110 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useFirestore } from '@/firebase';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { Users, User, Bot, Clock } from 'lucide-react';
+import { getAccounts, getAnonymousUsers } from '@/lib/db';
 import type { Account } from '@/lib/types';
+import { Timestamp } from 'firebase/firestore';
+
+// Define a unified user type
+type DisplayUser = {
+  id: string;
+  identifier: string; // email for permanent, cookieId for temporary
+  type: 'Permanent' | 'Temporary';
+  lastSeen: string; // ISO string date
+};
+
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [users, setUsers] = useState<DisplayUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const firestore = useFirestore();
 
   useEffect(() => {
-    if (!firestore) return;
-    const fetchAccounts = async () => {
+    const fetchUsers = async () => {
       try {
         setLoading(true);
-        const accountsRef = collection(firestore, 'accounts');
-        const q = query(accountsRef, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        setAccounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account)));
+        const [permanentAccounts, anonymousUsers] = await Promise.all([
+          getAccounts(),
+          getAnonymousUsers(),
+        ]);
+
+        const permanentDisplayUsers: DisplayUser[] = permanentAccounts.map(acc => ({
+            id: acc.id,
+            identifier: acc.email,
+            type: 'Permanent',
+            lastSeen: (acc.createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+        }));
+        
+        const anonymousDisplayUsers: DisplayUser[] = anonymousUsers.map(anon => ({
+            id: anon.id,
+            identifier: anon.id,
+            type: 'Temporary',
+            lastSeen: anon.lastSeen
+        }));
+
+        // Combine and sort by last seen date
+        const allUsers = [...permanentDisplayUsers, ...anonymousDisplayUsers];
+        allUsers.sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime());
+        
+        setUsers(allUsers);
         setError(null);
       } catch (err) {
         console.error(err);
-        setError('Failed to load accounts. Please try again later.');
+        setError('Failed to load users. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAccounts();
-  }, [firestore]);
+    fetchUsers();
+  }, []);
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Registered Users</CardTitle>
-          <CardDescription>
-            List of user accounts with email and password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Users</CardTitle>
+        <CardDescription>
+           A combined list of registered users and anonymous visitors.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
           <div className="space-y-4">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="text-center py-12">
-        <p className="text-destructive">{error}</p>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Registered Users</CardTitle>
-        <CardDescription>
-           List of user accounts with email and password.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {accounts.length > 0 ? (
+        ) : error ? (
+            <Card className="text-center py-12">
+                <p className="text-destructive">{error}</p>
+            </Card>
+        ) : users.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>User Identifier</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Last Seen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accounts.map((account) => (
-                <TableRow key={account.id}>
-                  <TableCell className="font-medium">{ (account as any).fullName || 'N/A'}</TableCell>
-                   <TableCell>{ (account as any).email || 'N/A'}</TableCell>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-mono text-xs break-all">
+                    {user.identifier}
+                  </TableCell>
                   <TableCell>
-                    {account.createdAt?.toDate ? formatDistanceToNow(account.createdAt.toDate(), { addSuffix: true }) : 'N/A'}
+                    <Badge variant={user.type === 'Permanent' ? 'default' : 'secondary'}>
+                        {user.type === 'Permanent' ? <User className="h-3 w-3 mr-1" /> : <Bot className="h-3 w-3 mr-1" />}
+                        {user.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs">
+                     <div className='flex items-center gap-1 text-muted-foreground'>
+                        <Clock className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(user.lastSeen), { addSuffix: true })}
+                     </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -115,11 +134,13 @@ export default function AccountsPage() {
         ) : (
           <div className="text-center py-16 text-muted-foreground">
             <Users className="mx-auto h-12 w-12" />
-            <h3 className="mt-4 text-lg font-semibold">No Accounts Yet</h3>
-            <p>New user accounts will appear here as they are created.</p>
+            <h3 className="mt-4 text-lg font-semibold">No Users Found</h3>
+            <p>User and visitor data will appear here.</p>
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
+
+```

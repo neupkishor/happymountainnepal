@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
@@ -349,7 +350,7 @@ export async function createBlogPostWithData(data: ImportedBlogData): Promise<st
     if (!firestore) return null;
 
     const slug = slugify(data.title);
-    const isAvailable = await checkSlugAvailability(slug);
+    const isAvailable = await checkBlogSlugAvailability(slug);
     if (!isAvailable) {
         throw new Error(`A blog post with the slug '${slug}' already exists.`);
     }
@@ -1800,3 +1801,48 @@ export async function getUniquePageLogs(options?: {
     }
 }
 
+export type AnonymousUser = {
+  id: string; // cookieId
+  lastSeen: string; // ISO string
+};
+
+export async function getAnonymousUsers(): Promise<AnonymousUser[]> {
+    if (!firestore) return [];
+    try {
+        const logsRef = collection(firestore, 'logs');
+        const q = query(logsRef, orderBy('timestamp', 'desc'));
+        const querySnapshot = await getDocs(q);
+
+        const usersMap = new Map<string, AnonymousUser>();
+
+        querySnapshot.docs.forEach(doc => {
+            const log = doc.data() as Log;
+            if (log.cookieId && !usersMap.has(log.cookieId)) {
+                usersMap.set(log.cookieId, {
+                    id: log.cookieId,
+                    lastSeen: (log.timestamp as Timestamp).toDate().toISOString(),
+                });
+            }
+        });
+
+        return Array.from(usersMap.values());
+    } catch (error) {
+        console.error("Error fetching anonymous users from logs:", error);
+        return [];
+    }
+}
+
+export async function getAccounts(): Promise<Account[]> {
+    if (!firestore) return [];
+    try {
+        const accountsRef = collection(firestore, 'accounts');
+        const q = query(accountsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account));
+    } catch (error) {
+        console.error("Error fetching accounts:", error);
+        return [];
+    }
+}
+
+```
