@@ -34,15 +34,10 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
 
 // Simple cookie-based authentication
 async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
-  console.log('[Auth] Checking manager authentication in middleware...');
-
   const username = request.cookies.get('manager_username')?.value;
   const password = request.cookies.get('manager_password')?.value;
 
-  console.log(`[Auth] Found cookies: username=${!!username}, password=${!!password}`);
-
   if (!username || !password) {
-    console.log('[Auth] Missing username or password cookie.');
     return false;
   }
 
@@ -53,51 +48,69 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
         m.username === username && m.password === password
     );
 
-    if (manager) {
-      console.log('[Auth] Valid manager credentials found.');
-      return true;
-    }
-
-    console.log('[Auth] Invalid credentials.');
-    return false;
+    return !!manager;
   } catch (e) {
-    console.log('[Auth] Error reading manager data:', e);
+    console.error('[Auth Middleware Error] Failed to validate manager credentials:', e);
     return false;
   }
 }
 
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const { pathname, origin } = request.nextUrl;
+  
+  // Create a new headers object from the original request's headers
+  const requestHeaders = new Headers(request.headers);
+  
   const userAgent = request.headers.get('user-agent') || 'Unknown';
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-    request.headers.get('x-real-ip') ?? '127.0.0.1';
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? request.ip ?? '127.0.0.1';
   const referrer = request.headers.get('referer') || undefined;
   const method = request.method;
 
-  const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
-  const isBotRequest = isBot(userAgent);
-
-  // 1. HTTPS enforcement
-  if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
-    if (request.nextUrl.protocol !== 'https:' && process.env.NODE_ENV == "production") {
-      const redirectUrl = new URL('/', origin);
-      redirectUrl.searchParams.set('loginError', 'unsafeProtocol');
-
-      const response = NextResponse.redirect(redirectUrl);
-      response.cookies.set(COOKIE_NAME, '', { maxAge: 0, path: '/' });
-      response.cookies.set('manager_username', '', { maxAge: 0, path: '/' });
-      response.cookies.set('manager_password', '', { maxAge: 0, path: '/' });
-
-      return response;
-    }
-  }
-
-  // 2. Temp account cookie
+  // 1. Temp account cookie
   let accountId = request.cookies.get(COOKIE_NAME)?.value;
   let isNewAccount = false;
   if (!accountId) {
     accountId = uuidv4();
     isNewAccount = true;
+  }
+
+  // Add the temp account ID to the request headers to be accessible by server components
+  requestHeaders.set('x-temp-account-id', accountId);
+
+  const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
+  const isBotRequest = isBot(userAgent);
+  
+  // Create the base response with the new headers
+  const response = NextResponse.next({
+      request: {
+          headers: requestHeaders,
+      },
+  });
+
+  // Set the cookie on the response if it's a new account
+  if (isNewAccount) {
+    response.cookies.set(COOKIE_NAME, accountId, {
+      httpOnly: true, // Make it httpOnly for security
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+
+  // 2. HTTPS enforcement
+  if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
+    if (request.nextUrl.protocol !== 'https:' && process.env.NODE_ENV == "production") {
+      const redirectUrl = new URL('/', origin);
+      redirectUrl.searchParams.set('loginError', 'unsafeProtocol');
+
+      const logoutResponse = NextResponse.redirect(redirectUrl);
+      logoutResponse.cookies.set(COOKIE_NAME, '', { maxAge: 0, path: '/' });
+      logoutResponse.cookies.set('manager_username', '', { maxAge: 0, path: '/' });
+      logoutResponse.cookies.set('manager_password', '', { maxAge: 0, path: '/' });
+
+      return logoutResponse;
+    }
   }
 
   // 3. Redirects
@@ -137,26 +150,13 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // 5. Manager authentication
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
     if (!await isManagerAuthenticated(request)) {
-      console.log(`[Auth] Redirecting unauthenticated user to /manage/login`);
       const url = request.nextUrl.clone();
       url.pathname = '/manage/login';
       return NextResponse.redirect(url);
     }
   }
 
-  // 6. Response & set temp account cookie
-  const response = NextResponse.next();
-  if (isNewAccount) {
-    response.cookies.set(COOKIE_NAME, accountId, {
-      httpOnly: false, // Must be false for client-side JS to read it
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 365,
-    });
-  }
-
-  // 7. Logging
+  // 6. Logging
   if (shouldLog) {
     const resourceType = getResourceType(pathname);
     event.waitUntil(
@@ -168,7 +168,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
           pageAccessed: pathname,
           resourceType,
           method,
-          statusCode: 200,
+          statusCode: response.status,
           referrer,
           userAgent,
           ipAddress: ip,

@@ -11,9 +11,10 @@ import { getBlogChatMessage } from '@/lib/chat-messages';
 
 interface BlogPostClientProps {
   post: BlogPost;
+  tempUserId: string;
 }
 
-export default function BlogPostClient({ post }: BlogPostClientProps) {
+export default function BlogPostClient({ post, tempUserId }: BlogPostClientProps) {
   const displayDate = post.date instanceof Timestamp ? post.date.toDate().toLocaleDateString() : new Date(post.date).toLocaleDateString();
   const isoDatePublished = post.date instanceof Timestamp ? post.date.toDate().toISOString() : new Date(post.date).toISOString();
   const isoDateModified = isoDatePublished; // Assuming no separate modified date for now
@@ -93,6 +94,7 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
       <Chatbot
         prefilledWhatsapp={chatMessages.whatsapp}
         prefilledEmail={chatMessages.email}
+        tempUserId={tempUserId}
       />
     </>
   );

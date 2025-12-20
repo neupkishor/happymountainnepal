@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Bot, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { cn } from '@/lib/utils';
 import { CustomizeTrip } from './CustomizeTrip';
-import { useCookie } from '@/hooks/use-cookie';
 import { getGeneralChatMessage } from '@/lib/chat-messages';
 
 const WhatsAppIcon = () => (
@@ -25,16 +24,16 @@ interface ChatbotProps {
     subject: string;
     body: string;
   };
+  tempUserId: string; // Now passed as a prop
 }
 
-export function Chatbot({ prefilledWhatsapp, prefilledEmail }: ChatbotProps) {
+export function Chatbot({ prefilledWhatsapp, prefilledEmail, tempUserId }: ChatbotProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isChatting, setIsChatting] = useState(false);
     const { profile, isLoading } = useSiteProfile();
-    const tempUserId = useCookie('temp_account');
 
     const finalMessages = useMemo(() => {
-        const userId = tempUserId || 'NotAvailable'; // Correctly use the cookie value
+        const userId = tempUserId || 'NotAvailable';
         const generalMessages = getGeneralChatMessage();
         return {
             whatsapp: (prefilledWhatsapp || generalMessages.whatsapp).replace('[userTempId]', userId),

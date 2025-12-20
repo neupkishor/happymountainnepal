@@ -12,8 +12,12 @@ import { RecommendedTours } from "@/components/RecommendedTours";
 import { OurPartners } from "@/components/OurPartners";
 import { ContactSection } from "@/components/ContactSection";
 import { Chatbot } from "@/components/Chatbot"; // Import Chatbot
+import { headers } from "next/headers";
 
 export default function Home() {
+  const headersList = headers();
+  const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';
+
   return (
     <>
       <div className="homepage-sections-wrapper flex flex-col">
@@ -29,7 +33,7 @@ export default function Home() {
         <CustomizeTrip />
         <ContactSection />
       </div>
-      <Chatbot />
+      <Chatbot tempUserId={tempUserId} />
     </>
   );
 }

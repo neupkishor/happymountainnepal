@@ -20,15 +20,17 @@ import { usePathname } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore';
 import { Chatbot } from '@/components/Chatbot';
 import { getTourChatMessage } from '@/lib/chat-messages';
+import { headers } from 'next/headers'; // This cannot be used in a client component
 
 interface TourDetailClientProps {
   tour: Tour;
+  tempUserId: string;
 }
 
 const RECENTLY_VIEWED_KEY = 'happy-mountain-recent-tours';
 const MAX_RECENTLY_VIEWED = 10;
 
-export default function TourDetailClient({ tour }: TourDetailClientProps) {
+export default function TourDetailClient({ tour, tempUserId }: TourDetailClientProps) {
   const [displayedReviews, setDisplayedReviews] = useState<ManagedReview[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [hasMorePackageReviews, setHasMorePackageReviews] = useState(true);
@@ -288,6 +290,7 @@ export default function TourDetailClient({ tour }: TourDetailClientProps) {
       <Chatbot
         prefilledWhatsapp={chatMessages.whatsapp}
         prefilledEmail={chatMessages.email}
+        tempUserId={tempUserId}
       />
     </>
   );

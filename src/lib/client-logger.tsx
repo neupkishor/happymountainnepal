@@ -3,18 +3,13 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-// Helper to get cookie by name
+// Helper to get cookie by name (remains for other potential uses, but not for temp_account)
 function getCookie(name: string): string | undefined {
     if (typeof document === 'undefined') return undefined;
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop()?.split(';').shift();
     return undefined;
-}
-
-// Helper to get cookie ID
-function getCookieId(): string | undefined {
-    return getCookie('temp_account');
 }
 
 // Helper to detect if user agent is a bot
@@ -31,14 +26,11 @@ function isBot(): boolean {
 // Log a page view
 export async function logPageView(pathname: string) {
     try {
-        const cookieId = getCookieId();
-        // if (!cookieId) return; // REMOVED: Cookie is HttpOnly, so client JS can't read it. Server will extract it.
-
         await fetch('/api/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                cookieId,
+                // The cookieId will be extracted from headers on the server-side via the middleware
                 pageAccessed: pathname,
                 resourceType: 'page',
                 method: 'GET',

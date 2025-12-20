@@ -3,6 +3,7 @@ import BlogPostClient from './blog-post-client';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next'; // Import Metadata type
 import { Timestamp } from 'firebase/firestore';
+import { headers } from 'next/headers';
 
 type BlogDetailPageProps = {
   params: {
@@ -74,5 +75,8 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
       date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
   };
 
-  return <BlogPostClient post={serializablePost} />;
+  const headersList = headers();
+  const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';
+
+  return <BlogPostClient post={serializablePost} tempUserId={tempUserId} />;
 }

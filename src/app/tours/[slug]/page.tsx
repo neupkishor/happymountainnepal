@@ -2,6 +2,7 @@ import { getTourBySlug } from '@/lib/db';
 import TourDetailClient from './tour-detail-client';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next'; // Import Metadata type
+import { headers } from 'next/headers';
 
 type TourDetailPageProps = {
   params: {
@@ -59,5 +60,8 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
     notFound();
   }
 
-  return <TourDetailClient tour={tour} />;
+  const headersList = headers();
+  const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';
+
+  return <TourDetailClient tour={tour} tempUserId={tempUserId} />;
 }
