@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { readCredentialFile } from '@/lib/base';
+import { getManagerData } from '@/lib/base-edge'; // Use the edge-safe fetcher
 
 // Login endpoint
 export async function POST(request: NextRequest) {
@@ -14,23 +14,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get manager credentials from base storage
+        // Get manager credentials from the API
         let managers: { username: string; password: string }[];
-
         try {
-            managers = await readCredentialFile('manager.json');
-        } catch (fileError) {
-            console.error('Manager credentials not found in base storage');
+            managers = await getManagerData();
+        } catch (fetchError) {
+            console.error('Failed to fetch manager credentials:', fetchError);
             return NextResponse.json(
-                { error: 'Manager credentials not configured' },
+                { error: 'Could not retrieve manager credentials from the source.' },
                 { status: 500 }
             );
         }
 
         // Check if credentials match
         const manager = managers.find(
-            (m: { username: string; password: string }) =>
-                m.username === username && m.password === password
+            (m) => m.username === username && m.password === password
         );
 
         if (!manager) {

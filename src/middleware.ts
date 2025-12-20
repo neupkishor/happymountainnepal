@@ -33,7 +33,7 @@ function getResourceType(pathname: string): 'page' | 'api' | 'static' {
 }
 
 // Simple cookie-based authentication
-function isManagerAuthenticated(request: NextRequest): boolean {
+async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
   console.log('[Auth] Checking manager authentication in middleware...');
 
   const username = request.cookies.get('manager_username')?.value;
@@ -47,7 +47,7 @@ function isManagerAuthenticated(request: NextRequest): boolean {
   }
 
   try {
-    const managers = getManagerData();
+    const managers = await getManagerData();
     const manager = managers.find(
       (m: { username: string; password: string }) =>
         m.username === username && m.password === password
@@ -136,7 +136,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
   // 5. Manager authentication
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
-    if (!isManagerAuthenticated(request)) {
+    if (!await isManagerAuthenticated(request)) {
       console.log(`[Auth] Redirecting unauthenticated user to /manage/login`);
       const url = request.nextUrl.clone();
       url.pathname = '/manage/login';
