@@ -101,7 +101,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // 3. Redirects
-  const matchResult = matchRedirectEdge(pathname);
+  const matchResult = await matchRedirectEdge(pathname);
   if (matchResult?.matched) {
     const statusCode = matchResult.permanent ? 308 : 307;
     if (shouldLog) {
