@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -189,42 +190,72 @@ export default function TeamManagementPage() {
   const handleMemberDragStart = (member: TeamMember) => {
     setDraggedMember(member);
   };
-
-  const handleMemberDragOver = (e: React.DragEvent, targetGroupId: string | null, targetIndex: number) => {
+  
+  const handleMemberDragOver = (e: React.DragEvent, targetGroupId: string | null, targetMemberIndex: number) => {
     e.preventDefault();
     e.stopPropagation();
-
+  
     if (!draggedMember) return;
-
-    // Optimistically update the UI
-    const membersInTargetGroup = teamMembers
+  
+    // Determine the current group and index of the dragged member
+    const sourceGroupId = draggedMember.groupId || null;
+    const membersInSourceGroup = teamMembers
+      .filter(m => (m.groupId || null) === sourceGroupId)
+      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+    const sourceIndex = membersInSourceGroup.findIndex(m => m.id === draggedMember.id);
+  
+    // If the position hasn't changed, do nothing
+    if (sourceGroupId === targetGroupId && sourceIndex === targetMemberIndex) {
+      return;
+    }
+  
+    // 1. Remove the dragged member from its current position
+    let tempMembers = teamMembers.filter(m => m.id !== draggedMember.id);
+  
+    // 2. Re-index the source group if it's different from the target
+    if (sourceGroupId !== targetGroupId) {
+      tempMembers = tempMembers.map(m => {
+        if ((m.groupId || null) === sourceGroupId && m.orderIndex && m.orderIndex > sourceIndex) {
+          return { ...m, orderIndex: m.orderIndex - 1 };
+        }
+        return m;
+      });
+    }
+  
+    // 3. Get members of the target group and make space
+    const targetGroupMembers = tempMembers
       .filter(m => (m.groupId || null) === targetGroupId)
       .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-
-    // Remove dragged member from its current position
-    const filteredMembers = membersInTargetGroup.filter(m => m.id !== draggedMember.id);
-
-    // Insert at new position
-    filteredMembers.splice(targetIndex, 0, draggedMember);
-
-    // Create optimistic state
-    const updatedMembers = teamMembers.map(member => {
-      if (member.id === draggedMember.id) {
-        return { ...member, groupId: targetGroupId, orderIndex: targetIndex };
+  
+    const updatedTargetGroupMembers = targetGroupMembers.map(m => {
+      if (m.orderIndex !== undefined && m.orderIndex >= targetMemberIndex) {
+        return { ...m, orderIndex: m.orderIndex + 1 };
       }
-
-      const indexInGroup = filteredMembers.findIndex(m => m.id === member.id);
-      if (indexInGroup !== -1 && (member.groupId || null) === targetGroupId) {
-        return { ...member, orderIndex: indexInGroup };
-      }
-
-      return member;
+      return m;
     });
-
-    setTeamMembers(updatedMembers);
+  
+    // 4. Update the state with the members from the target group with their new indices
+    tempMembers = tempMembers.map(m => {
+      const updatedMember = updatedTargetGroupMembers.find(um => um.id === m.id);
+      return updatedMember || m;
+    });
+  
+    // 5. Insert the dragged member into its new position
+    const updatedDraggedMember = {
+      ...draggedMember,
+      groupId: targetGroupId,
+      orderIndex: targetMemberIndex,
+    };
+  
+    tempMembers.push(updatedDraggedMember);
+  
+    // Final re-sorting to ensure everything is in order before setting state
+    tempMembers.sort((a, b) => ((a.orderIndex || 0) - (b.orderIndex || 0)));
+  
+    setTeamMembers(tempMembers);
     setDragOverGroupId(targetGroupId);
-    setDragOverMemberIndex(targetIndex);
   };
+  
 
   const handleMemberDragEnd = () => {
     setDraggedMember(null);
@@ -236,24 +267,15 @@ export default function TeamManagementPage() {
     if (!draggedMember) return;
 
     setIsUpdating(true);
-    try {
-      const membersInTargetGroup = teamMembers
-        .filter(m => (m.groupId || null) === targetGroupId)
-        .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
 
-      // Remove dragged member from its current position
-      const filteredMembers = membersInTargetGroup.filter(m => m.id !== draggedMember.id);
-
-      // Insert at new position
-      filteredMembers.splice(targetIndex, 0, draggedMember);
-
-      // Create updates for all affected members
-      const updates = filteredMembers.map((member, index) => ({
+    // Use the already optimistically-updated `teamMembers` state
+    const updates = teamMembers.map(member => ({
         id: member.id,
-        groupId: targetGroupId,
-        orderIndex: index,
-      }));
-
+        groupId: member.groupId || null,
+        orderIndex: member.orderIndex || 0,
+    }));
+    
+    try {
       await batchUpdateTeamMemberPositions(updates);
 
       toast({
@@ -261,14 +283,14 @@ export default function TeamManagementPage() {
         description: 'Team member position updated',
       });
 
-      fetchData();
+      fetchData(); // Refetch to confirm state from DB
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to update team member position',
         variant: 'destructive',
       });
-      // Revert optimistic update on error
+      // Revert optimistic update on error by fetching original data
       fetchData();
     } finally {
       setDraggedMember(null);
@@ -483,7 +505,7 @@ export default function TeamManagementPage() {
                       <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
                     <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/manage/team/${member.id}`}>
+                      <Link href={`/manage/team/${member.id}/edit`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -511,8 +533,7 @@ export default function TeamManagementPage() {
           ))}
 
           {/* Ungrouped Members */}
-          {ungroupedMembers.length > 0 && (
-            <div className={`border rounded-lg p-4 transition-all duration-200 ${dragOverGroupId === null && draggedMember ? 'border-primary bg-primary/5' : ''
+          <div className={`border rounded-lg p-4 transition-all duration-200 ${dragOverGroupId === null && draggedMember ? 'border-primary bg-primary/5' : ''
               }`}>
               <h3 className="font-semibold text-lg mb-4">Ungrouped Members</h3>
               <div className="space-y-2">
@@ -542,15 +563,30 @@ export default function TeamManagementPage() {
                       <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
                     <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/manage/team/${member.id}`}>
+                      <Link href={`/manage/team/${member.id}/edit`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>
                   </div>
                 ))}
+                 {/* Drop zone for ungrouped */}
+                 <div
+                  onDragOver={(e) => handleMemberDragOver(e, null, getMembersInGroup(null).length)}
+                  onDrop={(e) => {
+                    e.stopPropagation();
+                    handleMemberDrop(null, getMembersInGroup(null).length);
+                  }}
+                  className={`border-2 border-dashed rounded-lg p-4 text-center text-sm transition-all duration-200 ${dragOverGroupId === null && draggedMember
+                    ? 'border-primary bg-primary/10 text-primary scale-105'
+                    : 'border-muted-foreground/20 text-muted-foreground hover:border-primary/50'
+                    }`}
+                >
+                  {dragOverGroupId === null && draggedMember
+                    ? `Drop ${draggedMember.name} here`
+                    : 'Drop member here to ungroup'}
+                </div>
               </div>
             </div>
-          )}
 
           {teamGroups.length === 0 && ungroupedMembers.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
