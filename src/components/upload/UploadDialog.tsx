@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Upload, Link2, X, Check } from 'lucide-react';
 import { addExternalMediaLink } from '@/lib/db';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useSiteProfile } from '@/hooks/use-site-profile';
 
 interface UploadDialogProps {
     open: boolean;
@@ -14,14 +14,13 @@ interface UploadDialogProps {
 }
 
 export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDialogProps) {
+    const { profile } = useSiteProfile();
+
     const [uploadMode, setUploadMode] = useState<'file' | 'link'>('file');
-    const [uploadDestination, setUploadDestination] = useState<'api' | 'server'>('server');
-    const [serverPath, setServerPath] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [linkUrl, setLinkUrl] = useState('');
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadOriginal, setUploadOriginal] = useState(false);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -55,70 +54,46 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
 
         setIsUploading(true);
         try {
-            if (uploadDestination === 'api') {
-                // Upload to neupgroup.com API
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-                formData.append('platform', 'p3.happymountainnepal');
-                formData.append('contentIds', JSON.stringify(['uploads', 'admin-user', 'upload-dialog']));
-                formData.append('name', selectedFile.name.replace(/\.[^/.]+$/, ''));
+            // Upload to neupgroup.com API
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('platform', 'p3.happymountainnepal');
+            formData.append('contentIds', JSON.stringify(['uploads', 'admin-user', 'upload-dialog']));
+            formData.append('name', selectedFile.name.replace(/\.[^/.]+$/, ''));
 
-                const response = await fetch('https://neupgroup.com/content/bridge/api/upload', {
+            const response = await fetch('https://neupgroup.com/content/bridge/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const responseText = await response.text();
+            if (!response.ok) {
+                throw new Error(`Upload failed: ${response.status} ${responseText}`);
+            }
+
+            const result = JSON.parse(responseText);
+
+            if (result.success && result.url) {
+                // Log to database
+                await fetch('/api/log-upload', {
                     method: 'POST',
-                    body: formData,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: selectedFile.name,
+                        url: result.url,
+                        uploadedBy: 'admin',
+                        type: selectedFile.type,
+                        size: selectedFile.size,
+                        category: 'general',
+                    }),
                 });
-
-                const responseText = await response.text();
-                if (!response.ok) {
-                    throw new Error(`Upload failed: ${response.status} ${responseText}`);
-                }
-
-                const result = JSON.parse(responseText);
-
-                if (result.success && result.url) {
-                    // Log to database
-                    await fetch('/api/log-upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            fileName: selectedFile.name,
-                            url: result.url,
-                            userId: 'admin',
-                            fileType: selectedFile.type,
-                            category: 'general',
-                        }),
-                    });
-
-                    // Reset and close
-                    setSelectedFile(null);
-                    setUploadOriginal(false);
-                    onUploadComplete();
-                    onOpenChange(false);
-                } else {
-                    throw new Error(result.message || 'Unknown upload error');
-                }
-            } else {
-                // Upload to local server
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-                formData.append('compress', (!uploadOriginal).toString());
-                formData.append('uploadType', uploadDestination);
-                formData.append('serverPath', serverPath);
-
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (!response.ok) {
-                    throw new Error('Upload failed');
-                }
 
                 // Reset and close
                 setSelectedFile(null);
-                setUploadOriginal(false);
                 onUploadComplete();
                 onOpenChange(false);
+            } else {
+                throw new Error(result.message || 'Unknown upload error');
             }
         } catch (error) {
             console.error('Upload error:', error);
@@ -149,11 +124,8 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
 
     const resetDialog = () => {
         setUploadMode('file');
-        setUploadDestination('server');
-        setServerPath('');
         setSelectedFile(null);
         setLinkUrl('');
-        setUploadOriginal(false);
         setIsDragging(false);
     };
 
@@ -250,73 +222,6 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
                             )}
                         </div>
 
-                        {/* Compression Option */}
-                        {selectedFile && (
-                            <>
-                                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                                    <Checkbox
-                                        id="upload-original"
-                                        checked={uploadOriginal}
-                                        onCheckedChange={(checked) => setUploadOriginal(checked as boolean)}
-                                    />
-                                    <label
-                                        htmlFor="upload-original"
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                    >
-                                        Upload original (no compression)
-                                    </label>
-                                </div>
-
-                                {/* Upload Destination */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Upload Destination</label>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            variant={uploadDestination === 'api' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setUploadDestination('api')}
-                                            className="flex-1"
-                                        >
-                                            API Storage
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant={uploadDestination === 'server' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setUploadDestination('server')}
-                                            className="flex-1"
-                                        >
-                                            Server
-                                        </Button>
-                                    </div>
-
-                                    {/* Server Path Input */}
-                                    {uploadDestination === 'server' && (
-                                        <div className="space-y-1">
-                                            <input
-                                                type="text"
-                                                value={serverPath}
-                                                onChange={(e) => setServerPath(e.target.value)}
-                                                placeholder="Optional: uploads, images, etc."
-                                                className="w-full px-3 py-2 text-sm border rounded-md bg-background"
-                                            />
-                                            <p className="text-xs text-muted-foreground">
-                                                Leave empty for /public or specify path like "uploads" for /public/uploads
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <p className="text-xs text-muted-foreground">
-                                        {uploadDestination === 'api'
-                                            ? 'Upload to external API storage service'
-                                            : `Upload to server: /public${serverPath ? '/' + serverPath : ''}`
-                                        }
-                                    </p>
-                                </div>
-                            </>
-                        )}
-
                         {/* Upload Button */}
                         <Button
                             onClick={handleFileUpload}
@@ -325,6 +230,9 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
                         >
                             {isUploading ? 'Uploading...' : 'Upload File'}
                         </Button>
+                        <p className="text-xs text-muted-foreground text-center">
+                            Files are uploaded to NeupCDN storage.
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-4">

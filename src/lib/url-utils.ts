@@ -1,64 +1,48 @@
-import type { FileUpload, PathType } from './types';
+import type { FileUpload } from './types';
+
+const NEUPCDN_BASE = 'https://neupgroup.com';
+const DEFAULT_LOCAL_BASE = 'https://neupgroup.com';
 
 /**
- * Replaces {{basePath}} template variable with actual baseUrl
- * @param path - Path that may contain {{basePath}} template
- * @param baseUrl - The base URL to replace the template with
- * @returns Path with template replaced
+ * Replaces template variables in URL
+ * @param url - URL that may contain {{neupcdn}} or {{local}} templates
+ * @param basePath - The base path to replace {{local}} with
+ * @returns Resolved URL
  */
-function replaceBasePath(path: string, baseUrl?: string): string {
-    if (!path.includes('{{basePath}}')) {
-        return path;
+export function resolveUrlTemplates(url: string, basePath?: string): string {
+    if (!url) return '';
+
+    let resolved = url;
+
+    // Replace {{neupcdn}}
+    if (resolved.includes('{{neupcdn}}')) {
+        resolved = resolved.replace('{{neupcdn}}', NEUPCDN_BASE);
     }
 
-    if (!baseUrl) {
-        // If no baseUrl, remove the template variable
-        return path.replace('{{basePath}}', '');
+    // Replace {{local}}
+    // Also support old {{basePath}} for backward compatibility if data exists
+    if (resolved.includes('{{local}}') || resolved.includes('{{basePath}}')) {
+        const effectiveBasePath = basePath || DEFAULT_LOCAL_BASE;
+        const cleanBasePath = effectiveBasePath.endsWith('/') ? effectiveBasePath.slice(0, -1) : effectiveBasePath;
+        resolved = resolved.replace('{{local}}', cleanBasePath).replace('{{basePath}}', cleanBasePath);
     }
 
-    // Remove trailing slash from baseUrl
-    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    return path.replace('{{basePath}}', cleanBaseUrl);
+    return resolved;
 }
 
 /**
- * Constructs a full URL from a file upload based on its pathType
+ * Constructs a full URL from a file upload based on its url and templates
  * @param file - The file upload object
- * @param baseUrl - The base URL from site profile (optional)
+ * @param basePath - The base path from site profile (optional/contextual)
  * @returns The full URL to the file
  */
-export function getFullUrl(file: FileUpload, baseUrl?: string): string {
-    if (file.pathType === 'absolute') {
-        return file.url;
-    }
-
-    // For relative paths, handle {{basePath}} template
-    if (file.pathType === 'relative' && file.path) {
-        const resolvedPath = replaceBasePath(file.path, baseUrl);
-
-        // If the resolved path doesn't start with http/https, make it absolute
-        if (!resolvedPath.startsWith('http')) {
-            // Use baseUrl if available, otherwise use current origin (if in browser)
-            const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
-            if (base) {
-                // Ensure base doesn't end with slash and path starts with slash
-                const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-                const cleanPath = resolvedPath.startsWith('/') ? resolvedPath : '/' + resolvedPath;
-                return cleanBase + cleanPath;
-            }
-        }
-
-        return resolvedPath;
-    }
-
-    return file.url;
+export function getFullUrl(file: FileUpload, basePath?: string): string {
+    return resolveUrlTemplates(file.url, basePath);
 }
 
 /**
- * Gets the path to use for selection/comparison
- * For relative paths with baseUrl, returns the full URL with {{basePath}} replaced
- * Otherwise returns the appropriate path based on pathType
+ * Returns the fully resolved URL
  */
-export function getSelectablePath(file: FileUpload, baseUrl?: string): string {
-    return getFullUrl(file, baseUrl);
+export function getSelectablePath(file: FileUpload, basePath?: string): string {
+    return getFullUrl(file, basePath);
 }

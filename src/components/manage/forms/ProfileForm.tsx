@@ -34,7 +34,7 @@ const whyUsSchema = z.object({
 });
 
 const formSchema = z.object({
-  baseUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  basePath: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   reviewCount: z.coerce.number().int().min(0, "Review count cannot be negative.").optional(),
   contactEmail: z.string().email({ message: "Please enter a valid email." }).optional(),
   phone: z.string().optional(),
@@ -68,7 +68,7 @@ export function ProfileForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      baseUrl: '',
+      basePath: '',
       reviewCount: 0,
       contactEmail: '',
       phone: '',
@@ -100,7 +100,7 @@ export function ProfileForm() {
   useEffect(() => {
     if (profile) {
       form.reset({
-        baseUrl: profile.baseUrl || '',
+        basePath: profile?.basePath || '',
         reviewCount: profile.reviewCount || 0,
         contactEmail: profile.contactEmail || '',
         phone: profile.phone || '',
@@ -279,15 +279,15 @@ export function ProfileForm() {
             <CardContent className="space-y-6">
               <FormField
                 control={form.control}
-                name="baseUrl"
+                name="basePath"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Base URL</FormLabel>
+                    <FormLabel>Base Path (Website URL)</FormLabel>
                     <FormControl>
                       <Input placeholder="https://happymountainnepal.com" {...field} disabled={isPending} />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
-                      The base URL of your website. This will be used to construct full URLs for relative image paths.
+                      The base URL of your website. This will be used to replace {'{{basePath}}'} in server-uploaded media URLs.
                     </p>
                     <FormMessage />
                   </FormItem>

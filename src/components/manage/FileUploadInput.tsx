@@ -116,38 +116,36 @@ export function FileUploadInput({
 
       if (result.success && result.url) {
         const fullUrl = result.url;
+        let storedUrl = fullUrl;
 
-        // Extract the relative path from the CDN URL
-        // Assuming CDN URL format: https://neupgroup.com/content/bridge/uploads/...
-        // We want to store: {{basePath}}/relative/path
-        let relativePath = fullUrl;
-        try {
-          const url = new URL(fullUrl);
-          // Get the path part (everything after the domain)
-          relativePath = url.pathname;
-        } catch (e) {
-          // If URL parsing fails, use the full URL as-is
-          console.warn('Could not parse URL, using full URL:', fullUrl);
+        // If the URL is from NeupCDN (neupgroup.com), format it with {{neupcdn}} template
+        if (fullUrl.includes('neupgroup.com')) {
+          // Remove the protocol and domain to get the path
+          try {
+            const urlObj = new URL(fullUrl);
+            // Verify it's actually neupgroup.com
+            if (urlObj.hostname.includes('neupgroup.com')) {
+              storedUrl = `{{neupcdn}}${urlObj.pathname}`;
+            }
+          } catch (e) {
+            console.warn('URL parsing failed', e);
+          }
         }
 
-        // Create template path
-        const templatePath = `{{basePath}}${relativePath}`;
-
-        setValue(name, fullUrl, { shouldValidate: true, shouldDirty: true });
+        setValue(name, storedUrl, { shouldValidate: true, shouldDirty: true });
 
         await logFileUpload({
-          fileName: correctedFile.name,
-          url: templatePath, // Store with template
-          userId: userId,
-          fileSize: correctedFile.size,
-          fileType: correctedFile.type,
+          name: correctedFile.name,
+          url: storedUrl,
+          uploadedBy: userId,
+          size: correctedFile.size,
+          type: correctedFile.type,
           category: category,
-          pathType: 'relative', // Changed to relative
-          path: templatePath, // Store with template
-          uploadSource: 'NeupCDN',
+          location: 'NeupCDN',
+          meta: [],
         });
 
-        onUploadSuccess?.(fullUrl);
+        onUploadSuccess?.(storedUrl);
       } else {
         throw new Error(result.message || 'Unknown upload error.');
       }

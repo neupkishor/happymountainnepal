@@ -39,20 +39,21 @@ export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'ge
         // Ensure path starts with /
         const normalizedPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
-        // Create path with {{basePath}} template variable
-        const templatePath = `{{basePath}}${normalizedPath}`;
+        // Create path with {{local}} template variable
+        // This is used for files that exist in the project's public directory
+        const templatePath = `{{local}}${normalizedPath}`;
 
         setIsSubmitting(true);
         try {
             await logFileUpload({
-                fileName,
+                name: fileName,
                 url: templatePath, // Store with template variable
-                userId: 'admin-user',
+                uploadedBy: 'admin-user',
                 category: selectedCategory,
-                pathType: 'relative',
-                path: templatePath, // Store with template variable
-                uploadSource: 'Application',
-                fileType: getFileTypeFromPath(normalizedPath),
+                location: 'Local',
+                type: getFileTypeFromPath(normalizedPath),
+                size: 0, // Size unknown for manually added local files
+                meta: [],
             });
 
             toast({

@@ -708,7 +708,7 @@ export async function getErrorById(id: string): Promise<SiteError | null> {
 
 
 // File Upload Logging
-export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt'>): Promise<void> {
+export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedOn'>): Promise<void> {
     if (!firestore) {
         console.error("Firestore is not initialized. Cannot log file upload.");
         return;
@@ -716,7 +716,9 @@ export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt'>)
     try {
         await addDoc(collection(firestore, 'uploads'), {
             ...data,
-            uploadedAt: serverTimestamp(),
+            uploadedOn: new Date().toISOString(),
+            uploadedAt: serverTimestamp(), // Keep for sorting compatibility
+            createdAt: serverTimestamp(),
         });
     } catch (error) {
         console.error('Failed to log file upload to Firestore:', error);
@@ -736,56 +738,45 @@ export async function deleteFileUpload(id: string): Promise<void> {
     }
 }
 
-// Add external media link
-export async function addExternalMediaLink(url: string, userId: string): Promise<string> {
+// Add external media link (hotlinked images)
+export async function addExternalMediaLink(url: string, uploadedBy: string): Promise<string> {
     if (!firestore) throw new Error("Database not available.");
     try {
         // Extract filename from URL or use a default
         const urlParts = url.split('/');
-        const fileName = urlParts[urlParts.length - 1] || 'external-media';
+        const name = urlParts[urlParts.length - 1] || 'external-media';
 
         // Determine file type from URL extension
-        const extension = fileName.split('.').pop()?.toLowerCase();
-        let fileType = 'application/octet-stream';
+        const extension = name.split('.').pop()?.toLowerCase();
+        let type = 'application/octet-stream';
         if (extension) {
             const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
             const videoExtensions = ['mp4', 'webm', 'ogg'];
             if (imageExtensions.includes(extension)) {
-                fileType = `image/${extension}`;
+                type = `image/${extension}`;
             } else if (videoExtensions.includes(extension)) {
-                fileType = `video/${extension}`;
+                type = `video/${extension}`;
             }
         }
 
-        // Extract relative path from URL
-        let relativePath = url;
-        try {
-            const urlObj = new URL(url);
-            // Get the path part (everything after the domain)
-            relativePath = urlObj.pathname;
-        } catch (e) {
-            // If URL parsing fails, use the full URL
-            console.warn('Could not parse external URL, using as-is:', url);
-        }
-
-        // Create template path
-        const templatePath = `{{basePath}}${relativePath}`;
-
+        // Hotlinked images are stored with 'HotLinked' location
         const docRef = await addDoc(collection(firestore, 'uploads'), {
-            url: templatePath, // Store with template
-            fileName,
-            fileType,
-            userId,
+            url, // Store the direct URL
+            name,
+            type,
+            size: 0,
+            location: 'HotLinked',
+            meta: [],
+            uploadedOn: new Date().toISOString(),
+            uploadedAt: serverTimestamp(), // Keep for sorting compatibility
+            uploadedBy,
             category: 'general' as UploadCategory,
-            uploadedAt: serverTimestamp(),
-            pathType: 'relative', // Changed to relative
-            path: templatePath, // Store with template
-            uploadSource: 'Application',
+            createdAt: serverTimestamp(),
         });
         return docRef.id;
     } catch (error: any) {
         console.error("Error adding external media link:", error);
-        await logError({ message: `Failed to add external media link: ${error.message}`, stack: error.stack, pathname: '/manage/uploads', context: { url, userId } });
+        await logError({ message: `Failed to add external media link: ${error.message}`, stack: error.stack, pathname: '/manage/uploads', context: { url, uploadedBy } });
         throw new Error("Could not add external media link.");
     }
 }
@@ -818,10 +809,29 @@ export async function getFileUploads(options?: {
         const querySnapshot = await getDocs(q);
         const uploads = querySnapshot.docs.slice(0, limit).map(doc => {
             const data = doc.data();
+
+            // Determine url based on old 'path' if 'url' is missing or needs construction
+            let url = data.url;
+            if (!url && data.path) {
+                if (data.pathType === 'relative') {
+                    url = `{{local}}/${data.path}`;
+                } else {
+                    url = data.path;
+                }
+            }
+            if (!url) url = '';
+
             return {
                 id: doc.id,
-                ...data,
-                uploadedAt: (data.uploadedAt as Timestamp).toDate().toISOString()
+                name: data.name || data.fileName || 'Untitled',
+                type: data.type || data.fileType || 'application/octet-stream',
+                category: data.category || 'general',
+                size: data.size || data.fileSize || 0,
+                location: data.location || (data.uploadSource === 'NeupCDN' ? 'NeupCDN' : (data.pathType === 'absolute' ? 'HotLinked' : 'Local')),
+                meta: Array.isArray(data.meta) ? data.meta : (data.metaInformation ? [data.metaInformation] : []),
+                uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
+                uploadedBy: data.uploadedBy || data.userId || 'Unknown',
+                url: url
             } as FileUpload;
         });
 
@@ -1804,11 +1814,11 @@ export async function getUniquePageLogs(options?: {
 }
 
 export type DisplayUser = {
-  id: string; // This will be the account ID or the cookie ID
-  identifier: string; // email for permanent, cookieId for temporary
-  type: 'Permanent' | 'Temporary';
-  activityCount: number;
-  lastSeen: string; // ISO string date
+    id: string; // This will be the account ID or the cookie ID
+    identifier: string; // email for permanent, cookieId for temporary
+    type: 'Permanent' | 'Temporary';
+    activityCount: number;
+    lastSeen: string; // ISO string date
 };
 
 export async function getPaginatedUsers(options: { page: number, limit: number }): Promise<{
@@ -1834,7 +1844,7 @@ export async function getPaginatedUsers(options: { page: number, limit: number }
 
     // 2. Fetch all logs to get anonymous users and activity data
     const logsSnapshot = await getDocs(query(collection(firestore, 'logs'), orderBy('timestamp', 'desc')));
-    
+
     // 3. Process logs to get unique users, activity counts, and last seen dates
     const userActivityMap = new Map<string, { activityCount: number; lastSeen: Timestamp; identifier: string; type: 'Permanent' | 'Temporary' }>();
 

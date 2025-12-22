@@ -81,12 +81,24 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
   };
 
   // Helper function to get the correct path for a file
-  // For relative paths with baseUrl, this returns the full absolute URL
+  // For relative paths with basePath, this returns the full absolute URL
   const getFilePath = (file: FileUpload): string => {
-    return getSelectablePath(file, profile?.baseUrl);
+    return getSelectablePath(file, profile?.basePath);
   };
 
-  const displayedRecent = recentUploads.slice(0, maxRecent);
+  // Sort uploads to show selected media first
+  const sortedUploads = [...recentUploads].sort((a, b) => {
+    const aPath = getFilePath(a);
+    const bPath = getFilePath(b);
+    const aIsSelected = aPath === previewUrl;
+    const bIsSelected = bPath === previewUrl;
+
+    if (aIsSelected && !bIsSelected) return -1;
+    if (!aIsSelected && bIsSelected) return 1;
+    return 0;
+  });
+
+  const displayedRecent = sortedUploads.slice(0, maxRecent);
 
   // Find the selected file for preview
   const selectedFile = displayedRecent.find(f => getFilePath(f) === previewUrl);
@@ -95,30 +107,25 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
     <div className="space-y-2">
       <Label htmlFor={name}>{label || 'Image'}</Label>
       <Card className="p-4">
-        {previewUrl && (
-          <div className="relative group w-full h-48 mb-4">
-            <SmartImage
-              src={selectedFile?.url || previewUrl}
-              pathType={selectedFile?.pathType}
-              path={selectedFile?.path}
-              alt="Selected image preview"
-              fill
-              className="object-cover rounded-md border-2 border-primary"
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={handleClearImage}
-            >
-              <XCircle className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground">Select an Image</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              {previewUrl ? 'Selected Image' : 'Select an Image'}
+            </h4>
+            {previewUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-destructive hover:text-destructive"
+                onClick={handleClearImage}
+              >
+                <XCircle className="h-3 w-3 mr-1" />
+                Clear Selection
+              </Button>
+            )}
+          </div>
+
           <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
             {/* Upload Box */}
             <FileUploadInput
@@ -136,30 +143,46 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
               </div>
             </FileUploadInput>
 
-            {/* Recent Images */}
+            {/* Recent Images - Selected items appear first */}
             {displayedRecent.map((file) => {
               const filePath = getFilePath(file);
+              const isSelected = previewUrl === filePath;
               return (
                 <div
                   key={file.id}
                   className={cn(
-                    'relative h-24 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all',
-                    previewUrl === filePath ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                    'relative h-24 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
+                    isSelected
+                      ? 'border-primary ring-2 ring-primary shadow-lg'
+                      : 'border-transparent hover:border-muted-foreground'
                   )}
                   onClick={() => handleSelectImage([filePath])}
                 >
                   <SmartImage
                     src={file.url}
-                    pathType={file.pathType}
-                    path={file.path}
-                    alt={file.fileName}
+                    alt={file.name}
                     fill
                     className="object-cover"
                   />
-                  {previewUrl === filePath && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
-                      <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
-                    </div>
+                  {isSelected && (
+                    <>
+                      <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
+                        <CheckCircle2 className="h-6 w-6 text-primary-foreground" />
+                      </div>
+                      {/* Deselect button on hover */}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClearImage();
+                        }}
+                      >
+                        <XCircle className="h-3 w-3" />
+                      </Button>
+                    </>
                   )}
                 </div>
               );

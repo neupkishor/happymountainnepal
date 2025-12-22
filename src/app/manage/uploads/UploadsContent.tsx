@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { FileUpload } from '@/lib/types';
-import { AddLocalImageDialog } from '@/components/manage/AddLocalImageDialog';
+
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { getFullUrl } from '@/lib/url-utils';
 import { useToast } from '@/hooks/use-toast';
@@ -28,47 +28,51 @@ export function UploadsContent() {
     const [totalCount, setTotalCount] = useState(0);
     const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isLocalImageDialogOpen, setIsLocalImageDialogOpen] = useState(false);
+
 
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const { profile } = useSiteProfile();
     const { toast } = useToast();
 
-    // Helper function to safely get view URL with error handling
-    const getSafeViewUrl = (item: FileUpload): string => {
-        try {
-            const url = getFullUrl(item, profile?.baseUrl);
-
-            // Check for unresolved template variables
-            if (url.includes('{{basePath}}')) {
-                console.error('Invalid image URL: Unresolved {{basePath}} template for file', item.fileName, '- Please configure baseUrl in site settings');
-                // Return a placeholder image URL for Next.js Image component
-                return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd"/%3E%3C/svg%3E';
-            }
-
-            // Validate that we have a proper URL
-            if (!url || url.trim() === '') {
-                console.error('Invalid image URL: Empty URL for file', item.fileName);
-                return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd"/%3E%3C/svg%3E';
-            }
-
-            // If it's a relative path and we don't have a base URL, construct one
-            if (!url.startsWith('http') && !url.startsWith('//')) {
-                if (typeof window !== 'undefined') {
-                    const base = window.location.origin;
-                    const cleanPath = url.startsWith('/') ? url : '/' + url;
-                    return base + cleanPath;
-                }
-                // On server side, return the relative path as-is
-                // The Link component will handle it
-                return url;
-            }
-
-            return url;
-        } catch (error) {
-            console.error('Invalid image URL: Failed to construct URL for file', item.fileName, error);
-            return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd"/%3E%3C/svg%3E';
+    // Helper function to get the display URL
+    const getDisplayUrl = (item: FileUpload): string => {
+        // For NeupCDN files, show the URL directly
+        if (item.uploadSource === 'NeupCDN') {
+            return item.url;
         }
+
+        // For hotlinked files (absolute paths), show the URL directly
+        if (item.pathType === 'absolute') {
+            return item.url;
+        }
+
+        // For server files (relative paths), combine with basePath
+        if (item.pathType === 'relative') {
+            // Use basePath from profile or fallback to default
+            const basePath = profile?.basePath || 'https://neupgroup.com';
+            const cleanBase = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+            const cleanPath = item.path.startsWith('/') ? item.path : '/' + item.path;
+            return cleanBase + cleanPath;
+        }
+
+        // Fallback to URL
+        return item.url;
+    };
+
+    // Helper function to get viewable URL (for Image component and links)
+    const getSafeViewUrl = (item: FileUpload): string => {
+        const displayUrl = getDisplayUrl(item);
+
+        // If it's a relative path without basePath, construct with current origin for viewing
+        if (!displayUrl.startsWith('http') && !displayUrl.startsWith('//')) {
+            if (typeof window !== 'undefined') {
+                const base = window.location.origin;
+                const cleanPath = displayUrl.startsWith('/') ? displayUrl : '/' + displayUrl;
+                return base + cleanPath;
+            }
+        }
+
+        return displayUrl;
     };
 
     const handleDelete = async (fileId: string) => {
@@ -163,10 +167,7 @@ export function UploadsContent() {
                         {totalCount} {totalCount === 1 ? 'file' : 'files'} uploaded
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button onClick={() => setIsLocalImageDialogOpen(true)} variant="outline">
-                        Add Local Image
-                    </Button>
+                <div>
                     <Button onClick={() => setIsDialogOpen(true)} variant="outline">
                         Upload
                     </Button>
@@ -179,11 +180,7 @@ export function UploadsContent() {
                 onUploadComplete={handleUploadComplete}
             />
 
-            <AddLocalImageDialog
-                isOpen={isLocalImageDialogOpen}
-                onClose={() => setIsLocalImageDialogOpen(false)}
-                onSuccess={handleUploadComplete}
-            />
+
 
             {isLoading ? (
                 <div className="space-y-4 mb-8">
@@ -239,21 +236,25 @@ export function UploadsContent() {
                                                 {(item.fileSize / 1024).toFixed(2)} KB
                                             </Badge>
                                         )}
-                                        <Badge variant={item.uploadSource === 'NeupCDN' ? 'default' : 'secondary'} className="text-xs">
-                                            {item.uploadSource || 'Unknown'}
+                                        <Badge
+                                            variant={item.uploadSource === 'NeupCDN' ? 'default' : 'secondary'}
+                                            className="text-xs"
+                                        >
+                                            {item.uploadSource === 'NeupCDN' ? '☁️ NeupCDN' : '🖥️ Server'}
                                         </Badge>
-                                        <Badge variant={item.pathType === 'relative' ? 'outline' : 'secondary'} className="text-xs">
-                                            {item.pathType === 'relative' ? 'Local' : 'External'}
+                                        <Badge
+                                            variant={item.pathType === 'relative' ? 'outline' : 'secondary'}
+                                            className="text-xs"
+                                        >
+                                            {item.pathType === 'relative' ? '📁 Local' : '🔗 Hotlinked'}
                                         </Badge>
                                         <span>
                                             {item.uploadedAt ? formatDistanceToNow(new Date(item.uploadedAt), { addSuffix: true }) : 'N/A'}
                                         </span>
                                     </div>
-                                    {item.pathType === 'relative' && (
-                                        <p className="text-xs text-muted-foreground mt-1 truncate" title={item.path}>
-                                            Path: {item.path}
-                                        </p>
-                                    )}
+                                    <p className="text-xs text-muted-foreground mt-1 truncate font-mono" title={getDisplayUrl(item)}>
+                                        URL: {getDisplayUrl(item)}
+                                    </p>
                                 </div>
                                 <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
                                     <Link href={getSafeViewUrl(item)} target="_blank" rel="noopener noreferrer">

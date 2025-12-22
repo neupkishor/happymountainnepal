@@ -4,18 +4,22 @@ import { logFileUpload } from '@/lib/db';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { fileName, url, userId, fileType, category } = body;
+        const { name, url, uploadedBy, type, category, size } = body;
 
-        if (!fileName || !url) {
+        if (!name || !url) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        // NeupCDN uploads come through this route from UploadDialog
         await logFileUpload({
-            fileName,
-            url,
-            userId: userId || 'admin',
-            fileType: fileType || 'application/octet-stream',
+            name,
+            url, // Direct URL from NeupCDN
+            location: 'NeupCDN',
+            uploadedBy: uploadedBy || 'admin',
+            type: type || 'application/octet-stream',
             category: category || 'general',
+            size: size || 0,
+            meta: [],
         });
 
         return NextResponse.json({ success: true });

@@ -3,7 +3,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import sharp from 'sharp';
-import { logFileUpload } from '@/lib/db';
+import { logFileUpload, getSiteProfile } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -15,6 +15,16 @@ export async function POST(request: NextRequest) {
 
         if (!file) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+        }
+
+        // Check if basePath is configured for server uploads
+        if (uploadType === 'server') {
+            const profile = await getSiteProfile();
+            if (!profile?.basePath) {
+                return NextResponse.json({
+                    error: 'Local uploads are disabled. Please configure basePath in site settings or use CDN uploads.'
+                }, { status: 400 });
+            }
         }
 
         const bytes = await file.arrayBuffer();
@@ -66,7 +76,10 @@ export async function POST(request: NextRequest) {
 
                 // Log to database
                 await logFileUpload({
-                    url: mockApiUrl,
+                    url: mockApiUrl, // Direct URL from API
+                    path: mockApiUrl, // Same as URL for absolute paths
+                    pathType: 'absolute', // API uploads are absolute URLs
+                    uploadSource: 'NeupCDN', // Uploaded to external CDN
                     fileName: finalFileName,
                     fileType: compress && isImage ? 'image/jpeg' : file.type,
                     userId: 'admin',
@@ -102,14 +115,19 @@ export async function POST(request: NextRequest) {
             const filePath = join(uploadDir, finalFileName);
             await writeFile(filePath, finalBuffer);
 
-            // Generate public URL
-            const url = serverPath
+            // Generate path with {{basePath}} template
+            const relativePath = serverPath
                 ? `/${serverPath}/${finalFileName}`
                 : `/${finalFileName}`;
 
+            const templatePath = `{{basePath}}${relativePath}`;
+
             // Log to database
             await logFileUpload({
-                url,
+                url: templatePath, // Store with template
+                path: templatePath, // Store with template
+                pathType: 'relative', // Server files are relative
+                uploadSource: 'Application', // Uploaded to application server
                 fileName: finalFileName,
                 fileType: compress && isImage ? 'image/jpeg' : file.type,
                 userId: 'admin',
@@ -118,7 +136,7 @@ export async function POST(request: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                url,
+                url: templatePath, // Return template path
                 fileName: finalFileName,
                 compressed: compress && isImage,
                 uploadType: 'server',

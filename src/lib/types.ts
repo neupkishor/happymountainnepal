@@ -113,22 +113,19 @@ export interface SiteError {
 
 export type UploadCategory = 'general' | 'trip' | 'document' | 'background' | 'feature-icon' | 'user-photo' | 'blog' | 'logo' | 'author';
 
-export type PathType = 'absolute' | 'relative';
-export type UploadSource = 'NeupCDN' | 'Application';
+export type FileLocation = 'Local' | 'NeupCDN' | 'HotLinked';
 
 export interface FileUpload {
   id: string;
-  fileName: string;
-  url: string; // The actual URL or path to the file
-  userId: string;
-  uploadedAt: string; // Changed from Timestamp to string
-  fileSize?: number; // Size of the uploaded file in bytes
-  fileType?: string; // MIME type of the uploaded file
-  category: UploadCategory; // The "for" field, e.g., 'trip', 'document', 'feature-icon'
-  metaInformation?: Record<string, any>; // Any additional metadata
-  pathType: PathType; // 'absolute' for external URLs, 'relative' for local files
-  path: string; // If absolute: full URL, if relative: path relative to /public
-  uploadSource: UploadSource; // Where the file is stored: 'NeupCDN' or 'Application'
+  name: string; // original file name
+  type: string; // file type
+  category: UploadCategory;
+  size: number; // size of file
+  location: FileLocation;
+  meta: any[]; // all meta information
+  uploadedOn: string;
+  uploadedBy: string;
+  url: string; // {{neupcdn}}... or raw
 }
 
 // New Review types for the /manage/reviews section
@@ -163,7 +160,7 @@ export type ChatbotPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'to
 
 export interface SiteProfile {
   id: string;
-  baseUrl?: string; // Base URL for the site (e.g., 'https://happymountainnepal.com')
+  basePath?: string; // Base path for the site (e.g., 'https://happymountainnepal.com')
   reviewCount?: number;
   contactEmail?: string;
   phone?: string;

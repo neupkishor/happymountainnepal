@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2 } from 'lucide-react';
+import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2, XCircle } from 'lucide-react';
 import { getFileUploads, deleteFileUpload } from '@/lib/db';
 import type { FileUpload, UploadCategory } from '@/lib/types';
 import Image from 'next/image';
@@ -99,15 +99,27 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   }, [selectedCategory, isOpen]);
 
 
-  const filteredUploads = uploads.filter((upload) =>
-    upload.fileName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   // Helper function to get the correct path for a file
-  // For relative paths with baseUrl, this returns the full absolute URL
+  // For relative paths with basePath, this returns the full absolute URL
   const getFilePath = (file: FileUpload): string => {
-    return getSelectablePath(file, profile?.baseUrl);
+    return getSelectablePath(file, profile?.basePath);
   };
+
+  const filteredUploads = uploads
+    .filter((upload) =>
+      upload.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aPath = getFilePath(a);
+      const bPath = getFilePath(b);
+      const aIsSelected = currentSelection.includes(aPath);
+      const bIsSelected = currentSelection.includes(bPath);
+
+      if (aIsSelected && !bIsSelected) return -1;
+      if (!aIsSelected && bIsSelected) return 1;
+      return 0;
+    });
 
   const handleDelete = async (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
@@ -163,15 +175,8 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
         <div className="flex-grow flex flex-col gap-4 overflow-hidden">
           {/* Upload Area */}
           <div className="border border-dashed p-4 rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
+            <div>
               <h3 className="font-semibold text-lg">Upload New File</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsLocalImageDialogOpen(true)}
-              >
-                Add Local Image
-              </Button>
             </div>
             <FileUploadInput
               name="media-library-upload"
@@ -206,6 +211,64 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
               </Select>
             </div>
 
+            {/* Selected Media Section */}
+            {currentSelection.length > 0 && (
+              <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  Selected Media ({currentSelection.length})
+                </h3>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  {currentSelection.map((selectedPath) => {
+                    const selectedFile = uploads.find(f => getFilePath(f) === selectedPath);
+                    return (
+                      <div
+                        key={selectedPath}
+                        className="relative h-20 w-full rounded-md overflow-hidden cursor-pointer border-2 border-primary ring-2 ring-primary group"
+                        onClick={() => handleImageClick(selectedPath)}
+                      >
+                        {selectedFile ? (
+                          selectedFile.type?.startsWith('image/') ? (
+                            <SmartImage
+                              src={selectedFile.url}
+                              alt={selectedFile.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
+                              <FileText className="h-6 w-6" />
+                            </div>
+                          )
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
+                            <ImageIcon className="h-6 w-6" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
+                          <CheckCircle2 className="h-6 w-6 text-primary-foreground" />
+                        </div>
+                        {/* X button to deselect */}
+                        <div className="absolute top-0.5 right-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-5 w-5 rounded-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleImageClick(selectedPath);
+                            }}
+                          >
+                            <XCircle className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {isLoading && uploads.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-grow text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin mb-4" />
@@ -230,12 +293,10 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                         )}
                         onClick={() => handleImageClick(filePath)}
                       >
-                        {file.fileType?.startsWith('image/') ? (
+                        {file.type?.startsWith('image/') ? (
                           <SmartImage
                             src={file.url}
-                            pathType={file.pathType}
-                            path={file.path}
-                            alt={file.fileName}
+                            alt={file.name}
                             fill
                             className="object-cover"
                           />
@@ -291,6 +352,6 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
         onSuccess={() => fetchUploads(selectedCategory)}
         category={selectedCategory === 'all' ? 'general' : selectedCategory}
       />
-    </Dialog>
+    </Dialog >
   );
 }
