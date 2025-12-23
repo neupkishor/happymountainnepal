@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { type Tour } from '@/lib/types';
+import { type Tour, type ImageWithCaption } from '@/lib/types';
 import { updateTour, logError } from '@/lib/db';
 import { useTransition, useState } from 'react';
 import { Loader2, Library, GripVertical, Save } from 'lucide-react';
@@ -31,12 +31,16 @@ const extractIframeSrc = (input: string): string => {
   return match ? match[1] : input;
 };
 
-// The form now manages a single array of all images.
+const imageSchema = z.object({
+    url: z.string().url(),
+    caption: z.string().optional(),
+});
+
 const formSchema = z.object({
   map: z.string().transform(val => extractIframeSrc(val)).pipe(
     z.string().url({ message: "Please enter a valid map URL." }).min(1, "Map URL is required.")
   ),
-  allImages: z.array(z.string().url()).min(1, "Please select at least one image."),
+  allImages: z.array(imageSchema).min(1, "Please select at least one image."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,7 +59,6 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       map: tour.map || '',
-      // Combine mainImage and gallery images into a single array for the form
       allImages: [tour.mainImage, ...(tour.images || [])].filter(Boolean),
     },
   });
@@ -65,11 +68,10 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        // Before updating, split the `allImages` array back into `mainImage` and `images`
         const [mainImage, ...galleryImages] = values.allImages;
         const dataToUpdate = {
           map: values.map,
-          mainImage: mainImage || '',
+          mainImage: mainImage || { url: '' },
           images: galleryImages,
         };
 
@@ -86,8 +88,8 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
     });
   };
   
-  const handleSelectImages = (urls: string[]) => {
-      form.setValue('allImages', urls, { shouldDirty: true, shouldValidate: true });
+  const handleSelectImages = (images: ImageWithCaption[]) => {
+      form.setValue('allImages', images, { shouldDirty: true, shouldValidate: true });
       setIsLibraryOpen(false);
   }
 
@@ -112,15 +114,28 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
                             onReorder={(newOrder) => form.setValue('allImages', newOrder, { shouldDirty: true })}
                             className="mt-4 space-y-2"
                         >
-                            {allImages.map((url, index) => (
-                            <Reorder.Item key={url} value={url}>
-                                <div className="flex items-center gap-4 p-2 border rounded-lg bg-card cursor-grab active:cursor-grabbing">
-                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                    <div className="relative h-16 w-24 rounded-md overflow-hidden">
-                                        <Image src={url} alt={`Selected image ${index + 1}`} fill className="object-cover" />
+                            {allImages.map((image, index) => (
+                            <Reorder.Item key={image.url} value={image}>
+                                <div className="flex flex-col gap-4 p-2 border rounded-lg bg-card cursor-grab active:cursor-grabbing">
+                                    <div className="flex items-center gap-4">
+                                        <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                        <div className="relative h-16 w-24 rounded-md overflow-hidden">
+                                            <Image src={image.url} alt={`Selected image ${index + 1}`} fill className="object-cover" />
+                                        </div>
+                                        <span className="text-sm text-muted-foreground truncate flex-grow">{image.url.split('/').pop()}</span>
+                                        {index === 0 && <span className="text-xs font-semibold text-primary-foreground bg-primary px-2 py-1 rounded-full">Main Image</span>}
                                     </div>
-                                    <span className="text-sm text-muted-foreground truncate flex-grow">{url.split('/').pop()}</span>
-                                    {index === 0 && <span className="text-xs font-semibold text-primary-foreground bg-primary px-2 py-1 rounded-full">Main Image</span>}
+                                    <FormField
+                                        control={form.control}
+                                        name={`allImages.${index}.caption`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Enter caption / alt text..." className="h-8" />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             </Reorder.Item>
                             ))}

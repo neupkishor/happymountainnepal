@@ -4,9 +4,10 @@ import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getFileNameFromUrl } from '@/lib/utils';
+import type { ImageWithCaption } from '@/lib/types';
 
 interface ImageViewerDialogProps {
-  images: string[];
+  images: ImageWithCaption[];
   tourName: string;
   isOpen: boolean;
   onClose: () => void;
@@ -100,9 +101,7 @@ export function ImageViewerDialog({
   if (!isOpen) return null;
 
   const currentImage = images[currentIndex];
-  const imageName = getFileNameFromUrl(currentImage);
-  // TODO: Replace with actual caption from database
-  const caption = `${tourName} - ${imageName}`;
+  const caption = currentImage.caption || tourName;
 
   return (
     <div
@@ -153,7 +152,7 @@ export function ImageViewerDialog({
       <div className="absolute inset-0 flex items-center justify-center p-4 md:p-8">
         <div className="relative w-full h-full overflow-hidden rounded-2xl">
           <Image
-            src={currentImage}
+            src={currentImage.url}
             alt={caption}
             fill
             className="object-contain"
@@ -165,27 +164,29 @@ export function ImageViewerDialog({
       </div>
 
       {/* Caption Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 z-50 pointer-events-none">
-        <div className="bg-gradient-to-t from-black/90 via-black/70 to-transparent pt-24 pb-8 px-6 pointer-events-auto">
-          <div className="max-w-5xl mx-auto">
-            <p
-              ref={captionRef}
-              className={`text-white text-lg font-medium leading-relaxed ${captionExpanded ? '' : 'line-clamp-1'
-                }`}
-            >
-              {caption}
-            </p>
-            {isTruncated && (
-              <button
-                onClick={() => setCaptionExpanded(!captionExpanded)}
-                className="text-white/80 hover:text-white text-sm mt-2 transition-colors underline decoration-dotted"
+      {caption && (
+        <div className="absolute bottom-0 left-0 right-0 z-50 pointer-events-none">
+          <div className="bg-gradient-to-t from-black/90 via-black/70 to-transparent pt-24 pb-8 px-6 pointer-events-auto">
+            <div className="max-w-5xl mx-auto">
+              <p
+                ref={captionRef}
+                className={`text-white text-lg font-medium leading-relaxed ${captionExpanded ? '' : 'line-clamp-1'
+                  }`}
               >
-                {captionExpanded ? 'Show less' : '...more'}
-              </button>
-            )}
+                {caption}
+              </p>
+              {isTruncated && (
+                <button
+                  onClick={() => setCaptionExpanded(!captionExpanded)}
+                  className="text-white/80 hover:text-white text-sm mt-2 transition-colors underline decoration-dotted"
+                >
+                  {captionExpanded ? 'Show less' : '...more'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

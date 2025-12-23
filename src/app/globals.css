@@ -190,15 +190,33 @@
   @apply border-l-4 border-primary pl-4 italic my-4 !important;
 }
 
+.ql-editor .ql-custom-image-container {
+    padding: 4px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.ql-editor .ql-custom-image-container.ql-custom-image-selected {
+    box-shadow: 0 0 0 3px hsl(var(--primary));
+    border-radius: 4px;
+}
+
+.ql-editor .ql-custom-image-container img {
+    max-width: 100%;
+    border-radius: 2px;
+}
+
+
 /* NProgress Custom Styles */
 #nprogress {
   pointer-events: none;
 }
 
 #nprogress .bar {
-  background: hsl(var(--primary));
+  background: hsl(var(--primary)) !important;
   position: fixed;
-  z-index: 9999;
+  z-index: 9999 !important;
   top: 0;
   left: 0;
   width: 100%;
