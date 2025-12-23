@@ -92,16 +92,18 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
     const target = event.target as HTMLElement;
     if (target.tagName === 'IMG' && target.parentElement?.tagName === 'FIGURE') {
       const figure = target.parentElement;
-      const blot = (ReactQuill.Quill as any).find(figure);
-      const rect = figure.getBoundingClientRect();
-      const editorBounds = editorRef.current?.getBoundingClientRect();
+      if (quillRef.current) {
+          const blot = (ReactQuill.Quill as any).find(figure);
+          const rect = figure.getBoundingClientRect();
+          const editorBounds = editorRef.current?.getBoundingClientRect();
 
-      if (blot && editorBounds) {
-          setSelectedImage({
-              node: figure,
-              blot: blot,
-              rect: rect,
-          });
+          if (blot && editorBounds) {
+              setSelectedImage({
+                  node: figure,
+                  blot: blot,
+                  rect: rect,
+              });
+          }
       }
     } else {
       setSelectedImage(null);
@@ -173,7 +175,8 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
     if (typeof window !== 'undefined' && el && !quillRef.current) {
         quillRef.current = el.getEditor();
         if (quillRef.current) {
-            const Quill = (ReactQuill.Quill as any);
+            // Correctly get the Quill static from the instance
+            const Quill = quillRef.current.constructor as any;
             const BlockEmbed = Quill.import('blots/block/embed');
 
             class ImageBlot extends BlockEmbed {
