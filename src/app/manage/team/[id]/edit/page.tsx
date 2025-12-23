@@ -4,11 +4,12 @@ import { TeamMemberForm } from '@/components/manage/TeamMemberForm';
 import { notFound } from 'next/navigation';
 
 type EditTeamMemberPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function EditTeamMemberPage({ params }: EditTeamMemberPageProps) {
-  const member = await getTeamMemberById(params.id);
+  const { id } = await params;
+  const member = await getTeamMemberById(id);
 
   if (!member) {
     notFound();

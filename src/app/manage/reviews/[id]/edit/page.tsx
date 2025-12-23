@@ -3,11 +3,12 @@ import { ReviewForm } from '@/components/manage/ReviewForm';
 import { notFound } from 'next/navigation';
 
 type EditReviewPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function EditReviewPage({ params }: EditReviewPageProps) {
-  const review = await getReviewById(params.id);
+  const { id } = await params;
+  const review = await getReviewById(id);
 
   if (!review) {
     notFound();

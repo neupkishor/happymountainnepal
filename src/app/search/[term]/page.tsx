@@ -15,11 +15,11 @@ async function SearchResults({ term }: { term: string }) {
     <div className="container mx-auto py-12">
       <div className="max-w-3xl mx-auto mb-12">
         <h1 className="text-3xl md:text-4xl font-bold !font-headline text-center mb-6">
-            Search Results for &quot;{term}&quot;
+          Search Results for &quot;{term}&quot;
         </h1>
         <SearchForm initialTerm={term} />
       </div>
-      
+
       {tours.length > 0 ? (
         <CardsGrid>
           {tours.map((tour) => (
@@ -28,29 +28,30 @@ async function SearchResults({ term }: { term: string }) {
         </CardsGrid>
       ) : (
         <div className="text-center py-16 bg-card rounded-lg">
-            <Mountain className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">No Tours Found</h3>
-            <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
-                We couldn&apos;t find any tours matching your search for &quot;{term}&quot;.
-            </p>
+          <Mountain className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold">No Tours Found</h3>
+          <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+            We couldn&apos;t find any tours matching your search for &quot;{term}&quot;.
+          </p>
         </div>
       )}
 
       {/* Recommendations on No Results */}
       {tours.length === 0 && (
         <div className="mt-16">
-            <RecommendedTours />
+          <RecommendedTours />
         </div>
       )}
     </div>
   );
 }
 
-export default function SearchTermPage({ params }: { params: { term: string } }) {
-    const decodedTerm = decodeURIComponent(params.term);
-    return (
-        <Suspense fallback={<div className="container mx-auto py-12">Loading search results...</div>}>
-            <SearchResults term={decodedTerm} />
-        </Suspense>
-    )
+export default async function SearchTermPage({ params }: { params: Promise<{ term: string }> }) {
+  const { term } = await params;
+  const decodedTerm = decodeURIComponent(term);
+  return (
+    <Suspense fallback={<div className="container mx-auto py-12">Loading search results...</div>}>
+      <SearchResults term={decodedTerm} />
+    </Suspense>
+  )
 }

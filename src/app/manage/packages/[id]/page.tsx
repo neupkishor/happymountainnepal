@@ -17,9 +17,9 @@ import { Timestamp } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
 
 type PackageDetailPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 // Helper component for section titles with edit links
@@ -34,7 +34,8 @@ const SectionTitle = ({ title, editHref }: { title: string; editHref: string }) 
 
 
 export default async function PackageDetailPage({ params }: PackageDetailPageProps) {
-  const tour = await getTourById(params.id);
+  const { id } = await params;
+  const tour = await getTourById(id);
 
   if (!tour) {
     notFound();

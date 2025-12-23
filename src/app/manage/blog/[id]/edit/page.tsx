@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore'; // Import Timestamp
 
 type EditBlogPostPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function EditBlogPostPage({ params }: EditBlogPostPageProps) {
-  const post = await getBlogPostById(params.id);
+  const { id } = await params;
+  const post = await getBlogPostById(id);
 
   if (!post) {
     notFound();

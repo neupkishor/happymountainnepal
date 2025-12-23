@@ -16,6 +16,7 @@ const formSchema = z.object({
     type: z.enum(['Trekking', 'Tour', 'Climbing', 'Jungle Safari']),
     difficulty: z.enum(['Easy', 'Moderate', 'Strenuous', 'Challenging']),
     duration: z.coerce.number().int().min(1, { message: "Duration must be at least 1 day." }),
+    shortDescription: z.string().min(50, { message: "Short description must be at least 50 characters." }).max(200, { message: "Short description must not exceed 200 characters." }),
     description: z.string().min(20, { message: "Description must be at least 20 characters." }),
     searchKeywords: z.array(z.string()).optional(),
 });
@@ -32,6 +33,7 @@ export function EditBasicInfoClient({ tour }: { tour: Tour }) {
             type: tour.type || 'Trekking',
             difficulty: tour.difficulty || 'Moderate',
             duration: tour.duration || 0,
+            shortDescription: tour.shortDescription || '',
             description: tour.description || '',
             searchKeywords: tour.searchKeywords || [],
         },
@@ -45,6 +47,7 @@ export function EditBasicInfoClient({ tour }: { tour: Tour }) {
             type: tour.type || 'Trekking',
             difficulty: tour.difficulty || 'Moderate',
             duration: tour.duration || 0,
+            shortDescription: tour.shortDescription || '',
             description: tour.description || '',
             searchKeywords: tour.searchKeywords || [],
         });

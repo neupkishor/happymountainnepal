@@ -4,11 +4,12 @@ import { PartnerForm } from '@/components/manage/PartnerForm';
 import { notFound } from 'next/navigation';
 
 type EditPartnerPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function EditPartnerPage({ params }: EditPartnerPageProps) {
-  const partner = await getPartnerById(params.id);
+  const { id } = await params;
+  const partner = await getPartnerById(id);
 
   if (!partner) {
     notFound();
@@ -27,4 +28,3 @@ export default async function EditPartnerPage({ params }: EditPartnerPageProps) 
   );
 }
 
-    

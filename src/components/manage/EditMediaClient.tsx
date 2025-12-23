@@ -21,10 +21,10 @@ const imageSchema = z.object({
 });
 
 const formSchema = z.object({
-  map: z.string().transform(val => extractIframeSrc(val)).pipe(
-    z.string().url({ message: "Please enter a valid map URL." }).min(1, "Map URL is required.")
-  ),
-  allImages: z.array(imageSchema).min(1, "Please select at least one image."),
+    map: z.string().transform(val => extractIframeSrc(val)).pipe(
+        z.string().url({ message: "Please enter a valid map URL." }).min(1, "Map URL is required.")
+    ),
+    allImages: z.array(imageSchema).min(1, "Please select at least one image."),
 });
 
 type FormValues = z.infer<typeof formSchema>;

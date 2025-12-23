@@ -6,14 +6,15 @@ import { Timestamp } from 'firebase/firestore';
 import { headers } from 'next/headers';
 
 type BlogDetailPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 // Generate dynamic metadata for each blog post
 export async function generateMetadata({ params }: BlogDetailPageProps): Promise<Metadata> {
-  const post = await getBlogPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = await getBlogPostBySlug(slug);
 
   if (!post) {
     return {
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
       description: 'The requested blog post could not be found.',
     };
   }
-  
+
   const serializablePost = {
     ...post,
     date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
@@ -63,19 +64,20 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 }
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
-  const post = await getBlogPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = await getBlogPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
-  
+
   // Convert timestamp for client component
   const serializablePost = {
-      ...post,
-      date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
+    ...post,
+    date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
   };
 
-  const headersList = headers();
+  const headersList = await headers();
   const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';
 
   return <BlogPostClient post={serializablePost} tempUserId={tempUserId} />;
