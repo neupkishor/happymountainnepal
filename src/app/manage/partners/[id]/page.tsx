@@ -4,13 +4,13 @@
 import { redirect } from 'next/navigation';
 
 type PartnerDetailPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-export default function PartnerDetailPage({ params }: PartnerDetailPageProps) {
-  redirect(`/manage/partners/${params.id}/edit`);
+export default async function PartnerDetailPage({ params }: PartnerDetailPageProps) {
+  const { id } = await params;
+  redirect(`/manage/partners/${id}/edit`);
 }
 
-    

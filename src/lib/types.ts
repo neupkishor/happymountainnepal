@@ -12,6 +12,7 @@ export interface Tour {
   slug: string;
   name: string;
   description: string;
+  shortDescription?: string; // Meta description for SEO (150-200 chars)
   region: string[]; // Changed to array
   type: 'Trekking' | 'Tour' | 'Climbing' | 'Jungle Safari';
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';

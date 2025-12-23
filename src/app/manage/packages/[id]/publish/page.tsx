@@ -5,8 +5,9 @@ import { EditPublishClient } from '@/components/manage/EditPublishClient';
 import type { Tour } from '@/lib/types';
 
 // This is a Server Component, so it can be async. No 'use client'.
-export default async function EditPublishPage({ params }: { params: { id: string } }) {
-  const tour = await getTourById(params.id);
+export default async function EditPublishPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tour = await getTourById(id);
 
   if (!tour) {
     notFound();

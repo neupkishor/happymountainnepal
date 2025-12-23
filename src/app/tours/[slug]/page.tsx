@@ -5,14 +5,15 @@ import { Metadata } from 'next'; // Import Metadata type
 import { headers } from 'next/headers';
 
 type TourDetailPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 // Generate dynamic metadata for each tour page
 export async function generateMetadata({ params }: TourDetailPageProps): Promise<Metadata> {
-  const tour = await getTourBySlug(params.slug);
+  const { slug } = await params;
+  const tour = await getTourBySlug(slug);
 
   if (!tour || tour.status === 'unpublished' || tour.status === 'draft') {
     return {
@@ -54,13 +55,14 @@ export async function generateMetadata({ params }: TourDetailPageProps): Promise
 }
 
 export default async function TourDetailPage({ params }: TourDetailPageProps) {
-  const tour = await getTourBySlug(params.slug);
+  const { slug } = await params;
+  const tour = await getTourBySlug(slug);
 
   if (!tour || tour.status === 'unpublished' || tour.status === 'draft') {
     notFound();
   }
 
-  const headersList = headers();
+  const headersList = await headers();
   const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';
 
   return <TourDetailClient tour={tour} tempUserId={tempUserId} />;

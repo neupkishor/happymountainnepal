@@ -4,13 +4,14 @@ import { notFound } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type TeamMemberPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export default async function TeamMemberPage({ params }: TeamMemberPageProps) {
-  const member = await getTeamMemberBySlug(params.slug);
+  const { slug } = await params;
+  const member = await getTeamMemberBySlug(slug);
 
   if (!member) {
     notFound();
