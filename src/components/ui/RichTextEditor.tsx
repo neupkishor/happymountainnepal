@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -36,7 +37,7 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
     toolbar: {
       container: [
         [{ 'header': [1, 2, 3, false] }], // Headings
-        ['bold', 'italic', 'underline'], // Text formatting
+        ['bold', 'italic', 'underline', 'link'], // Text formatting with link
         [{ 'list': 'ordered'}, { 'list': 'bullet' }], // Lists
         ['image'], // Image insertion
       ],
