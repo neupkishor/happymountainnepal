@@ -1,5 +1,11 @@
 
+
 import { Timestamp } from "firebase/firestore";
+
+export interface ImageWithCaption {
+  url: string;
+  caption?: string;
+}
 
 export interface Tour {
   id: string;
@@ -11,8 +17,8 @@ export interface Tour {
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging';
   duration: number; // in days
   price: number; // Base price
-  mainImage: string;
-  images: string[];
+  mainImage: ImageWithCaption;
+  images: ImageWithCaption[];
   itinerary: { day: number; title: string; description: string }[];
   inclusions: string[];
   exclusions: string[];
@@ -118,6 +124,7 @@ export type FileLocation = 'Local' | 'NeupCDN' | 'HotLinked';
 export interface FileUpload {
   id: string;
   name: string; // original file name
+  caption?: string; // New field for caption/alt text
   type: string; // file type
   category: UploadCategory;
   size: number; // size of file
