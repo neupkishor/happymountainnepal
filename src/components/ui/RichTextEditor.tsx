@@ -93,17 +93,17 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
     if (target.tagName === 'IMG' && target.parentElement?.tagName === 'FIGURE') {
       const figure = target.parentElement;
       if (quillRef.current) {
-          const blot = (ReactQuill.Quill as any).find(figure);
-          const rect = figure.getBoundingClientRect();
-          const editorBounds = editorRef.current?.getBoundingClientRect();
+        const blot = (ReactQuill.Quill as any).find(figure);
+        const rect = figure.getBoundingClientRect();
+        const editorBounds = editorRef.current?.getBoundingClientRect();
 
-          if (blot && editorBounds) {
-              setSelectedImage({
-                  node: figure,
-                  blot: blot,
-                  rect: rect,
-              });
-          }
+        if (blot && editorBounds) {
+          setSelectedImage({
+            node: figure,
+            blot: blot,
+            rect: rect,
+          });
+        }
       }
     } else {
       setSelectedImage(null);
@@ -132,12 +132,12 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   };
 
   const handleReplaceSelectedImage = (urls: ImageWithCaption[]) => {
-      if (urls.length === 0 || !selectedImage || !quillRef.current) return;
-      const newImage = urls[0];
-      quillRef.current.deleteText(selectedImage.blot.offset(quillRef.current.scroll), 1, 'user');
-      quillRef.current.insertEmbed(selectedImage.blot.offset(quillRef.current.scroll), 'customImage', { url: newImage.url, alt: newImage.caption || '' }, 'user');
-      setSelectedImage(null);
-      setIsMediaLibraryOpen(false);
+    if (urls.length === 0 || !selectedImage || !quillRef.current) return;
+    const newImage = urls[0];
+    quillRef.current.deleteText(selectedImage.blot.offset(quillRef.current.scroll), 1, 'user');
+    quillRef.current.insertEmbed(selectedImage.blot.offset(quillRef.current.scroll), 'customImage', { url: newImage.url, alt: newImage.caption || '' }, 'user');
+    setSelectedImage(null);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleUpdateImageAlt = (newAlt: string) => {
@@ -149,9 +149,9 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   };
 
   const handleDeleteImage = () => {
-      if (!selectedImage || !quillRef.current) return;
-      quillRef.current.deleteText(selectedImage.blot.offset(quillRef.current.scroll), 1, 'user');
-      setSelectedImage(null);
+    if (!selectedImage || !quillRef.current) return;
+    quillRef.current.deleteText(selectedImage.blot.offset(quillRef.current.scroll), 1, 'user');
+    setSelectedImage(null);
   }
 
   const modules = useMemo(() => ({
@@ -173,61 +173,61 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
 
   const getQuillRef = (el: any) => {
     if (typeof window !== 'undefined' && el && !quillRef.current) {
-        quillRef.current = el.getEditor();
-        if (quillRef.current) {
-            // Correctly get the Quill static from the instance
-            const Quill = quillRef.current.constructor as any;
-            const BlockEmbed = Quill.import('blots/block/embed');
+      quillRef.current = el.getEditor();
+      if (quillRef.current) {
+        // Correctly get the Quill static from the instance
+        const Quill = quillRef.current.constructor as any;
+        const BlockEmbed = Quill.import('blots/block/embed');
 
-            class ImageBlot extends BlockEmbed {
-                static blotName = 'customImage';
-                static tagName = 'figure';
-                static className = 'ql-custom-image-container';
+        class ImageBlot extends BlockEmbed {
+          static blotName = 'customImage';
+          static tagName = 'figure';
+          static className = 'ql-custom-image-container';
 
-                static create(value: {url: string; alt: string}) {
-                    const node = super.create();
-                    node.setAttribute('contenteditable', 'false');
-                    const img = document.createElement('img');
-                    img.setAttribute('src', value.url);
-                    img.setAttribute('alt', value.alt || '');
-                    node.appendChild(img);
-                    return node;
-                }
+          static create(value: { url: string; alt: string }) {
+            const node = super.create();
+            node.setAttribute('contenteditable', 'false');
+            const img = document.createElement('img');
+            img.setAttribute('src', value.url);
+            img.setAttribute('alt', value.alt || '');
+            node.appendChild(img);
+            return node;
+          }
 
-                static value(node: HTMLElement) {
-                    const img = node.querySelector('img');
-                    return {
-                        url: img?.getAttribute('src') || '',
-                        alt: img?.getAttribute('alt') || '',
-                    };
-                }
+          static value(node: HTMLElement) {
+            const img = node.querySelector('img');
+            return {
+              url: img?.getAttribute('src') || '',
+              alt: img?.getAttribute('alt') || '',
+            };
+          }
 
-                format(name: string, value: any) {
-                    if (name === 'alt') {
-                        const img = this.domNode.querySelector('img');
-                        if (img) {
-                            img.setAttribute('alt', value);
-                        }
-                    } else {
-                        super.format(name, value);
-                    }
-                }
+          format(name: string, value: any) {
+            if (name === 'alt') {
+              const img = this.domNode.querySelector('img');
+              if (img) {
+                img.setAttribute('alt', value);
+              }
+            } else {
+              super.format(name, value);
             }
-            Quill.register(ImageBlot);
+          }
         }
+        Quill.register(ImageBlot);
+      }
     }
   };
 
   const getToolbarPosition = () => {
-      if (!selectedImage || !editorRef.current) return { top: 0, left: 0, width: 0 };
-      const editorRect = editorRef.current.getBoundingClientRect();
-      const imageRect = selectedImage.rect;
+    if (!selectedImage || !editorRef.current) return { top: 0, left: 0, width: 0 };
+    const editorRect = editorRef.current.getBoundingClientRect();
+    const imageRect = selectedImage.rect;
 
-      return {
-          top: imageRect.bottom - editorRect.top + window.scrollY,
-          left: imageRect.left - editorRect.left + window.scrollX,
-          width: imageRect.width
-      };
+    return {
+      top: imageRect.bottom - editorRect.top + window.scrollY,
+      left: imageRect.left - editorRect.left + window.scrollX,
+      width: imageRect.width
+    };
   };
 
   if (!mounted) {
@@ -235,7 +235,7 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   }
 
   return (
-    <div className="rich-text-editor-container relative" ref={editorRef} onClick={handleEditorClick}>
+    <div className="rich-text-editor-container relative mb-16" style={{ height: '500px' }} ref={editorRef} onClick={handleEditorClick}>
       <ReactQuill
         ref={getQuillRef}
         theme="snow"
@@ -248,7 +248,7 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
         placeholder={placeholder}
         readOnly={disabled}
         className="bg-card rounded-md"
-        style={{ height: '250px' }}
+        style={{ height: '500px' }}
       />
       {selectedImage && (
         <ImageToolbar
