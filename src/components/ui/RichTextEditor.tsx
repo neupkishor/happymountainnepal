@@ -1,9 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css'; // Import Quill's CSS
+import 'react-quill/dist/quill.snow.css';
+import { MediaLibraryDialog } from '@/components/manage/MediaLibraryDialog';
+import type { Quill } from 'react-quill-new';
+import type { UploadCategory } from '@/lib/types';
 
 // Dynamically import ReactQuill to ensure it's only loaded on the client side
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
@@ -16,38 +19,61 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, placeholder, disabled }: RichTextEditorProps) {
-  // State to track if the component is mounted on the client
   const [mounted, setMounted] = useState(false);
-  // Internal state for the editor's value to manage uncontrolled/controlled behavior
   const [editorValue, setEditorValue] = useState(value);
+  const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
+  const quillRef = useRef<Quill | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Update internal editorValue if the prop value changes
   useEffect(() => {
     if (value !== editorValue) {
       setEditorValue(value);
     }
-  }, [value]); // Only re-run if the prop 'value' changes
+  }, [value]);
 
-  // Define the toolbar options
+  const imageHandler = () => {
+    setIsMediaLibraryOpen(true);
+  };
+
+  const handleImageSelect = (urls: string[]) => {
+    if (urls.length === 0 || !quillRef.current) return;
+
+    const quill = quillRef.current;
+    const range = quill.getSelection(true);
+    const imageUrl = urls[0];
+
+    // Insert the image URL into the editor
+    quill.insertEmbed(range.index, 'image', imageUrl);
+    quill.setSelection(range.index + 1, 0); // Move cursor after the image
+    setIsMediaLibraryOpen(false);
+  };
+
   const modules = useMemo(() => ({
     toolbar: {
       container: [
-        [{ 'header': [1, 2, 3, false] }], // Headings
-        ['bold', 'italic', 'underline', 'link'], // Text formatting with link
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }], // Lists
-        ['image'], // Image insertion
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'link'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        ['image'],
       ],
+      handlers: {
+        'image': imageHandler,
+      },
     },
     clipboard: {
-      matchVisual: false, // Disable matching visual styles from clipboard
+      matchVisual: false,
     },
   }), []);
 
-  // Render a placeholder or null until mounted on the client to prevent hydration mismatches
+  const getQuillRef = (el: any) => {
+    if (typeof window !== 'undefined' && el) {
+      quillRef.current = el.getEditor();
+    }
+  };
+
   if (!mounted) {
     return <div className="h-40 rounded-md border bg-muted/20 animate-pulse" />;
   }
@@ -55,17 +81,24 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   return (
     <div className="rich-text-editor-container">
       <ReactQuill
+        ref={getQuillRef}
         theme="snow"
         value={editorValue}
         onChange={(val) => {
-          setEditorValue(val); // Update internal state
-          onChange(val);      // Propagate change to form
+          setEditorValue(val);
+          onChange(val);
         }}
         modules={modules}
         placeholder={placeholder}
         readOnly={disabled}
         className="bg-card rounded-md"
-        style={{ height: '250px' }} // Added a fixed height for better initial rendering
+        style={{ height: '250px' }}
+      />
+      <MediaLibraryDialog
+        isOpen={isMediaLibraryOpen}
+        onClose={() => setIsMediaLibraryOpen(false)}
+        onSelect={handleImageSelect}
+        defaultCategory="blog"
       />
     </div>
   );
