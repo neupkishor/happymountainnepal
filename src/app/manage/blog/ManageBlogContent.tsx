@@ -8,68 +8,98 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { BlogManagementCard } from '@/components/manage/BlogTableRow'; // Re-using as card
-import { getBlogPosts } from '@/lib/db';
+import { BlogManagementCard } from '@/components/manage/BlogTableRow';
 import type { BlogPost } from '@/lib/types';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useDebounce } from '@/hooks/use-debounce';
 
 const ITEMS_PER_PAGE = 10;
 
 export function ManageBlogContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const currentPage = parseInt(searchParams.get('page') || '1', 10);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-    const [allPosts, setAllPosts] = useState<BlogPost[]>([]);
+    const [posts, setPosts] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        totalPages: 0,
+        hasMore: false,
+    });
+    const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
     
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
     useEffect(() => {
-        const fetchAllPosts = async () => {
+        const fetchPosts = async (page: number, search: string) => {
             setLoading(true);
             try {
-                // Fetch all posts for client-side search.
-                // In a very large application, we would implement server-side search.
-                const posts = [];
-                let hasMore = true;
-                let lastDocId: string | null = null;
-                while (hasMore) {
-                    const result = await getBlogPosts({ limit: 50, lastDocId });
-                    posts.push(...result.posts);
-                    hasMore = result.hasMore;
-                    if(result.posts.length > 0) {
-                        lastDocId = result.posts[result.posts.length - 1].id;
+                // For server-side search, we'll need a new API endpoint or modify getBlogPosts
+                // Let's assume for now getBlogPosts is adapted.
+                // In a real scenario, this would become an API call.
+                const lastDocId = page > pageHistory.length ? null : pageHistory[page - 1];
+
+                // This logic would ideally be in an API route.
+                // Simulating it here for now.
+                const queryParams = new URLSearchParams({
+                    limit: String(ITEMS_PER_PAGE),
+                    search: search,
+                });
+                if (lastDocId && page > 1) {
+                    queryParams.set('lastDocId', lastDocId);
+                }
+
+                // This should be a fetch to an API route like /api/blog
+                // For now, we will adapt getBlogPosts to accept search
+                // Note: a proper server-side implementation is needed for production scale.
+                // This requires updating db.ts and potentially a new API route.
+                
+                // Let's assume we have an API route /api/blog that handles this
+                const response = await fetch(`/api/blog?${queryParams.toString()}`);
+                const data = await response.json();
+
+                setPosts(data.posts);
+                setPagination({
+                    currentPage: page,
+                    totalPages: data.totalPages,
+                    hasMore: data.hasMore,
+                });
+                
+                if(data.posts.length > 0) {
+                    const newLastDocId = data.posts[data.posts.length - 1].id;
+                    if(pageHistory.length <= page) {
+                        setPageHistory(prev => [...prev, newLastDocId]);
                     }
                 }
-                setAllPosts(posts);
+
             } catch (error) {
                 console.error("Failed to fetch posts", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchAllPosts();
-    }, []);
 
-    const filteredPosts = useMemo(() => {
-        return allPosts.filter(post => 
-            post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            post.author.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [allPosts, searchTerm]);
+        fetchPosts(currentPage, debouncedSearchTerm);
+        
+        // Update URL
+        const params = new URLSearchParams(window.location.search);
+        if (debouncedSearchTerm) {
+            params.set('search', debouncedSearchTerm);
+        } else {
+            params.delete('search');
+        }
+        router.replace(`/manage/blog?${params.toString()}`);
 
-    const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE);
-    const paginatedPosts = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredPosts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }, [filteredPosts, currentPage]);
+    }, [debouncedSearchTerm, currentPage, router]);
 
 
     const handlePageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= totalPages) {
-            router.push(`/manage/blog?page=${newPage}`);
+        if (newPage >= 1 && newPage <= pagination.totalPages) {
+            router.push(`/manage/blog?page=${newPage}${searchTerm ? `&search=${searchTerm}`: ''}`);
         }
     };
     
@@ -103,30 +133,30 @@ export function ManageBlogContent() {
             <div className="space-y-4">
                 {loading ? (
                     [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
-                ) : paginatedPosts.length > 0 ? (
-                    paginatedPosts.map((post) => (
+                ) : posts.length > 0 ? (
+                    posts.map((post) => (
                         <BlogManagementCard key={post.id} post={post} />
                     ))
                 ) : (
                     <Card>
                         <CardContent className="text-center py-16 text-muted-foreground">
-                            No posts found.
+                            No posts found for your search query.
                         </CardContent>
                     </Card>
                 )}
             </div>
             
-            {totalPages > 1 && (
+            {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between border-t pt-6 mt-6">
                     <div className="text-sm text-muted-foreground">
-                        Page {currentPage} of {totalPages}
+                        Page {pagination.currentPage} of {pagination.totalPages}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1 || loading}
+                            onClick={() => handlePageChange(pagination.currentPage - 1)}
+                            disabled={pagination.currentPage === 1 || loading}
                         >
                             <ChevronLeft className="h-4 w-4 mr-1" />
                             Previous
@@ -134,8 +164,8 @@ export function ManageBlogContent() {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages || loading}
+                            onClick={() => handlePageChange(pagination.currentPage + 1)}
+                            disabled={!pagination.hasMore || loading}
                         >
                             Next
                             <ChevronRight className="h-4 w-4 ml-1" />

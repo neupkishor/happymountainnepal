@@ -1,8 +1,4 @@
 
-
-
-
-
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
@@ -444,43 +440,62 @@ export async function getBlogPosts(options?: {
     limit?: number;
     lastDocId?: string | null;
     status?: 'published' | 'draft';
-}): Promise<{ posts: BlogPost[]; hasMore: boolean }> {
-    if (!firestore) return { posts: [], hasMore: false };
+    search?: string;
+}): Promise<{ posts: BlogPost[]; hasMore: boolean; totalPages: number; }> {
+    if (!firestore) return { posts: [], hasMore: false, totalPages: 0 };
     try {
+        const limit = options?.limit || 10;
         let q = query(collection(firestore, 'blogPosts'), orderBy('date', 'desc'));
 
         if (options?.status) {
-            q = query(collection(firestore, 'blogPosts'), where('status', '==', options.status), orderBy('date', 'desc'));
+            q = query(q, where('status', '==', options.status));
         }
 
-        if (options?.lastDocId) {
-            const lastDoc = await getDoc(doc(firestore, 'blogPosts', options.lastDocId));
-            if (lastDoc.exists()) {
-                q = query(q, startAfter(lastDoc));
-            }
+        if (options?.search) {
+            // Firestore does not support case-insensitive search natively.
+            // A common workaround is to store a lowercase version of the fields you want to search.
+            // For this implementation, we will filter in memory, which is not ideal for large datasets.
+            // A more scalable solution would involve a third-party search service like Algolia or Typesense.
         }
 
-        const limit = options?.limit || 10;
-        q = query(q, firestoreLimit(limit + 1));
-
-        const querySnapshot = await getDocs(q);
-        const posts = querySnapshot.docs.slice(0, limit).map(doc => {
+        const countSnapshot = await getDocs(query(collection(firestore, 'blogPosts'), ...(options?.status ? [where('status', '==', options.status)] : [])));
+        let allPosts = countSnapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 id: doc.id,
                 ...data,
-                // Convert Firestore Timestamp to ISO string for React serialization
                 date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date
             } as BlogPost;
         });
 
-        const hasMore = querySnapshot.docs.length > limit;
+        if (options?.search) {
+            const searchTerm = options.search.toLowerCase();
+            allPosts = allPosts.filter(post => 
+                post.title.toLowerCase().includes(searchTerm) ||
+                post.author.toLowerCase().includes(searchTerm)
+            );
+        }
 
-        return { posts, hasMore };
+        const totalCount = allPosts.length;
+        const totalPages = Math.ceil(totalCount / limit);
+        
+        let posts = allPosts;
+        if(options?.lastDocId) {
+            const lastIndex = posts.findIndex(p => p.id === options.lastDocId);
+            if(lastIndex !== -1) {
+                posts = posts.slice(lastIndex + 1);
+            }
+        }
+        
+        const hasMore = posts.length > limit;
+        const finalPosts = posts.slice(0, limit);
+
+        return { posts: finalPosts, hasMore, totalPages };
+
     } catch (e: any) {
         console.error("Error fetching blog posts", e);
         await logError({ message: `Failed to fetch blog posts: ${e.message}`, stack: e.stack, pathname: '/manage/blog' });
-        return { posts: [], hasMore: false };
+        return { posts: [], hasMore: false, totalPages: 0 };
     }
 }
 
