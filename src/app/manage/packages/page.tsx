@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -8,16 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableCell,
-} from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
-import { PackageTableRow } from '@/components/manage/PackageTableRow';
+import { Input } from '@/components/ui/input';
+import { PlusCircle, Search } from 'lucide-react';
+import { PackageManagementCard } from '@/components/manage/PackageTableRow'; // Re-using and renaming
 import type { Tour } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,32 +23,30 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { useDebounce } from '@/hooks/use-debounce';
 
-interface PaginationInfo {
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
-  limit: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-}
+const ITEMS_PER_PAGE = 10;
 
 export default function PackagesListPage() {
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<PaginationInfo>({
+  const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 0,
     totalCount: 0,
-    limit: 10,
-    hasNextPage: false,
-    hasPreviousPage: false,
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const fetchPackages = async (page: number) => {
+  const fetchPackages = async (page: number, search: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/packages?page=${page}&limit=10`);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
+        search: search,
+      });
+      const response = await fetch(`/api/packages?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch packages');
 
       const data = await response.json();
@@ -68,19 +60,24 @@ export default function PackagesListPage() {
   };
 
   useEffect(() => {
-    fetchPackages(pagination.currentPage);
-  }, []);
+    fetchPackages(1, debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= pagination.totalPages) {
-      fetchPackages(page);
+      fetchPackages(page, searchTerm);
     }
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold !font-headline">Tour Packages</h1>
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold !font-headline">Tour Packages</h1>
+          <p className="text-muted-foreground mt-2">
+            Create, edit, and manage your tour packages.
+          </p>
+        </div>
         <Button asChild>
           <Link href="/manage/packages/create">
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -92,44 +89,34 @@ export default function PackagesListPage() {
         <CardHeader>
           <CardTitle>Manage Packages</CardTitle>
           <CardDescription>
-            Here you can add, edit, or remove tour packages. Showing {tours.length} of {pagination.totalCount} packages.
+            Showing {tours.length} of {pagination.totalCount} packages.
           </CardDescription>
+          <div className="relative pt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+                placeholder="Search by name..." 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {[
-                  <TableHead key="name">Package Name</TableHead>,
-                  <TableHead key="region">Region</TableHead>,
-                  <TableHead key="duration">Duration</TableHead>,
-                  <TableHead key="status">Status</TableHead>,
-                  <TableHead key="actions" className="text-right">Actions</TableHead>,
-                ]}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell colSpan={5}>
-                      <Skeleton className="h-10 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : tours.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No packages found. Create your first package to get started.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                tours.map((tour) => (
-                  <PackageTableRow key={tour.id} tour={tour} />
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <div className="space-y-4">
+            {loading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton key={index} className="h-20 w-full" />
+              ))
+            ) : tours.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                No packages found.
+              </div>
+            ) : (
+              tours.map((tour) => (
+                <PackageManagementCard key={tour.id} tour={tour} />
+              ))
+            )}
+          </div>
 
           {pagination.totalPages > 1 && (
             <div className="mt-6">
@@ -138,57 +125,24 @@ export default function PackagesListPage() {
                   <PaginationItem>
                     <PaginationPrevious
                       onClick={() => handlePageChange(pagination.currentPage - 1)}
-                      className={
-                        !pagination.hasPreviousPage
-                          ? 'pointer-events-none opacity-50'
-                          : 'cursor-pointer'
-                      }
+                      className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                     />
                   </PaginationItem>
-
-                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
-                    // Show first page, last page, current page, and pages around current
-                    const showPage =
-                      page === 1 ||
-                      page === pagination.totalPages ||
-                      Math.abs(page - pagination.currentPage) <= 1;
-
-                    if (!showPage) {
-                      // Show ellipsis for skipped pages
-                      if (
-                        page === pagination.currentPage - 2 ||
-                        page === pagination.currentPage + 2
-                      ) {
-                        return (
-                          <PaginationItem key={page}>
-                            <span className="px-2">...</span>
-                          </PaginationItem>
-                        );
-                      }
-                      return null;
-                    }
-
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(page)}
-                          isActive={page === pagination.currentPage}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
-
+                  {[...Array(pagination.totalPages)].map((_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(i + 1)}
+                        isActive={i + 1 === pagination.currentPage}
+                        className="cursor-pointer"
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => handlePageChange(pagination.currentPage + 1)}
-                      className={
-                        !pagination.hasNextPage
-                          ? 'pointer-events-none opacity-50'
-                          : 'cursor-pointer'
-                      }
+                      className={pagination.currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                     />
                   </PaginationItem>
                 </PaginationContent>

@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getPackagesPaginated } from '@/lib/db';
 
@@ -6,8 +7,9 @@ export async function GET(request: NextRequest) {
         const searchParams = request.nextUrl.searchParams;
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
+        const search = searchParams.get('search') || '';
 
-        const result = await getPackagesPaginated({ page, limit });
+        const result = await getPackagesPaginated({ page, limit, search });
 
         return NextResponse.json(result);
     } catch (error) {
