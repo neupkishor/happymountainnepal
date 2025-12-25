@@ -16,39 +16,50 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { type TeamMember } from '@/lib/types';
+import { type TeamMember, type TeamGroup } from '@/lib/types';
 import { addTeamMember, updateTeamMember, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { MediaPicker } from './MediaPicker'; // Updated import
-import { usePathname } from 'next/navigation';
+import { MediaPicker } from './MediaPicker';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   role: z.string().min(3, { message: "Role must be at least 3 characters." }),
   bio: z.string().min(10, { message: "Bio must be at least 10 characters." }),
   image: z.string().url({ message: "Please upload an image." }).min(1, "Image is required."),
+  groupId: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface TeamMemberFormProps {
   member?: TeamMember;
+  groups?: TeamGroup[];
 }
 
-export function TeamMemberForm({ member }: TeamMemberFormProps) {
+export function TeamMemberForm({ member, groups = [] }: TeamMemberFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const pathname = usePathname();
+  const router = useRouter();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: member || {
+    defaultValues: member ? { ...member, groupId: member.groupId || null } : {
       name: '',
       role: '',
       bio: '',
       image: '',
+      groupId: null,
     },
   });
 
@@ -62,6 +73,8 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
           await addTeamMember(values);
           toast({ title: 'Success', description: 'Team member created.' });
         }
+        router.push('/manage/team');
+        router.refresh(); // To reflect changes in the team list
       } catch (error: any) {
         console.error("Failed to save team member:", error);
         const context = {
@@ -109,6 +122,35 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
                     <FormMessage />
                     </FormItem>
                 )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="groupId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Group</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value === 'null' ? null : value)}
+                        defaultValue={field.value || 'null'}
+                        disabled={isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a group" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="null">None (Ungrouped)</SelectItem>
+                          {groups.map((group) => (
+                            <SelectItem key={group.id} value={group.id}>
+                              {group.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
                 <FormField
                 control={form.control}

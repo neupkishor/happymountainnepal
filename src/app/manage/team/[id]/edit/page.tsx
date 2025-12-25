@@ -1,5 +1,5 @@
 
-import { getTeamMemberById } from '@/lib/db';
+import { getTeamMemberById, getTeamGroups } from '@/lib/db';
 import { TeamMemberForm } from '@/components/manage/TeamMemberForm';
 import { notFound } from 'next/navigation';
 
@@ -9,7 +9,12 @@ type EditTeamMemberPageProps = {
 
 export default async function EditTeamMemberPage({ params }: EditTeamMemberPageProps) {
   const { id } = await params;
-  const member = await getTeamMemberById(id);
+  
+  // Fetch both the member and the list of groups concurrently
+  const [member, groups] = await Promise.all([
+    getTeamMemberById(id),
+    getTeamGroups()
+  ]);
 
   if (!member) {
     notFound();
@@ -23,7 +28,7 @@ export default async function EditTeamMemberPage({ params }: EditTeamMemberPageP
           Update the details for {member.name}.
         </p>
       </div>
-      <TeamMemberForm member={member} />
+      <TeamMemberForm member={member} groups={groups} />
     </div>
   );
 }

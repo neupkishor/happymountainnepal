@@ -1,13 +1,14 @@
 
 
 
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
 import *as firestoreAggregates from 'firebase/firestore'; // Import all as namespace
 const { aggregate, count } = firestoreAggregates; // Destructure aggregate and count from the namespace
 import type { CustomizeTripInput } from "@/ai/flows/customize-trip-flow";
-import type { Account, Activity, Tour, BlogPost, TeamMember, TeamGroup, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData, Redirect, Log } from './types';
+import type { Account, Activity, Tour, BlogPost, TeamMember, TeamGroup, Destination, Partner, Review, SiteError, FileUpload, ManagedReview, OnSiteReview, OffSiteReview, SiteProfile, LegalContent, LegalDocument, UploadCategory, ImportedTourData, ImportedBlogData, Redirect, Log, ImageWithCaption } from './types';
 import { slugify } from "./utils";
 import { firestore } from './firebase-server';
 // Removed import { errorEmitter } from '@/firebase/error-emitter';
@@ -127,7 +128,7 @@ export async function createTour(): Promise<string | null> {
         difficulty: 'Moderate',
         duration: 0,
         price: 0,
-        mainImage: '',
+        mainImage: {url: '', caption: ''},
         images: [],
         itinerary: [],
         inclusions: [],
@@ -176,7 +177,7 @@ export async function createTourWithBasicInfo(data: Partial<ImportedTourData>): 
             difficulty: data.difficulty || 'Moderate',
             duration: typeof data.duration === 'number' ? data.duration : 0,
             price: data.price || 0,
-            mainImage: '',
+            mainImage: {url: '', caption: ''},
             images: [],
             itinerary: data.itinerary || [],
             inclusions: data.inclusions || [],
@@ -281,7 +282,7 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
         missing.push("External Booking URL (required for external booking type)");
     }
 
-    if (!tour.mainImage || tour.mainImage.length === 0) missing.push("Main Image");
+    if (!tour.mainImage || !tour.mainImage.url) missing.push("Main Image");
     if (!tour.map || tour.map.length === 0) missing.push("Map URL");
 
     if (!tour.itinerary || tour.itinerary.length === 0 || tour.itinerary.some(item => !item.day || !item.title || !item.description)) {
@@ -490,19 +491,38 @@ export async function addTeamMember(data: Omit<TeamMember, 'id' | 'slug'>) {
     }
 }
 
-export async function updateTeamMember(id: string, data: Omit<TeamMember, 'id' | 'slug'>) {
+export async function updateTeamMember(id: string, data: Partial<Omit<TeamMember, 'id' | 'slug'>>) {
     if (!firestore) throw new Error("Database not available.");
     try {
-        const slug = slugify(data.name);
-        const updatedMember = { ...data, slug };
+        const slug = slugify(data.name || '');
         const docRef = doc(firestore, 'teamMembers', id);
-        await updateDoc(docRef, updatedMember);
+        const currentDoc = await getDoc(docRef);
+        const currentData = currentDoc.data() as TeamMember | undefined;
+
+        let finalData: Partial<TeamMember> = { ...data, slug };
+
+        // If groupId has changed, calculate the new orderIndex
+        if (data.groupId !== undefined && data.groupId !== currentData?.groupId) {
+            if (data.groupId === null) { // Moved to "Ungrouped"
+                finalData.orderIndex = 0; // Or handle as needed
+            } else {
+                const membersInNewGroupQuery = query(
+                    collection(firestore, 'teamMembers'),
+                    where('groupId', '==', data.groupId)
+                );
+                const snapshot = await getDocs(membersInNewGroupQuery);
+                finalData.orderIndex = snapshot.size; // Place at the end
+            }
+        }
+        
+        await updateDoc(docRef, finalData);
     } catch (error: any) {
         console.error("Error updating team member: ", error);
         await logError({ message: `Failed to update team member ${id}: ${error.message}`, stack: error.stack, pathname: `/manage/team/${id}/edit`, context: { memberId: id, data } });
         throw new Error("Could not update team member.");
     }
 }
+
 
 export async function deleteTeamMember(id: string) {
     if (!firestore) throw new Error("Database not available.");
@@ -810,20 +830,10 @@ export async function getFileUploads(options?: {
         const uploads = querySnapshot.docs.slice(0, limit).map(doc => {
             const data = doc.data();
 
-            // Determine url based on old 'path' if 'url' is missing or needs construction
-            let url = data.url;
-            if (!url && data.path) {
-                if (data.pathType === 'relative') {
-                    url = `{{local}}/${data.path}`;
-                } else {
-                    url = data.path;
-                }
-            }
-            if (!url) url = '';
-
             return {
                 id: doc.id,
                 name: data.name || data.fileName || 'Untitled',
+                caption: data.caption || '',
                 type: data.type || data.fileType || 'application/octet-stream',
                 category: data.category || 'general',
                 size: data.size || data.fileSize || 0,
@@ -831,7 +841,7 @@ export async function getFileUploads(options?: {
                 meta: Array.isArray(data.meta) ? data.meta : (data.metaInformation ? [data.metaInformation] : []),
                 uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
                 uploadedBy: data.uploadedBy || data.userId || 'Unknown',
-                url: url
+                url: data.url || ''
             } as FileUpload;
         });
 
