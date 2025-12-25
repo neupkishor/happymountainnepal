@@ -2,6 +2,7 @@
 
 
 
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
@@ -208,6 +209,26 @@ export async function updateTour(id: string, data: Partial<Omit<Tour, 'id'>>) {
         const docRef = doc(firestore, 'packages', id);
 
         let finalData: Partial<Omit<Tour, 'id'>> = { ...data };
+
+        // Auto-generate searchKeywords if certain fields are updated
+        if (data.name || data.description || data.region || data.type || data.difficulty) {
+            const currentDoc = await getDoc(docRef);
+            const existingData = currentDoc.data() as Tour || {};
+            const combinedData = { ...existingData, ...data };
+
+            const keywords = new Set<string>();
+            (combinedData.name || '').toLowerCase().split(' ').forEach(word => keywords.add(word));
+            (combinedData.description || '').toLowerCase().split(' ').forEach(word => keywords.add(word.replace(/[^a-z0-9]/gi, '')));
+            if (Array.isArray(combinedData.region)) {
+                combinedData.region.forEach(r => keywords.add(r.trim().toLowerCase()));
+            } else if (typeof combinedData.region === 'string') {
+                (combinedData.region as string).split(',').forEach(r => keywords.add(r.trim().toLowerCase()));
+            }
+            if(combinedData.type) keywords.add(combinedData.type.toLowerCase());
+            if(combinedData.difficulty) keywords.add(combinedData.difficulty.toLowerCase());
+            
+            finalData.searchKeywords = Array.from(keywords).filter(Boolean);
+        }
 
         if (finalData.departureDates) {
             finalData.departureDates = finalData.departureDates.map(d => ({
@@ -880,81 +901,58 @@ export async function getTourBySlug(slug: string): Promise<Tour | null> {
 export async function getPackagesPaginated(options: {
     page: number;
     limit: number;
+    search?: string;
 }): Promise<{
     packages: Tour[];
     pagination: {
         currentPage: number;
         totalPages: number;
         totalCount: number;
-        limit: number;
-        hasNextPage: boolean;
-        hasPreviousPage: boolean;
     };
 }> {
     if (!firestore) {
+        // Return structure consistent with a successful empty call
         return {
             packages: [],
-            pagination: {
-                currentPage: 1,
-                totalPages: 0,
-                totalCount: 0,
-                limit: options.limit,
-                hasNextPage: false,
-                hasPreviousPage: false,
-            },
+            pagination: { currentPage: options.page, totalPages: 0, totalCount: 0 },
         };
     }
 
     try {
-        const { page, limit } = options;
+        const { page, limit, search } = options;
         const packagesRef = collection(firestore, 'packages');
+        let dataQuery = query(packagesRef, orderBy('name'));
+        let countQuery = query(packagesRef);
 
-        // Get total count using aggregate
-        const countSnapshot = await getDocs(query(packagesRef));
-        const totalCount = countSnapshot.size;
-
-        // Calculate pagination
-        const totalPages = Math.ceil(totalCount / limit);
-        const offset = (page - 1) * limit;
-
-        // Get paginated packages
-        let q = query(
-            packagesRef,
-            orderBy('name', 'asc'),
-            firestoreLimit(limit)
-        );
-
-        // Apply offset by skipping documents
-        if (offset > 0) {
-            const offsetQuery = query(packagesRef, orderBy('name', 'asc'), firestoreLimit(offset));
-            const offsetSnapshot = await getDocs(offsetQuery);
-            if (offsetSnapshot.docs.length > 0) {
-                const lastDoc = offsetSnapshot.docs[offsetSnapshot.docs.length - 1];
-                q = query(
-                    packagesRef,
-                    orderBy('name', 'asc'),
-                    startAfter(lastDoc),
-                    firestoreLimit(limit)
-                );
-            }
+        if (search) {
+            const searchTermLower = search.toLowerCase();
+            dataQuery = query(dataQuery, where('searchKeywords', 'array-contains', searchTermLower));
+            countQuery = query(countQuery, where('searchKeywords', 'array-contains', searchTermLower));
         }
 
-        const querySnapshot = await getDocs(q);
-        const packages = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        } as Tour));
+        // Get total count for pagination with filter
+        const countSnapshot = await getDocs(countQuery);
+        const totalCount = countSnapshot.size;
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // Calculate offset for pagination
+        if (page > 1) {
+            const offset = (page - 1) * limit;
+            const offsetQuery = query(dataQuery, firestoreLimit(offset));
+            const offsetSnapshot = await getDocs(offsetQuery);
+            if (offsetSnapshot.docs.length > 0) {
+                const lastVisible = offsetSnapshot.docs[offsetSnapshot.docs.length - 1];
+                dataQuery = query(dataQuery, startAfter(lastVisible));
+            }
+        }
+        
+        dataQuery = query(dataQuery, firestoreLimit(limit));
+        const packageSnapshot = await getDocs(dataQuery);
+        const packages = packageSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
 
         return {
             packages,
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalCount,
-                limit,
-                hasNextPage: page < totalPages,
-                hasPreviousPage: page > 1,
-            },
+            pagination: { currentPage: page, totalPages, totalCount },
         };
     } catch (error: any) {
         console.error('Error fetching paginated packages:', error);
