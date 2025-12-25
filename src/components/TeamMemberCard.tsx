@@ -11,7 +11,7 @@ interface TeamMemberCardProps {
 
 export function TeamMemberCard({ member }: TeamMemberCardProps) {
   return (
-    <Link href={`/about/teams/${member.slug}`} className="group block text-center">
+    <Link href={`/about/teams/${member.slug}`} className="group block">
         <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-muted">
              <Image
                 src={member.image}
