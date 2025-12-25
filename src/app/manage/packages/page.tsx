@@ -1,18 +1,10 @@
 
-
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search } from 'lucide-react';
-import { PackageManagementCard } from '@/components/manage/PackageTableRow'; // Re-using and renaming
+import { PackageManagementCard } from '@/components/manage/PackageTableRow';
 import type { Tour } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -71,8 +63,8 @@ export default function PackagesListPage() {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold !font-headline">Tour Packages</h1>
           <p className="text-muted-foreground mt-2">
@@ -86,72 +78,64 @@ export default function PackagesListPage() {
           </Link>
         </Button>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Packages</CardTitle>
-          <CardDescription>
-            Showing {tours.length} of {pagination.totalCount} packages.
-          </CardDescription>
-          <div className="relative pt-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input 
-                placeholder="Search by name..." 
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {loading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-              ))
-            ) : tours.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                No packages found.
-              </div>
-            ) : (
-              tours.map((tour) => (
-                <PackageManagementCard key={tour.id} tour={tour} />
-              ))
-            )}
-          </div>
+      
+      <div className="relative pt-2">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Input
+          placeholder="Search by name..."
+          className="pl-10"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-          {pagination.totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => handlePageChange(pagination.currentPage - 1)}
-                      className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                    />
-                  </PaginationItem>
-                  {[...Array(pagination.totalPages)].map((_, i) => (
-                    <PaginationItem key={i}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(i + 1)}
-                        isActive={i + 1 === pagination.currentPage}
-                        className="cursor-pointer"
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => handlePageChange(pagination.currentPage + 1)}
-                      className={pagination.currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="h-20 w-full" />
+          ))
+        ) : tours.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
+            No packages found.
+          </div>
+        ) : (
+          tours.map((tour) => (
+            <PackageManagementCard key={tour.id} tour={tour} />
+          ))
+        )}
+      </div>
+
+      {pagination.totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  className={pagination.currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              {[...Array(pagination.totalPages)].map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    onClick={() => handlePageChange(i + 1)}
+                    isActive={i + 1 === pagination.currentPage}
+                    className="cursor-pointer"
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  className={pagination.currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
