@@ -60,48 +60,48 @@ export default function TeamsPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12">
-            {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-12">
+            {[...Array(8)].map((_, i) => (
+                <div key={i}>
+                    <Skeleton className="aspect-[3/4] w-full rounded-lg" />
+                    <Skeleton className="h-5 w-3/4 mt-4" />
+                    <Skeleton className="h-4 w-1/2 mt-2" />
+                </div>
+            ))}
           </div>
         ) : (
           <div className="space-y-16">
-            {/* Display grouped members */}
             {teamGroups.map((group) => {
               const groupMembers = getMembersInGroup(group.id);
               if (groupMembers.length === 0) return null;
 
               return (
-                <div key={group.id} className="space-y-8">
+                <div key={group.id} className="space-y-12">
                   <div className="text-center">
                     <h2 className="text-3xl font-bold !font-headline">{group.name}</h2>
                     {group.description && (
-                      <p className="mt-2 text-muted-foreground">{group.description}</p>
+                      <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">{group.description}</p>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-12">
                     {groupMembers.map((member) => (
-                      <Link key={member.id} href={`/about/teams/${member.slug}`}>
-                        <TeamMemberCard member={member} />
-                      </Link>
+                        <TeamMemberCard key={member.id} member={member} />
                     ))}
                   </div>
                 </div>
               );
             })}
 
-            {/* Display ungrouped members */}
             {ungroupedMembers.length > 0 && (
-              <div className="space-y-8">
+              <div className="space-y-12">
                 {teamGroups.length > 0 && (
                   <div className="text-center">
-                    <h2 className="text-3xl font-bold !font-headline">Our Team</h2>
+                    <h2 className="text-3xl font-bold !font-headline">Our Guides & Staff</h2>
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-12">
                   {ungroupedMembers.map((member) => (
-                    <Link key={member.id} href={`/about/teams/${member.slug}`}>
-                      <TeamMemberCard member={member} />
-                    </Link>
+                      <TeamMemberCard key={member.id} member={member} />
                   ))}
                 </div>
               </div>
