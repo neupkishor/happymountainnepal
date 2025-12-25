@@ -15,12 +15,12 @@ export default function TeamMemberClient({ member }: TeamMemberClientProps) {
       <div className="max-w-4xl mx-auto space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             <div className="md:col-span-1 flex justify-center">
-              <div className="relative w-48 h-48 md:w-56 md:h-56">
+              <div className="relative w-48 h-64 md:w-56 md:h-72">
                 <Image
                     src={member.image}
                     alt={member.name}
                     fill
-                    className="rounded-full object-cover ring-4 ring-primary/50"
+                    className="rounded-lg object-cover ring-4 ring-primary/50"
                     data-ai-hint="portrait person"
                 />
               </div>
