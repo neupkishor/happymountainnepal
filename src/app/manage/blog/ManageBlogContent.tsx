@@ -4,15 +4,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
     Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+    CardContent
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { BlogManagementCard } from '@/components/manage/BlogTableRow'; // Re-using as card
-import { getBlogPosts, getBlogPostCount } from '@/lib/db';
+import { getBlogPosts } from '@/lib/db';
 import type { BlogPost } from '@/lib/types';
 import { useState, useEffect, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -77,7 +74,7 @@ export function ManageBlogContent() {
     };
     
     return (
-        <div>
+        <div className="space-y-8">
             <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
                 <div>
                     <h1 className="text-3xl font-bold !font-headline">Blog Posts</h1>
@@ -92,66 +89,60 @@ export function ManageBlogContent() {
                     </Button>
                 </div>
             </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Manage Blog Posts</CardTitle>
-                    <CardDescription>
-                        Here you can create, edit, and manage all blog posts.
-                    </CardDescription>
-                    <div className="relative pt-2">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input 
-                            placeholder="Search by title or author..." 
-                            className="pl-10" 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+
+            <div className="relative pt-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input 
+                    placeholder="Search by title or author..." 
+                    className="pl-10" 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            
+            <div className="space-y-4">
+                {loading ? (
+                    [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
+                ) : paginatedPosts.length > 0 ? (
+                    paginatedPosts.map((post) => (
+                        <BlogManagementCard key={post.id} post={post} />
+                    ))
+                ) : (
+                    <Card>
+                        <CardContent className="text-center py-16 text-muted-foreground">
+                            No posts found.
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+            
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t pt-6 mt-6">
+                    <div className="text-sm text-muted-foreground">
+                        Page {currentPage} of {totalPages}
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        {loading ? (
-                            [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
-                        ) : paginatedPosts.length > 0 ? (
-                            paginatedPosts.map((post) => (
-                                <BlogManagementCard key={post.id} post={post} />
-                            ))
-                        ) : (
-                            <div className="text-center py-16 text-muted-foreground">
-                                No posts found.
-                            </div>
-                        )}
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1 || loading}
+                        >
+                            <ChevronLeft className="h-4 w-4 mr-1" />
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages || loading}
+                        >
+                            Next
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
                     </div>
-                    
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t pt-6 mt-6">
-                            <div className="text-sm text-muted-foreground">
-                                Page {currentPage} of {totalPages}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1 || loading}
-                                >
-                                    <ChevronLeft className="h-4 w-4 mr-1" />
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages || loading}
-                                >
-                                    Next
-                                    <ChevronRight className="h-4 w-4 ml-1" />
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                </div>
+            )}
         </div>
     );
 }
