@@ -65,8 +65,16 @@ export type TeamMember = {
   role: string;
   bio: string;
   image: string;
-  groupId?: string; // ID of the group/category this member belongs to
-  orderIndex?: number; // Order within the group for drag-and-drop positioning
+  groupId?: string;
+  orderIndex?: number;
+  shortDescription?: string;
+  story?: string;
+  gallery?: string[];
+  socials?: {
+    twitter?: string;
+    linkedin?: string;
+    facebook?: string;
+  };
 }
 
 export type TeamGroup = {
