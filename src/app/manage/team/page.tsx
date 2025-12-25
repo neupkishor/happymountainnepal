@@ -309,60 +309,47 @@ export default function TeamManagementPage() {
   const handleGroupDragOver = (e: React.DragEvent, targetIndex: number) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!draggedGroup) return;
-
-    const reorderedGroups = [...teamGroups];
-    const currentIndex = reorderedGroups.findIndex(g => g.id === draggedGroup.id);
-
-    if (currentIndex === targetIndex) return;
-
-    // Remove from current position
-    reorderedGroups.splice(currentIndex, 1);
-
-    // Insert at new position
-    reorderedGroups.splice(targetIndex, 0, draggedGroup);
-
-    // Update order indices optimistically
-    const updatedGroups = reorderedGroups.map((group, index) => ({
+  
+    if (!draggedGroup || targetIndex === teamGroups.findIndex(g => g.id === draggedGroup.id)) return;
+  
+    // Reorder the groups optimistically
+    const reordered = [...teamGroups];
+    const draggedIndex = reordered.findIndex(g => g.id === draggedGroup.id);
+    
+    if (draggedIndex === -1) return;
+  
+    const [removed] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+  
+    const updatedGroups = reordered.map((group, index) => ({
       ...group,
       orderIndex: index,
     }));
-
+  
     setTeamGroups(updatedGroups);
   };
 
   const handleGroupDragEnd = () => {
     setDraggedGroup(null);
   };
-
+  
   const handleGroupDrop = async (targetIndex: number) => {
     if (!draggedGroup) return;
-
+  
     setIsUpdating(true);
     try {
-      const reorderedGroups = [...teamGroups];
-      const currentIndex = reorderedGroups.findIndex(g => g.id === draggedGroup.id);
-
-      // Remove from current position
-      reorderedGroups.splice(currentIndex, 1);
-
-      // Insert at new position
-      reorderedGroups.splice(targetIndex, 0, draggedGroup);
-
-      // Update order indices
-      const updates = reorderedGroups.map((group, index) => ({
+      const updates = teamGroups.map((group, index) => ({
         id: group.id,
         orderIndex: index,
       }));
-
+  
       await batchUpdateTeamGroupOrder(updates);
-
+  
       toast({
         title: 'Success',
         description: 'Group order updated',
       });
-
+  
       fetchData();
     } catch (error) {
       toast({
