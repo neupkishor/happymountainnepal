@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { firestore } from '@/lib/firebase-server';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
-import { getFullUrl, resolveUrlTemplates } from '@/lib/url-utils';
+import { resolveUrlTemplates } from '@/lib/url-utils';
 
 const BASE_URL = 'https://happymountainnepal.com'; // Replace with your actual domain
 
