@@ -30,6 +30,7 @@ import {
 import { createTeamGroup, updateTeamGroup, deleteTeamGroup, batchUpdateTeamMemberPositions, batchUpdateTeamGroupOrder } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DeleteTeamMemberDialog } from '@/components/manage/DeleteTeamMemberDialog';
 
 export default function TeamManagementPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -504,11 +505,18 @@ export default function TeamManagementPage() {
                       <p className="font-medium">{member.name}</p>
                       <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
-                    <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/manage/team/${member.id}/edit`}>
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                     <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" asChild>
+                            <Link href={`/manage/team/${member.id}/edit`}>
+                                <Pencil className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                        <DeleteTeamMemberDialog member={member}>
+                            <Button size="icon" variant="ghost">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </DeleteTeamMemberDialog>
+                    </div>
                   </div>
                 ))}
 
@@ -562,11 +570,18 @@ export default function TeamManagementPage() {
                       <p className="font-medium">{member.name}</p>
                       <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
-                    <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/manage/team/${member.id}/edit`}>
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                     <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" asChild>
+                            <Link href={`/manage/team/${member.id}/edit`}>
+                                <Pencil className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                        <DeleteTeamMemberDialog member={member}>
+                            <Button size="icon" variant="ghost">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </DeleteTeamMemberDialog>
+                    </div>
                   </div>
                 ))}
                  {/* Drop zone for ungrouped */}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
@@ -127,7 +128,7 @@ export function TeamMemberForm({ member }: TeamMemberFormProps) {
                 )}
                 />
                 
-                <MediaPicker name="image" label="Profile Image" /> {/* Using MediaPicker */}
+                <MediaPicker name="image" label="Profile Image" category="user-photo" />
                 <FormMessage>{form.formState.errors.image?.message}</FormMessage>
 
                 <Button type="submit" disabled={isPending}>

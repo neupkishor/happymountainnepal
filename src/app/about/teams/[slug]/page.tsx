@@ -1,3 +1,4 @@
+
 import { getTeamMemberBySlug } from '@/lib/db';
 import TeamMemberClient from './team-member-client';
 import { notFound } from 'next/navigation';
