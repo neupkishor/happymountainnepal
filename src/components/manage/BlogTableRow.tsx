@@ -10,7 +10,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { DeleteBlogPostDialog } from './DeleteBlogPostDialog';
 import { Badge } from '../ui/badge';
@@ -69,13 +68,6 @@ export function BlogManagementCard({ post }: BlogTableRowProps) {
                 <DropdownMenuItem asChild>
                   <Link href={`/manage/blog/${post.id}/edit`}>Edit</Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DeleteBlogPostDialog post={post}>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DeleteBlogPostDialog>
               </DropdownMenuContent>
             </DropdownMenu>
         </div>

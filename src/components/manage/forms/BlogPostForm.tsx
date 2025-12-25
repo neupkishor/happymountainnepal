@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
@@ -19,7 +20,7 @@ import { type BlogPost } from '@/lib/types';
 import { updateBlogPost, logError, checkBlogSlugAvailability } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { useTransition } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MediaPicker } from '../MediaPicker';
 import { usePathname, useRouter } from 'next/navigation';
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Timestamp } from 'firebase/firestore';
 import { RichTextEditor } from '@/components/ui/RichTextEditor'; // Import the new RichTextEditor
+import { DeleteBlogPostDialog } from '../DeleteBlogPostDialog';
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
@@ -248,10 +250,18 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                 )}
               />
 
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Post
-              </Button>
+              <div className="flex justify-between items-center">
+                <Button type="submit" disabled={isPending}>
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save Post
+                </Button>
+                
+                <DeleteBlogPostDialog post={post}>
+                    <Button type="button" variant="destructive" disabled={isPending}>
+                       <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                    </Button>
+                </DeleteBlogPostDialog>
+              </div>
             </form>
           </Form>
         </CardContent>
