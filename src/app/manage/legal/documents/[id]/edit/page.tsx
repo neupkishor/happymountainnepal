@@ -1,23 +1,20 @@
 
-import { getLegalDocumentById } from '@/lib/db';
-import { notFound } from 'next/navigation';
-import { use } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getLegalDocumentById, updateLegalDocument, logFileUpload } from '@/lib/db';
+import type { LegalDocument } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Save, Upload as UploadIcon, FileText } from 'lucide-react';
-import Link from 'next/link';
 
-// Since this is a simple page, we can include the client component logic directly.
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { updateLegalDocument } from '@/lib/db';
-import type { LegalDocument } from '@/lib/types';
 
 export default function EditLegalDocumentPage({ params }: { params: { id: string } }) {
     const { id } = params;
@@ -101,17 +98,15 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
                     if (result.success && result.url) {
                         fileUrl = result.url;
 
-                        // Log upload
-                        await fetch('/api/log-upload', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                fileName: selectedFile.name,
-                                url: fileUrl,
-                                userId: 'admin',
-                                fileType: selectedFile.type,
-                                category: 'document',
-                            }),
+                        await logFileUpload({
+                            name: selectedFile.name,
+                            url: fileUrl,
+                            uploadedBy: 'admin',
+                            type: selectedFile.type,
+                            size: selectedFile.size,
+                            category: 'document',
+                            location: 'NeupCDN',
+                            meta: [],
                         });
                     } else {
                         throw new Error(result.message || 'Unknown upload error');
@@ -122,7 +117,7 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
                     formData.append('file', selectedFile);
                     formData.append('compress', 'false');
                     formData.append('uploadType', 'server');
-                    formData.append('serverPath', '');
+                    formData.append('serverPath', 'documents');
 
                     const response = await fetch('/api/upload', {
                         method: 'POST',
@@ -135,19 +130,6 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
 
                     const result = await response.json();
                     fileUrl = result.url;
-
-                    // Log upload
-                    await fetch('/api/log-upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            fileName: selectedFile.name,
-                            url: fileUrl,
-                            userId: 'admin',
-                            fileType: selectedFile.type,
-                            category: 'document',
-                        }),
-                    });
                 }
             }
 
@@ -279,42 +261,7 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
                             )}
                         </div>
                     </div>
-
-                    {/* Upload Destination (only visible when file is selected) */}
-                    {selectedFile && (
-                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                            <Label>Upload Destination</Label>
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant={uploadDestination === 'api' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setUploadDestination('api')}
-                                    className="flex-1"
-                                    disabled={isSaving}
-                                >
-                                    API Storage
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={uploadDestination === 'public' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setUploadDestination('public')}
-                                    className="flex-1"
-                                    disabled={isSaving}
-                                >
-                                    Public Folder
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                {uploadDestination === 'api'
-                                    ? 'Upload to external API storage (neupgroup.com)'
-                                    : 'Upload to server /public folder'
-                                }
-                            </p>
-                        </div>
-                    )}
-
+                    
                     <div className="flex justify-end gap-3 pt-4">
                         <Button variant="outline" asChild disabled={isSaving}>
                             <Link href="/manage/legal/documents">Cancel</Link>
