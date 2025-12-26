@@ -9,7 +9,7 @@ import type { LegalDocument } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, FileText, ExternalLink, Upload as UploadIcon } from 'lucide-react';
 import Link from 'next/link';
-import { DocumentViewer as DocumentCard } from './components/document-card';
+import { DocumentViewer as DocumentCard } from '@/app/legal/documents/components/document-card';
 import { useCookies } from 'next-client-cookies';
 
 export default function LegalDocumentsPage() {
