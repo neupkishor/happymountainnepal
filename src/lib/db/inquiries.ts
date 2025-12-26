@@ -35,16 +35,21 @@ export async function saveInquiry(conversation: CustomizeTripInput): Promise<str
 }
 
 export async function saveContactInquiry(inquiryData: ContactInquiry): Promise<string> {
-    if (!firestore) throw new Error("Database not available.");
+    console.log('[DB saveContactInquiry] Attempting to save data:', JSON.stringify(inquiryData, null, 2));
+    if (!firestore) {
+        console.error('[DB saveContactInquiry] Firestore is not available.');
+        throw new Error("Database not available.");
+    }
     try {
         const docRef = await addDoc(collection(firestore, 'inquiries'), {
             ...inquiryData,
             type: 'contact',
             createdAt: serverTimestamp(),
         });
+        console.log(`[DB saveContactInquiry] Successfully saved document with ID: ${docRef.id}`);
         return docRef.id;
     } catch (error: any) {
-        console.error("Error saving contact inquiry: ", error);
+        console.error("[DB saveContactInquiry] Error saving contact inquiry: ", error);
         await logError({ message: `Failed to save contact inquiry: ${error.message}`, stack: error.stack, pathname: inquiryData.page, context: { inquiryData } });
         throw new Error("Could not save contact inquiry to the database.");
     }

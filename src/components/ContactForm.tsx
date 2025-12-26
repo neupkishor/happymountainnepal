@@ -46,13 +46,19 @@ export function ContactForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
+        const payload = { ...values, page: pathname };
+        console.log('[ContactForm] Submitting payload:', JSON.stringify(payload, null, 2));
+
         const response = await fetch('/api/contact-inquiry', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...values, page: pathname }),
+          body: JSON.stringify(payload),
         });
 
+        console.log(`[ContactForm] API Response Status: ${response.status}`);
         if (!response.ok) {
+          const errorBody = await response.text();
+          console.error('[ContactForm] API Error Response:', errorBody);
           throw new Error('Failed to submit inquiry.');
         }
         
