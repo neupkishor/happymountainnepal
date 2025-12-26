@@ -35,9 +35,7 @@ export async function saveInquiry(conversation: CustomizeTripInput): Promise<str
 }
 
 export async function saveContactInquiry(inquiryData: ContactInquiry): Promise<string> {
-    console.log('[DB saveContactInquiry] Attempting to save data:', JSON.stringify(inquiryData, null, 2));
     if (!firestore) {
-        console.error('[DB saveContactInquiry] Firestore is not available.');
         throw new Error("Database not available.");
     }
     try {
@@ -46,7 +44,6 @@ export async function saveContactInquiry(inquiryData: ContactInquiry): Promise<s
             type: 'contact',
             createdAt: serverTimestamp(),
         });
-        console.log(`[DB saveContactInquiry] Successfully saved document with ID: ${docRef.id}`);
         return docRef.id;
     } catch (error: any) {
         console.error("[DB saveContactInquiry] Error saving contact inquiry: ", error);

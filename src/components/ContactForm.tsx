@@ -47,15 +47,13 @@ export function ContactForm() {
     startTransition(async () => {
       try {
         const payload = { ...values, page: pathname };
-        console.log('[ContactForm] Submitting payload:', JSON.stringify(payload, null, 2));
-
+        
         const response = await fetch('/api/contact-inquiry', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
-        console.log(`[ContactForm] API Response Status: ${response.status}`);
         if (!response.ok) {
           const errorBody = await response.text();
           console.error('[ContactForm] API Error Response:', errorBody);
