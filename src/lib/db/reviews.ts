@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { ManagedReview, OnSiteReview, OffSiteReview } from '@/lib/types';
 import { logError } from './errors';

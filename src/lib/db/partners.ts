@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { Partner } from '@/lib/types';
 import { logError } from './errors';

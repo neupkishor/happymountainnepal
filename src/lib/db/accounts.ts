@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, query, where, orderBy, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { Account, Activity, DisplayUser } from '@/lib/types';
 import { logError } from './errors';

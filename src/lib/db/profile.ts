@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { SiteProfile } from '@/lib/types';
 import { logError } from './errors';

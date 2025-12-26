@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc, where } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc, where, getDoc, limit } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { TeamMember, TeamGroup } from '@/lib/types';
 import { slugify } from "@/lib/utils";
