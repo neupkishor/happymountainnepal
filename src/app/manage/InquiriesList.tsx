@@ -21,7 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Mail } from 'lucide-react';
+import { Mail, MessageSquare } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -30,19 +30,27 @@ import {
 } from "@/components/ui/accordion"
 
 function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
-    const initialUserMessage = inquiry.conversation.find(c => c.role === 'user')?.text || 'No initial message found.';
-    const contactInfoMatch = initialUserMessage.match(/Contact Info: (.+)/);
-    const contactInfo = contactInfoMatch ? contactInfoMatch[1] : 'Not provided';
-    const createdAt = inquiry.createdAt?.toDate ? formatDistanceToNow(inquiry.createdAt.toDate(), { addSuffix: true }) : 'N/A';
+    const isCustomization = inquiry.type === 'customization';
+    const createdAt = inquiry.createdAt ? formatDistanceToNow(new Date(inquiry.createdAt as any), { addSuffix: true }) : 'N/A';
+
+    const getPrimaryContact = () => {
+        if (isCustomization) {
+            const initialUserMessage = inquiry.conversation?.find(c => c.role === 'user')?.text || '';
+            const contactInfoMatch = initialUserMessage.match(/Contact Info: (.+)/);
+            return contactInfoMatch ? contactInfoMatch[1] : 'Not provided';
+        }
+        return inquiry.data?.email || inquiry.data?.name || 'N/A';
+    };
 
     return (
         <AccordionItem value={inquiry.id}>
             <AccordionTrigger>
                 <div className="flex items-center justify-between w-full pr-4">
                     <div className="flex items-center gap-4 text-left">
-                        <div className="font-medium truncate">{contactInfo}</div>
-                        <Badge variant="outline" className="hidden sm:inline-flex">
-                            {inquiry.conversation.length} messages
+                        <div className="font-medium truncate">{getPrimaryContact()}</div>
+                        <Badge variant={isCustomization ? 'default' : 'secondary'} className="hidden sm:inline-flex items-center gap-1.5">
+                            {isCustomization ? <MessageSquare className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
+                            {isCustomization ? 'Custom Trip' : 'Contact Form'}
                         </Badge>
                     </div>
                     <div className="text-sm text-muted-foreground hidden md:block">
@@ -52,12 +60,22 @@ function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
             </AccordionTrigger>
             <AccordionContent>
                 <div className="p-4 bg-secondary/50 rounded-md">
-                     {inquiry.conversation.map((message, index) => (
-                        <div key={index} className={`mb-3 ${message.role === 'user' ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            <span className="font-bold capitalize">{message.role}:</span>
-                            <p className="ml-2 whitespace-pre-wrap">{message.text}</p>
+                     {isCustomization ? (
+                        inquiry.conversation?.map((message, index) => (
+                            <div key={index} className={`mb-3 ${message.role === 'user' ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                <span className="font-bold capitalize">{message.role}:</span>
+                                <p className="ml-2 whitespace-pre-wrap">{message.text}</p>
+                            </div>
+                        ))
+                     ) : (
+                        <div className="space-y-2">
+                           <div><strong>From:</strong> {inquiry.data?.name} &lt;{inquiry.data?.email}&gt;</div>
+                           <div><strong>Subject:</strong> {inquiry.data?.subject}</div>
+                           <div className="pt-2 border-t mt-2">
+                            <p className="whitespace-pre-wrap">{inquiry.data?.message}</p>
+                           </div>
                         </div>
-                    ))}
+                     )}
                 </div>
             </AccordionContent>
         </AccordionItem>
