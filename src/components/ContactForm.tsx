@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -16,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "./ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -26,6 +30,9 @@ const formSchema = z.object({
 
 export function ContactForm() {
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
+  const pathname = usePathname();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,17 +44,32 @@ export function ContactForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Simulate API call
-    console.log("Form submitted:", values);
-    
-    // In a real app, you would have a server action here to send the email/save to DB.
-    // e.g., await sendInquiry(values);
-    
-    toast({
-      title: "Inquiry Sent!",
-      description: "Thank you for your message. We'll get back to you shortly.",
+    startTransition(async () => {
+      try {
+        const response = await fetch('/api/contact-inquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...values, page: pathname }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit inquiry.');
+        }
+        
+        toast({
+          title: "Inquiry Sent!",
+          description: "Thank you for your message. We'll get back to you shortly.",
+        });
+        form.reset();
+      } catch (error) {
+        console.error("Contact form submission error:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Submission Failed',
+          description: 'There was a problem sending your message. Please try again.',
+        });
+      }
     });
-    form.reset();
   }
 
   return (
@@ -63,7 +85,7 @@ export function ContactForm() {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="John Doe" {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -76,7 +98,7 @@ export function ContactForm() {
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="you@example.com" {...field} />
+                      <Input placeholder="you@example.com" {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -90,7 +112,7 @@ export function ContactForm() {
                 <FormItem>
                   <FormLabel>Subject</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Custom Everest Trek" {...field} />
+                    <Input placeholder="e.g., Custom Everest Trek" {...field} disabled={isPending} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -107,13 +129,15 @@ export function ContactForm() {
                       placeholder="Tell us about your dream trip, including number of people, desired dates, and any specific requests."
                       className="min-h-[120px]"
                       {...field}
+                      disabled={isPending}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Send Message
             </Button>
           </form>

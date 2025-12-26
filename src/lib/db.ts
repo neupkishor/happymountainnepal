@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
@@ -44,6 +45,36 @@ export async function saveInquiry(conversation: CustomizeTripInput): Promise<str
         throw new Error("Could not save inquiry to the database.");
     }
 }
+
+export interface ContactInquiry {
+    page: string;
+    temporary_id: string;
+    data: { name: string; email: string; subject: string; message: string; };
+}
+
+/**
+ * Saves a new contact form inquiry to the 'inquiries' collection in Firestore.
+ * @param inquiryData The data from the contact form.
+ * @returns The ID of the newly created document in Firestore.
+ */
+export async function saveContactInquiry(inquiryData: ContactInquiry): Promise<string> {
+    if (!firestore) {
+        console.error("Firestore is not initialized.");
+        throw new Error("Database not available.");
+    }
+    try {
+        const docRef = await addDoc(collection(firestore, 'inquiries'), {
+            ...inquiryData,
+            when: serverTimestamp(),
+        });
+        return docRef.id;
+    } catch (error: any) {
+        console.error("Error saving contact inquiry: ", error);
+        await logError({ message: `Failed to save contact inquiry: ${error.message}`, stack: error.stack, pathname: inquiryData.page, context: { inquiryData } });
+        throw new Error("Could not save contact inquiry to the database.");
+    }
+}
+
 
 /**
  * Fetches all trip inquiries from the 'inquiries' collection in Firestore, ordered by creation date.
