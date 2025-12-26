@@ -1,6 +1,7 @@
 
 
 
+
 'use server';
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, collectionGroup, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
@@ -34,6 +35,7 @@ export async function saveInquiry(conversation: CustomizeTripInput): Promise<str
     try {
         const docRef = await addDoc(collection(firestore, 'inquiries'), {
             conversation,
+            type: 'customization', // To distinguish from contact forms
             createdAt: serverTimestamp(),
         });
         console.log("Inquiry saved with ID: ", docRef.id);
@@ -65,7 +67,9 @@ export async function saveContactInquiry(inquiryData: ContactInquiry): Promise<s
     try {
         const docRef = await addDoc(collection(firestore, 'inquiries'), {
             ...inquiryData,
+            type: 'contact', // To distinguish from customization forms
             when: serverTimestamp(),
+            createdAt: serverTimestamp(), // Use createdAt for consistent ordering
         });
         return docRef.id;
     } catch (error: any) {
