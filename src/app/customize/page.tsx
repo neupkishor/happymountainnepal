@@ -160,7 +160,7 @@ export default function CustomizePage() {
         setIsInitialStep(true);
     } catch(error: any) {
         console.error('Database Error:', error);
-        logError({ message: error.message, stack: error.stack, pathname, context: { function: 'saveInquiry', input: values.conversation } });
+        logError({ message: `Failed to save inquiry: ${error.message}`, stack: error.stack, pathname, context: { function: 'saveInquiry', input: values.conversation } });
         toast({
             variant: 'destructive',
             title: "Database Error",
