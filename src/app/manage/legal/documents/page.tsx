@@ -2,7 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getLegalDocuments, deleteLegalDocument } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
@@ -10,15 +13,26 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, FileText, ExternalLink, Upload as UploadIcon } from 'lucide-react';
 import Link from 'next/link';
 import { DocumentViewer as DocumentCard } from '@/app/legal/documents/components/document-card';
-import { useCookies } from 'next-client-cookies';
+import { cookies } from 'next/headers';
+
 
 export default function LegalDocumentsPage() {
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const cookies = useCookies();
-  const userEmail = cookies.get('user_email') || 'guest';
-  const deviceIdentifier = 'server-placeholder'; // This is fine for admin view
+  
+  // Since this is a client component, we can't use `cookies()` directly.
+  // We'll read it on the client side. This is less ideal but works for this context.
+  const [userEmail, setUserEmail] = useState('guest');
+  const [deviceIdentifier, setDeviceIdentifier] = useState('client-placeholder');
+
+  useEffect(() => {
+    // Read cookies on the client
+    const emailCookie = document.cookie.split('; ').find(row => row.startsWith('user_email='));
+    if(emailCookie) {
+      setUserEmail(emailCookie.split('=')[1]);
+    }
+  }, []);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
