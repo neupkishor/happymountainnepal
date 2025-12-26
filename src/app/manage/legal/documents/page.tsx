@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { getLegalDocuments, deleteLegalDocument } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, FileText, ExternalLink, Upload as UploadIcon } from 'lucide-react';
+import { Trash2, FileText, ExternalLink, Upload as UploadIcon, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { DocumentViewer as DocumentCard } from '@/app/legal/documents/components/document-card';
+import { cookies } from 'next/headers';
 
 export default function LegalDocumentsPage() {
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
@@ -21,22 +23,17 @@ export default function LegalDocumentsPage() {
   const [userEmail, setUserEmail] = useState('guest');
   const [deviceIdentifier, setDeviceIdentifier] = useState('client');
 
-  // ✅ Client-safe cookie reading
+  // Client-safe cookie reading
   useEffect(() => {
-    const cookieMap = document.cookie
-      .split('; ')
-      .reduce<Record<string, string>>((acc, curr) => {
-        const [key, value] = curr.split('=');
-        acc[key] = decodeURIComponent(value);
-        return acc;
-      }, {});
-
-    if (cookieMap.user_email) {
-      setUserEmail(cookieMap.user_email);
+    const cookieString = document.cookie;
+    const emailCookie = cookieString.split('; ').find(row => row.startsWith('user_email='));
+    const deviceIdCookie = cookieString.split('; ').find(row => row.startsWith('device_id='));
+    
+    if (emailCookie) {
+      setUserEmail(decodeURIComponent(emailCookie.split('=')[1]));
     }
-
-    if (cookieMap.device_id) {
-      setDeviceIdentifier(cookieMap.device_id);
+    if (deviceIdCookie) {
+      setDeviceIdentifier(decodeURIComponent(deviceIdCookie.split('=')[1]));
     }
   }, []);
 
@@ -46,7 +43,7 @@ export default function LegalDocumentsPage() {
       const allDocs = await getLegalDocuments();
       setDocuments(allDocs);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to load legal documents", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -137,29 +134,27 @@ export default function LegalDocumentsPage() {
               </div>
 
               <div className="flex-1 min-w-0">
-                <Link
-                  href={`/manage/legal/documents/${doc.id}/edit`}
-                  className="hover:underline"
-                >
-                  <h3 className="font-medium truncate">
-                    {doc.title}
-                  </h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {doc.description}
-                    </p>
-                  )}
-                </Link>
+                <p className="font-medium truncate">{doc.title}</p>
+                {doc.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {doc.description}
+                  </p>
+                )}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <Button asChild variant="ghost" size="sm">
                   <Link
                     href={`/legal/documents/${doc.id}`}
                     target="_blank"
                   >
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    View
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                </Button>
+                
+                <Button asChild variant="ghost" size="sm">
+                  <Link href={`/manage/legal/documents/${doc.id}/edit`}>
+                    <Pencil className="h-4 w-4" />
                   </Link>
                 </Button>
 
