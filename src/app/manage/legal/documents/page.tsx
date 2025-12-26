@@ -1,16 +1,15 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { getLegalDocuments, addLegalDocument, deleteLegalDocument } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, FileText, ExternalLink, Upload as UploadIcon } from 'lucide-react';
+import { Loader2, Trash2, FileText, ExternalLink, Upload as UploadIcon, X } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LegalDocumentsPage() {
@@ -19,11 +18,10 @@ export default function LegalDocumentsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Form state
+  // Form state for dialog
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadDestination, setUploadDestination] = useState<'api' | 'public'>('api');
 
   const { toast } = useToast();
 
@@ -59,52 +57,29 @@ export default function LegalDocumentsPage() {
 
     setIsUploading(true);
     try {
-      let fileUrl = '';
+      // Upload to neupgroup.com API
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('platform', 'p3.happymountainnepal');
+      formData.append('contentIds', JSON.stringify(['legal-documents', 'admin-user']));
+      formData.append('name', selectedFile.name.replace(/\.[^/.]+$/, ''));
 
-      if (uploadDestination === 'api') {
-        // Upload to neupgroup.com API
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('platform', 'p3.happymountainnepal');
-        formData.append('contentIds', JSON.stringify(['legal-documents', 'admin-user']));
-        formData.append('name', selectedFile.name.replace(/\.[^/.]+$/, ''));
+      const response = await fetch('https://neupgroup.com/content/bridge/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-        const response = await fetch('https://neupgroup.com/content/bridge/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const responseText = await response.text();
-        if (!response.ok) {
-          throw new Error(`Upload failed: ${response.status} ${responseText}`);
-        }
-
-        const result = JSON.parse(responseText);
-        if (result.success && result.url) {
-          fileUrl = result.url;
-        } else {
-          throw new Error(result.message || 'Unknown upload error');
-        }
-      } else {
-        // Upload to local server /public
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('compress', 'false');
-        formData.append('uploadType', 'server');
-        formData.append('serverPath', '');
-
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Upload failed');
-        }
-
-        const result = await response.json();
-        fileUrl = result.url;
+      const responseText = await response.text();
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status} ${responseText}`);
       }
+
+      const result = JSON.parse(responseText);
+      if (!result.success || !result.url) {
+        throw new Error(result.message || 'Unknown upload error');
+      }
+
+      const fileUrl = result.url;
 
       // Add document to database
       await addLegalDocument({
@@ -170,22 +145,16 @@ export default function LegalDocumentsPage() {
 
       {isLoading ? (
         <div className="space-y-4">
-          {/* Skeleton Cards */}
-          {Array.from({ length: 5 }).map((_, index) => (
+          {[...Array(5)].map((_, index) => (
             <div
               key={index}
               className="flex items-center gap-4 p-4 border rounded-lg bg-card animate-pulse"
             >
-              {/* Skeleton Icon */}
               <div className="h-20 w-20 rounded-md bg-muted flex-shrink-0"></div>
-
-              {/* Skeleton Info */}
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="h-5 bg-muted rounded w-3/4"></div>
                 <div className="h-4 bg-muted rounded w-full"></div>
               </div>
-
-              {/* Skeleton Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="h-9 w-20 bg-muted rounded"></div>
                 <div className="h-9 w-9 bg-muted rounded"></div>
@@ -210,12 +179,9 @@ export default function LegalDocumentsPage() {
               key={doc.id}
               className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow bg-card"
             >
-              {/* Icon */}
               <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
                 <FileText className="h-10 w-10 text-muted-foreground" />
               </div>
-
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <Link href={`/manage/legal/documents/${doc.id}`} className="block hover:underline">
                   <h3 className="font-medium truncate mb-1" title={doc.title}>
@@ -228,8 +194,6 @@ export default function LegalDocumentsPage() {
                   )}
                 </Link>
               </div>
-
-              {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button asChild variant="ghost" size="sm">
                   <Link href={`/legal/documents/${doc.id}`} target="_blank" rel="noopener noreferrer">
@@ -259,42 +223,38 @@ export default function LegalDocumentsPage() {
               Add a legal document with title, description, and file.
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4 py-4">
-            {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Document Title *</Label>
-              <Input
+              <input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Company Registration"
                 disabled={isUploading}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
               />
             </div>
-
-            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
+              <textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional description for the document"
                 disabled={isUploading}
                 rows={3}
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
-
-            {/* File Upload */}
             <div className="space-y-2">
               <Label htmlFor="file">File *</Label>
               <div
                 className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary transition-colors"
-                onClick={() => document.getElementById('file-input')?.click()}
+                onClick={() => document.getElementById('dialog-file-input')?.click()}
               >
                 <input
-                  id="file-input"
+                  id="dialog-file-input"
                   type="file"
                   className="hidden"
                   onChange={handleFileSelect}
@@ -312,51 +272,14 @@ export default function LegalDocumentsPage() {
                 ) : (
                   <div className="space-y-1">
                     <UploadIcon className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Click to select a file
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      PDF, DOC, DOCX, JPG, PNG
-                    </p>
+                    <p className="text-sm text-muted-foreground">Click to select a file</p>
+                    <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, JPG, PNG</p>
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Upload Destination */}
-            <div className="space-y-2">
-              <Label>Upload Destination</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={uploadDestination === 'api' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setUploadDestination('api')}
-                  className="flex-1"
-                  disabled={isUploading}
-                >
-                  API Storage
-                </Button>
-                <Button
-                  type="button"
-                  variant={uploadDestination === 'public' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setUploadDestination('public')}
-                  className="flex-1"
-                  disabled={isUploading}
-                >
-                  Public Folder
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {uploadDestination === 'api'
-                  ? 'Upload to external API storage (neupgroup.com)'
-                  : 'Upload to server /public folder'
-                }
-              </p>
-            </div>
-
-            {/* Upload Button */}
+          </div>
+          <DialogFooter>
             <Button
               onClick={handleUploadDocument}
               disabled={!title.trim() || !selectedFile || isUploading}
@@ -368,13 +291,10 @@ export default function LegalDocumentsPage() {
                   Uploading...
                 </>
               ) : (
-                <>
-                  <UploadIcon className="mr-2 h-4 w-4" />
-                  Upload Document
-                </>
+                'Upload Document'
               )}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
