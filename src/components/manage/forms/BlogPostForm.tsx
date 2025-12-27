@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type BlogPost } from '@/lib/types';
-import { updateBlogPost, logError, checkBlogSlugAvailability } from '@/lib/db';
+import { saveBlogPost, logError, checkBlogSlugAvailability } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { useTransition } from 'react';
 import { Loader2, RefreshCw, Trash2 } from 'lucide-react';
@@ -79,20 +79,25 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
     startTransition(async () => {
       try {
         // Check slug availability
-        const isAvailable = await checkBlogSlugAvailability(values.slug, post.id);
+        const isAvailable = await checkBlogSlugAvailability(values.slug, post.id || undefined);
         if (!isAvailable) {
           form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
           return;
         }
 
-        await updateBlogPost(post.id, {
+        const isNewPost = !post.id;
+        const savedPostId = await saveBlogPost(post.id || undefined, {
           ...values,
-          date: post.date, // Preserve original date
+          date: post.date, // Preserve original date for updates, will be set by server for new posts
         });
-        toast({ title: 'Success', description: 'Blog post updated.' });
+
+        toast({
+          title: 'Success',
+          description: isNewPost ? 'Blog post created successfully.' : 'Blog post updated successfully.'
+        });
         router.push('/manage/blog');
       } catch (error: any) {
-        logError({ message: `Failed to update blog post ${post.id}`, stack: error.stack, pathname, context: { postId: post.id, values } });
+        logError({ message: `Failed to save blog post ${post.id || 'new'}`, stack: error.stack, pathname, context: { postId: post.id, values } });
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -253,14 +258,16 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
               <div className="flex justify-between items-center">
                 <Button type="submit" disabled={isPending}>
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Post
+                  {post.id ? 'Save Post' : 'Create Post'}
                 </Button>
-                
-                <DeleteBlogPostDialog post={post}>
+
+                {post.id && (
+                  <DeleteBlogPostDialog post={post}>
                     <Button type="button" variant="destructive" disabled={isPending}>
-                       <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Post
                     </Button>
-                </DeleteBlogPostDialog>
+                  </DeleteBlogPostDialog>
+                )}
               </div>
             </form>
           </Form>

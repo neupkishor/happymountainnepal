@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, getDoc, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { BlogPost, ImportedBlogData } from '@/lib/types';
 import { slugify } from "@/lib/utils";
@@ -74,6 +74,25 @@ export async function createBlogPostWithData(data: ImportedBlogData): Promise<st
     return docRef.id;
 }
 
+export async function saveBlogPost(id: string | undefined, data: Omit<BlogPost, 'id' | 'date'> & { date?: string }): Promise<string> {
+    if (!firestore) throw new Error("Database not available.");
+
+    if (id) {
+        // Update existing post
+        const docRef = doc(firestore, 'blogPosts', id);
+        await updateDoc(docRef, data);
+        return id;
+    } else {
+        // Create new post
+        const newPost = {
+            ...data,
+            date: serverTimestamp(),
+        };
+        const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
+        return docRef.id;
+    }
+}
+
 export async function updateBlogPost(id: string, data: Partial<Omit<BlogPost, 'id'>>) {
     if (!firestore) throw new Error("Database not available.");
     const docRef = doc(firestore, 'blogPosts', id);
@@ -100,15 +119,15 @@ export async function getBlogPosts(options?: {
     search?: string;
 }): Promise<{ posts: BlogPost[]; hasMore: boolean; totalPages: number; }> {
     if (!firestore) return { posts: [], hasMore: false, totalPages: 0 };
-    
+
     const limit = options?.limit || 10;
-    
+
     // Base query for counting
     let countQuery = query(collection(firestore, 'blogPosts'));
     if (options?.status) {
         countQuery = query(countQuery, where('status', '==', options.status));
     }
-     if (options?.search) {
+    if (options?.search) {
         // This is a simplified search. For production, consider a dedicated search service.
         countQuery = query(countQuery, where('title', '>=', options.search), where('title', '<=', options.search + '\uf8ff'));
     }
@@ -124,7 +143,7 @@ export async function getBlogPosts(options?: {
     if (options?.search) {
         dataQuery = query(dataQuery, where('title', '>=', options.search), where('title', '<=', options.search + '\uf8ff'));
     }
-    
+
     if (options?.lastDocId) {
         const lastDoc = await getDoc(doc(firestore, 'blogPosts', options.lastDocId));
         if (lastDoc.exists()) {
