@@ -57,10 +57,10 @@ async function isManagerAuthenticated(request: NextRequest): Promise<boolean> {
 
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
   const { pathname, origin } = request.nextUrl;
-  
+
   // Create a new headers object from the original request's headers
   const requestHeaders = new Headers(request.headers);
-  
+
   const userAgent = request.headers.get('user-agent') || 'Unknown';
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? request.ip ?? '127.0.0.1';
   const referrer = request.headers.get('referer') || undefined;
@@ -79,12 +79,12 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
   const shouldLog = !pathname.startsWith('/_next') && pathname !== '/favicon.ico';
   const isBotRequest = isBot(userAgent);
-  
+
   // Create the base response with the new headers
   const response = NextResponse.next({
-      request: {
-          headers: requestHeaders,
-      },
+    request: {
+      headers: requestHeaders,
+    },
   });
 
   // Set the cookie on the response if it's a new account
@@ -141,10 +141,21 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // 4. Legal documents paywall
-  if (pathname === '/legal/documents' && !request.cookies.has('user_email')) {
+  // Skip the check if there's a verification token (user just authenticated)
+  const hasVerificationToken = request.nextUrl.searchParams.has('verified');
+
+  if (pathname.startsWith('/legal/documents') && !pathname.startsWith('/legal/documents/gate') && !request.cookies.has('user_email') && !hasVerificationToken) {
     const url = request.nextUrl.clone();
     url.pathname = '/legal/documents/gate';
+    url.searchParams.set('returnTo', pathname);
     return NextResponse.redirect(url);
+  }
+
+  if (pathname.startsWith('/legal/documents') && (request.cookies.has('user_email') || hasVerificationToken)) {
+
+    // If they have the verification token, we'll let the request through
+    // but we won't redirect - just continue processing
+    // The verification token will be in the URL but that's okay
   }
 
   // 5. Manager authentication

@@ -5,6 +5,8 @@ import { FileText } from 'lucide-react';
 import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
 import { DocumentViewer as DocumentCard } from './components/document-card';
+import { UrlCleaner } from './components/url-cleaner';
+
 
 export default async function LegalDocumentsPage() {
   let documents: LegalDocument[] = [];
@@ -25,6 +27,7 @@ export default async function LegalDocumentsPage() {
 
   return (
     <div className="container mx-auto py-16">
+      <UrlCleaner />
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold !font-headline">Legal Documents</h1>

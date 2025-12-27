@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Lock } from "lucide-react";
 
-export default function LegalGatePage() {
+export default async function LegalGatePage({
+    searchParams
+}: {
+    searchParams: Promise<{ returnTo?: string }>
+}) {
+    const params = await searchParams;
+    const returnTo = params.returnTo || '/legal/documents';
+
     return (
         <div className="container mx-auto flex items-center justify-center min-h-[80vh] py-10">
             <Card className="w-full max-w-md">
@@ -20,6 +27,7 @@ export default function LegalGatePage() {
                 </CardHeader>
                 <CardContent>
                     <form action="/api/legal-access" method="POST" className="space-y-4">
+                        <input type="hidden" name="returnTo" value={returnTo} />
                         <div className="space-y-2">
                             <Label htmlFor="email">Email Address</Label>
                             <Input
