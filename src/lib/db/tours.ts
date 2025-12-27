@@ -34,7 +34,7 @@ export async function createTour(): Promise<string | null> {
         difficulty: 'Moderate',
         duration: 0,
         price: 0,
-        mainImage: {url: '', caption: ''},
+        mainImage: { url: '', caption: '' },
         images: [],
         itinerary: [],
         inclusions: [],
@@ -55,7 +55,7 @@ export async function createTour(): Promise<string | null> {
 
 export async function createTourWithBasicInfo(data: Partial<ImportedTourData>): Promise<string | null> {
     if (!firestore) throw new Error("Database not available.");
-    const slug = slugify(data.slug || data.name || 'new-package');
+    const slug = slugify(data.name || 'new-package');
     if (!await checkSlugAvailability(slug)) {
         throw new Error(`Slug '${slug}' is already in use.`);
     }
@@ -69,7 +69,7 @@ export async function createTourWithBasicInfo(data: Partial<ImportedTourData>): 
         difficulty: data.difficulty || 'Moderate',
         duration: typeof data.duration === 'number' ? data.duration : 0,
         price: data.price || 0,
-        mainImage: {url: '', caption: ''},
+        mainImage: { url: '', caption: '' },
         images: [],
         itinerary: data.itinerary || [],
         inclusions: data.inclusions || [],
@@ -185,36 +185,59 @@ export async function getPackagesPaginated(options: {
     pagination: { currentPage: number; totalPages: number; totalCount: number; };
 }> {
     if (!firestore) return { packages: [], pagination: { currentPage: options.page, totalPages: 0, totalCount: 0 } };
-    
+
     const { page, limit, search } = options;
-    let dataQuery = query(collection(firestore, 'packages'), orderBy('name'));
-    let countQuery = query(collection(firestore, 'packages'));
 
-    if (search) {
-        const searchTermLower = search.toLowerCase();
-        dataQuery = query(dataQuery, where('searchKeywords', 'array-contains', searchTermLower));
-        countQuery = query(countQuery, where('searchKeywords', 'array-contains', searchTermLower));
+    // Fetch all packages first (we need to do client-side filtering for search)
+    let baseQuery = query(collection(firestore, 'packages'), orderBy('name'));
+    const allDocsSnapshot = await getDocs(baseQuery);
+
+    let allPackages = allDocsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    } as Tour));
+
+    // Apply search filter if provided
+    if (search && search.trim()) {
+        const searchTermLower = search.toLowerCase().trim();
+        allPackages = allPackages.filter(pkg => {
+            // Search in name
+            if (pkg.name?.toLowerCase().includes(searchTermLower)) return true;
+
+            // Search in description
+            if (pkg.description?.toLowerCase().includes(searchTermLower)) return true;
+
+            // Search in regions
+            if (Array.isArray(pkg.region)) {
+                if (pkg.region.some(r => r.toLowerCase().includes(searchTermLower))) return true;
+            }
+
+            // Search in type
+            if (pkg.type?.toLowerCase().includes(searchTermLower)) return true;
+
+            // Search in difficulty
+            if (pkg.difficulty?.toLowerCase().includes(searchTermLower)) return true;
+
+            return false;
+        });
     }
-    
-    const countSnapshot = await getDocs(countQuery);
-    const totalCount = countSnapshot.size;
+
+    // Calculate pagination
+    const totalCount = allPackages.length;
     const totalPages = Math.ceil(totalCount / limit);
+    const offset = (page - 1) * limit;
 
-    if (page > 1) {
-        const offset = (page - 1) * limit;
-        const offsetQuery = query(dataQuery, firestoreLimit(offset));
-        const offsetSnapshot = await getDocs(offsetQuery);
-        if (offsetSnapshot.docs.length > 0) {
-            const lastVisible = offsetSnapshot.docs[offsetSnapshot.docs.length - 1];
-            dataQuery = query(dataQuery, startAfter(lastVisible));
+    // Get the page of results
+    const packages = allPackages.slice(offset, offset + limit);
+
+    return {
+        packages,
+        pagination: {
+            currentPage: page,
+            totalPages,
+            totalCount
         }
-    }
-    
-    dataQuery = query(dataQuery, firestoreLimit(limit));
-    const packageSnapshot = await getDocs(dataQuery);
-    const packages = packageSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
-
-    return { packages, pagination: { currentPage: page, totalPages, totalCount } };
+    };
 }
 
 export async function getAllToursForSelect(): Promise<{ id: string; name: string; slug: string }[]> {
