@@ -28,81 +28,91 @@ export function ManageBlogContent() {
     const [pagination, setPagination] = useState({
         currentPage: 1,
         totalPages: 0,
+        totalCount: 0,
         hasMore: false,
     });
-    const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
-    
+
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
     useEffect(() => {
         const fetchPosts = async (page: number, search: string) => {
             setLoading(true);
             try {
-                // For server-side search, we'll need a new API endpoint or modify getBlogPosts
-                // Let's assume for now getBlogPosts is adapted.
-                // In a real scenario, this would become an API call.
-                const lastDocId = page > pageHistory.length ? null : pageHistory[page - 1];
-
-                // This logic would ideally be in an API route.
-                // Simulating it here for now.
                 const queryParams = new URLSearchParams({
                     limit: String(ITEMS_PER_PAGE),
+                    page: String(page),
                     search: search,
                 });
-                if (lastDocId && page > 1) {
-                    queryParams.set('lastDocId', lastDocId);
-                }
 
-                // This should be a fetch to an API route like /api/blog
-                // For now, we will adapt getBlogPosts to accept search
-                // Note: a proper server-side implementation is needed for production scale.
-                // This requires updating db.ts and potentially a new API route.
-                
-                // Let's assume we have an API route /api/blog that handles this
                 const response = await fetch(`/api/blog?${queryParams.toString()}`);
                 const data = await response.json();
 
-                setPosts(data.posts);
+                setPosts(data.posts || []);
                 setPagination({
                     currentPage: page,
-                    totalPages: data.totalPages,
-                    hasMore: data.hasMore,
+                    totalPages: data.totalPages || 0,
+                    totalCount: data.totalCount || 0,
+                    hasMore: data.hasMore || false,
                 });
-                
-                if(data.posts.length > 0) {
-                    const newLastDocId = data.posts[data.posts.length - 1].id;
-                    if(pageHistory.length <= page) {
-                        setPageHistory(prev => [...prev, newLastDocId]);
-                    }
-                }
 
             } catch (error) {
                 console.error("Failed to fetch posts", error);
+                setPosts([]);
+                setPagination({
+                    currentPage: 1,
+                    totalPages: 0,
+                    totalCount: 0,
+                    hasMore: false,
+                });
             } finally {
                 setLoading(false);
             }
         };
 
         fetchPosts(currentPage, debouncedSearchTerm);
-        
-        // Update URL
-        const params = new URLSearchParams(window.location.search);
+    }, [debouncedSearchTerm, currentPage]);
+
+    // Update URL when search term changes (reset to page 1)
+    useEffect(() => {
+        const params = new URLSearchParams();
+
         if (debouncedSearchTerm) {
             params.set('search', debouncedSearchTerm);
-        } else {
-            params.delete('search');
         }
-        router.replace(`/manage/blog?${params.toString()}`);
 
-    }, [debouncedSearchTerm, currentPage, router]);
+        // Only add page if it's not page 1
+        const currentPageParam = searchParams.get('page');
+        if (currentPageParam && currentPageParam !== '1') {
+            // Reset to page 1 when search changes
+            if (searchParams.get('search') !== debouncedSearchTerm) {
+                params.delete('page');
+            } else {
+                params.set('page', currentPageParam);
+            }
+        }
+
+        const newUrl = params.toString() ? `/manage/blog?${params.toString()}` : '/manage/blog';
+        router.replace(newUrl, { scroll: false });
+    }, [debouncedSearchTerm]);
 
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            router.push(`/manage/blog?page=${newPage}${searchTerm ? `&search=${searchTerm}`: ''}`);
+            const params = new URLSearchParams();
+
+            if (debouncedSearchTerm) {
+                params.set('search', debouncedSearchTerm);
+            }
+
+            if (newPage > 1) {
+                params.set('page', String(newPage));
+            }
+
+            const newUrl = params.toString() ? `/manage/blog?${params.toString()}` : '/manage/blog';
+            router.push(newUrl, { scroll: false });
         }
     };
-    
+
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
@@ -122,14 +132,14 @@ export function ManageBlogContent() {
 
             <div className="relative pt-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input 
-                    placeholder="Search by title or author..." 
-                    className="pl-10" 
+                <Input
+                    placeholder="Search by title or author..."
+                    className="pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            
+
             <div className="space-y-4">
                 {loading ? (
                     [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
@@ -145,11 +155,14 @@ export function ManageBlogContent() {
                     </Card>
                 )}
             </div>
-            
+
             {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between border-t pt-6 mt-6">
                     <div className="text-sm text-muted-foreground">
                         Page {pagination.currentPage} of {pagination.totalPages}
+                        {pagination.totalCount > 0 && (
+                            <span className="ml-2">({pagination.totalCount} total {pagination.totalCount === 1 ? 'post' : 'posts'})</span>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button

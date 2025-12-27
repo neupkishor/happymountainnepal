@@ -114,47 +114,28 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 
 export async function getBlogPosts(options?: {
     limit?: number;
-    lastDocId?: string | null;
+    page?: number;
     status?: 'published' | 'draft';
     search?: string;
-}): Promise<{ posts: BlogPost[]; hasMore: boolean; totalPages: number; }> {
-    if (!firestore) return { posts: [], hasMore: false, totalPages: 0 };
+}): Promise<{ posts: BlogPost[]; hasMore: boolean; totalPages: number; totalCount: number; }> {
+    if (!firestore) return { posts: [], hasMore: false, totalPages: 0, totalCount: 0 };
 
     const limit = options?.limit || 10;
+    const page = options?.page || 1;
+    const searchTerm = options?.search?.toLowerCase().trim() || '';
 
-    // Base query for counting
-    let countQuery = query(collection(firestore, 'blogPosts'));
+    // Build base query - always order by date descending
+    let baseQuery = query(collection(firestore, 'blogPosts'), orderBy('date', 'desc'));
+
     if (options?.status) {
-        countQuery = query(countQuery, where('status', '==', options.status));
-    }
-    if (options?.search) {
-        // This is a simplified search. For production, consider a dedicated search service.
-        countQuery = query(countQuery, where('title', '>=', options.search), where('title', '<=', options.search + '\uf8ff'));
-    }
-    const countSnapshot = await getDocs(countQuery);
-    const totalCount = countSnapshot.size;
-    const totalPages = Math.ceil(totalCount / limit);
-
-    // Data query with pagination
-    let dataQuery = query(collection(firestore, 'blogPosts'), orderBy('date', 'desc'));
-    if (options?.status) {
-        dataQuery = query(dataQuery, where('status', '==', options.status));
-    }
-    if (options?.search) {
-        dataQuery = query(dataQuery, where('title', '>=', options.search), where('title', '<=', options.search + '\uf8ff'));
+        baseQuery = query(baseQuery, where('status', '==', options.status));
     }
 
-    if (options?.lastDocId) {
-        const lastDoc = await getDoc(doc(firestore, 'blogPosts', options.lastDocId));
-        if (lastDoc.exists()) {
-            dataQuery = query(dataQuery, startAfter(lastDoc));
-        }
-    }
+    // Fetch all matching documents (we'll filter search client-side)
+    const querySnapshot = await getDocs(baseQuery);
 
-    dataQuery = query(dataQuery, firestoreLimit(limit + 1));
-    const querySnapshot = await getDocs(dataQuery);
-
-    const posts = querySnapshot.docs.map(doc => {
+    // Convert to BlogPost array
+    let allPosts = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
             id: doc.id,
@@ -163,12 +144,26 @@ export async function getBlogPosts(options?: {
         } as BlogPost;
     });
 
-    const hasMore = posts.length > limit;
-    if (hasMore) {
-        posts.pop(); // Remove the extra item
+    // Apply search filter client-side (case-insensitive)
+    if (searchTerm) {
+        allPosts = allPosts.filter(post => {
+            const titleMatch = post.title?.toLowerCase().includes(searchTerm);
+            const authorMatch = post.author?.toLowerCase().includes(searchTerm);
+            const excerptMatch = post.excerpt?.toLowerCase().includes(searchTerm);
+            return titleMatch || authorMatch || excerptMatch;
+        });
     }
 
-    return { posts, hasMore, totalPages };
+    // Calculate pagination
+    const totalCount = allPosts.length;
+    const totalPages = Math.ceil(totalCount / limit);
+    const offset = (page - 1) * limit;
+    const hasMore = offset + limit < totalCount;
+
+    // Get the page of results
+    const posts = allPosts.slice(offset, offset + limit);
+
+    return { posts, hasMore, totalPages, totalCount };
 }
 
 

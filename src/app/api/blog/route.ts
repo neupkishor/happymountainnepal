@@ -6,10 +6,10 @@ export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const limit = parseInt(searchParams.get('limit') || '10', 10);
+        const page = parseInt(searchParams.get('page') || '1', 10);
         const search = searchParams.get('search') || '';
-        const lastDocId = searchParams.get('lastDocId') || null;
 
-        const result = await getBlogPosts({ limit, lastDocId, search });
+        const result = await getBlogPosts({ limit, page, search });
 
         return NextResponse.json(result);
     } catch (error) {
