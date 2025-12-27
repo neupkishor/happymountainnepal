@@ -49,10 +49,24 @@ export function ProgressBar() {
       const targetUrl = target.href;
       const currentUrl = window.location.href;
 
-      // Only start progress if navigating to a different page
-      if (targetUrl !== currentUrl && target.target !== '_blank') {
-        NProgress.start();
+      // Skip NProgress for:
+      // - mailto: links (emails)
+      // - tel: links (phone numbers)
+      // - hash links (#)
+      // - same page navigation
+      // - links opening in new tabs
+      if (
+        targetUrl.startsWith('mailto:') ||
+        targetUrl.startsWith('tel:') ||
+        targetUrl.startsWith('#') ||
+        targetUrl.includes('#') && targetUrl.split('#')[0] === currentUrl.split('#')[0] ||
+        targetUrl === currentUrl ||
+        target.target === '_blank'
+      ) {
+        return;
       }
+
+      NProgress.start();
     };
 
     // Start progress on browser back/forward

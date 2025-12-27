@@ -8,8 +8,8 @@ import NProgress from 'nprogress';
 import { usePathname } from 'next/navigation';
 
 type LinkProps = ComponentProps<typeof NextLink> & {
-    children: React.ReactNode;
-    className?: string;
+  children: React.ReactNode;
+  className?: string;
 }
 
 export const Link = ({ href, className, children, ...props }: LinkProps) => {
@@ -18,14 +18,23 @@ export const Link = ({ href, className, children, ...props }: LinkProps) => {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const currentPath = pathname;
     const newPath = href.toString();
-    
+
     // Check for new tab clicks
     if (props.target === '_blank' || e.ctrlKey || e.metaKey) {
       return;
     }
 
-    // Check for anchor links or links to the same page
-    if (newPath.startsWith('#') || newPath === currentPath) {
+    // Skip NProgress for:
+    // - mailto: links (emails)
+    // - tel: links (phone numbers)
+    // - hash/anchor links
+    // - same page navigation
+    if (
+      newPath.startsWith('mailto:') ||
+      newPath.startsWith('tel:') ||
+      newPath.startsWith('#') ||
+      newPath === currentPath
+    ) {
       return;
     }
 
