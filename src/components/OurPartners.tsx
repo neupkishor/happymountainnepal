@@ -1,16 +1,26 @@
+
 'use client';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useFirestore } from '@/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import type { Partner } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 export function OurPartners() {
   const firestore = useFirestore();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const autoplay = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
+
+  const [emblaRef] = useEmblaCarousel({ loop: true, align: 'start' }, [
+    autoplay.current,
+  ]);
 
   useEffect(() => {
     if (!firestore) return;
@@ -32,42 +42,41 @@ export function OurPartners() {
   }, [firestore]);
 
   return (
-    <section className="py-16 lg:py-24">
+    <section className="py-16 lg:py-24 bg-secondary/50">
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Partners & Affiliations</h2>
           <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-            We are proud to be associated with leading organizations in the tourism industry and government bodies, ensuring the highest standards of service and credibility.
+            We are proud to be associated with leading organizations in the tourism industry, ensuring the highest standards of service.
           </p>
         </div>
+
         {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
-                {[...Array(4)].map((_, i) => (
-                    <div key={i} className="text-center">
-                        <Skeleton className="h-32 w-full mb-4" />
-                        <Skeleton className="h-6 w-3/4 mx-auto" />
-                        <Skeleton className="h-4 w-1/2 mx-auto mt-2" />
-                    </div>
-                ))}
-            </div>
-        ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {partners?.map(partner => (
-                <div key={partner.id} className="text-center">
-                <div className="bg-card p-8 rounded-lg flex justify-center items-center relative aspect-square mb-4 transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
-                    <Image
-                    src={partner.logo}
-                    alt={`${partner.name} logo`}
-                    fill
-                    className="object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
-                    data-ai-hint="company logo"
-                    />
-                </div>
-                <h3 className="font-semibold text-lg">{partner.name}</h3>
-                <p className="text-sm text-muted-foreground">{partner.description}</p>
-                </div>
+          <div className="flex gap-8 overflow-hidden">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex-[0_0_50%] md:flex-[0_0_20%]">
+                <Skeleton className="h-32 w-full" />
+              </div>
             ))}
+          </div>
+        ) : (
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex gap-8">
+              {partners.concat(partners).map((partner, index) => ( // Duplicate for seamless looping
+                <div key={`${partner.id}-${index}`} className="flex-[0_0_50%] md:flex-[0_0_20%]">
+                  <div className="relative h-32 flex justify-center items-center">
+                    <Image
+                      src={partner.logo}
+                      alt={`${partner.name} logo`}
+                      fill
+                      className="object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+                      data-ai-hint="company logo"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
         )}
       </div>
     </section>
