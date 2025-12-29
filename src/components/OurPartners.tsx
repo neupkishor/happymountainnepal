@@ -16,7 +16,7 @@ export function OurPartners() {
   const [isLoading, setIsLoading] = useState(true);
   
   const autoplay = useRef(
-    Autoplay({ delay: 3000, stopOnInteraction: false, stopOnMouseEnter: true })
+    Autoplay({ delay: 3000, stopOnInteraction: true, stopOnMouseEnter: true })
   );
 
   const [emblaRef] = useEmblaCarousel({ loop: true, align: 'start' }, [
@@ -53,9 +53,9 @@ export function OurPartners() {
         </div>
 
         {isLoading ? (
-          <div className="flex gap-8 overflow-hidden">
+          <div className="flex gap-6">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex-[0_0_80%] sm:flex-[0_0_40%] md:flex-[0_0_25%]">
+              <div key={i} className="flex-[0_0_80%] sm:flex-[0_0_40%] md:flex-[0_0_33.33%] lg:flex-[0_0_20%]">
                 <Card>
                   <CardContent className="p-6 text-center">
                     <Skeleton className="h-32 w-32 rounded-lg mx-auto" />
@@ -71,15 +71,15 @@ export function OurPartners() {
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex gap-6">
               {partners.concat(partners).map((partner, index) => (
-                <div key={`${partner.id}-${index}`} className="flex-[0_0_80%] sm:flex-[0_0_40%] md:flex-[0_0_25%]">
-                  <Card className="h-full w-full">
+                <div key={`${partner.id}-${index}`} className="flex-[0_0_80%] sm:flex-[0_0_45%] md:flex-[0_0_30%] lg:flex-[0_0_23%]">
+                  <Card className="h-full w-full group">
                     <CardContent className="p-6 text-center flex flex-col items-center h-full">
-                      <div className="relative h-32 w-32 mb-4">
+                      <div className="relative h-32 w-32 mb-4 bg-background/50 rounded-lg flex items-center justify-center p-4">
                         <Image
                           src={partner.logo}
                           alt={`${partner.name} logo`}
                           fill
-                          className="object-contain rounded-md"
+                          className="object-contain rounded-md transition-transform duration-300 group-hover:scale-105"
                           data-ai-hint="company logo"
                         />
                       </div>
