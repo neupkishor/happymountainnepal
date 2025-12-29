@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -68,7 +69,7 @@ export function OurPartners() {
                       src={partner.logo}
                       alt={`${partner.name} logo`}
                       fill
-                      className="object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+                      className="object-contain filter grayscale hover:grayscale-0 transition-all duration-300 rounded-md"
                       data-ai-hint="company logo"
                     />
                   </div>
