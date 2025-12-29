@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -60,7 +61,7 @@ export default function UploadLegalDocumentPage() {
         );
 
         const res = await fetch(
-          'https://neupgroup.com/content/bridge/api/upload',
+          'https://cdn.neupgroup.com/bridge/api/v1/upload',
           { method: 'POST', body: formData }
         );
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -61,7 +62,7 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
             formData.append('contentIds', JSON.stringify(['uploads', 'admin-user', 'upload-dialog']));
             formData.append('name', selectedFile.name.replace(/\.[^/.]+$/, ''));
 
-            const response = await fetch('https://neupgroup.com/content/bridge/api/upload', {
+            const response = await fetch('https://cdn.neupgroup.com/bridge/api/v1/upload', {
                 method: 'POST',
                 body: formData,
             });

@@ -23,7 +23,7 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [document, setDocument] = useState<LegalDocument | null>(null);
+    const [documentData, setDocumentData] = useState<LegalDocument | null>(null);
 
     // Form state
     const [title, setTitle] = useState('');
@@ -39,7 +39,7 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
             try {
                 const doc = await getLegalDocumentById(id);
                 if (doc) {
-                    setDocument(doc);
+                    setDocumentData(doc);
                     setTitle(doc.title);
                     setDescription(doc.description || '');
                     setCurrentFileUrl(doc.url);
@@ -84,7 +84,7 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
                     formData.append('contentIds', JSON.stringify(['legal-documents', 'admin-user', 'edit']));
                     formData.append('name', selectedFile.name.replace(/\.[^/.]+$/, ''));
 
-                    const response = await fetch('https://neupgroup.com/content/bridge/api/upload', {
+                    const response = await fetch('https://cdn.neupgroup.com/bridge/api/v1/upload', {
                         method: 'POST',
                         body: formData,
                     });
@@ -99,14 +99,15 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
                         fileUrl = result.url;
 
                         await logFileUpload({
-                            name: selectedFile.name,
+                            fileName: selectedFile.name,
+                            pathType: 'absolute',
+                            path: fileUrl,
                             url: fileUrl,
-                            uploadedBy: 'admin',
-                            type: selectedFile.type,
-                            size: selectedFile.size,
+                            uploadSource: 'NeupCDN',
+                            fileSize: selectedFile.size,
+                            fileType: selectedFile.type,
                             category: 'document',
-                            location: 'NeupCDN',
-                            meta: [],
+                            userId: 'admin',
                         });
                     } else {
                         throw new Error(result.message || 'Unknown upload error');
