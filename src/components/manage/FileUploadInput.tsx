@@ -102,7 +102,7 @@ export function FileUploadInput({
     formData.append('name', safeBaseName);
 
     try {
-      const response = await fetch('https://neupgroup.com/content/bridge/api/upload', {
+      const response = await fetch('https://cdn.neupgroup.com/bridge/api/v1/upload', {
         method: 'POST',
         body: formData,
       });
@@ -118,31 +118,29 @@ export function FileUploadInput({
         const fullUrl = result.url;
         let storedUrl = fullUrl;
 
-        // If the URL is from NeupCDN (neupgroup.com), format it with {{neupcdn}} template
+        // If the URL is from NeupCDN (neupgroup.com), format it with {{basePath}} template
         if (fullUrl.includes('neupgroup.com')) {
-          // Remove the protocol and domain to get the path
           try {
             const urlObj = new URL(fullUrl);
-            // Verify it's actually neupgroup.com
-            if (urlObj.hostname.includes('neupgroup.com')) {
-              storedUrl = `{{neupcdn}}${urlObj.pathname}`;
-            }
+            const relativePath = urlObj.pathname;
+            storedUrl = `{{basePath}}${relativePath}`;
           } catch (e) {
-            console.warn('URL parsing failed', e);
+            console.warn('URL parsing failed, storing full URL', e);
           }
         }
 
         setValue(name, storedUrl, { shouldValidate: true, shouldDirty: true });
 
         await logFileUpload({
-          name: correctedFile.name,
+          fileName: correctedFile.name,
+          pathType: 'relative',
+          path: storedUrl,
           url: storedUrl,
-          uploadedBy: userId,
-          size: correctedFile.size,
-          type: correctedFile.type,
+          uploadSource: 'NeupCDN',
+          fileSize: correctedFile.size,
+          fileType: correctedFile.type,
           category: category,
-          location: 'NeupCDN',
-          meta: [],
+          userId: userId,
         });
 
         onUploadSuccess?.(storedUrl);

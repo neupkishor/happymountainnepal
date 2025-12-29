@@ -1,3 +1,4 @@
+
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -36,6 +37,18 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'neupgroup.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.neupgroup.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'neupcdn.com',
         port: '',
         pathname: '/**',
       },
