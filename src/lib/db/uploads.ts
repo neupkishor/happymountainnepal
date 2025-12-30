@@ -3,10 +3,10 @@
 
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
-import type { FileUpload, UploadCategory } from '@/lib/types';
+import type { FileUpload } from '@/lib/types';
 import { logError } from './errors';
 
-export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedOn'>): Promise<void> {
+export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt' | 'createdAt' | 'uploadedOn'>): Promise<void> {
     if (!firestore) {
         console.error("Firestore is not initialized. Cannot log file upload.");
         return;
@@ -28,35 +28,14 @@ export async function deleteFileUpload(id: string): Promise<void> {
     await deleteDoc(doc(firestore, 'uploads', id));
 }
 
-export async function addExternalMediaLink(url: string, uploadedBy: string): Promise<string> {
-    if (!firestore) throw new Error("Database not available.");
-    const urlParts = url.split('/');
-    const name = urlParts[urlParts.length - 1] || 'external-media';
-    const extension = name.split('.').pop()?.toLowerCase();
-    let type = 'application/octet-stream';
-    if (extension) {
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
-        if (imageExtensions.includes(extension)) type = `image/${extension}`;
-    }
-    const docRef = await addDoc(collection(firestore, 'uploads'), {
-        url, name, type, size: 0, location: 'HotLinked', meta: [],
-        uploadedOn: new Date().toISOString(), uploadedAt: serverTimestamp(),
-        uploadedBy, category: 'general' as UploadCategory, createdAt: serverTimestamp(),
-    });
-    return docRef.id;
-}
-
 export async function getFileUploads(options?: {
     limit?: number;
-    category?: UploadCategory;
+    tags?: string[];
     lastDocId?: string | null;
 }): Promise<{ uploads: FileUpload[]; hasMore: boolean; totalCount?: number }> {
     if (!firestore) return { uploads: [], hasMore: false };
     
     let q = query(collection(firestore, 'uploads'), orderBy('uploadedAt', 'desc'));
-    if (options?.category) {
-        q = query(q, where('category', '==', options.category));
-    }
     
     if (options?.lastDocId) {
         const lastDoc = await getDoc(doc(firestore, 'uploads', options.lastDocId));
@@ -73,16 +52,16 @@ export async function getFileUploads(options?: {
         const data = doc.data();
         return {
             id: doc.id,
-            name: data.name || data.fileName || 'Untitled',
-            caption: data.caption || '',
-            type: data.type || data.fileType || 'application/octet-stream',
-            category: data.category || 'general',
-            size: data.size || data.fileSize || 0,
-            location: data.location || (data.uploadSource === 'NeupCDN' ? 'NeupCDN' : (data.pathType === 'absolute' ? 'HotLinked' : 'Local')),
-            meta: Array.isArray(data.meta) ? data.meta : (data.metaInformation ? [data.metaInformation] : []),
+            name: data.name || 'Untitled',
+            url: data.url || '',
+            uploadedBy: data.uploadedBy || 'Unknown',
+            type: data.type || 'application/octet-stream',
+            size: data.size || 0,
+            tags: data.tags || ['general'],
+            meta: data.meta || [],
             uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
-            uploadedBy: data.uploadedBy || data.userId || 'Unknown',
-            url: data.url || ''
+            uploadedAt: data.uploadedAt,
+            createdAt: data.createdAt,
         } as FileUpload;
     });
 

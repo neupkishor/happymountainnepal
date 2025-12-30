@@ -2,16 +2,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useFormContext, useController } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import imageCompression from 'browser-image-compression';
-import { logError, logFileUpload } from '@/lib/db';
+import { logError } from '@/lib/db';
 import { usePathname } from 'next/navigation';
 import { slugify } from '@/lib/utils';
-import type { UploadCategory } from '@/lib/types';
 
 interface FileUploadInputProps {
   name: string;
@@ -20,7 +19,7 @@ interface FileUploadInputProps {
   onUploadingChange?: (isUploading: boolean) => void;
   customFileName?: string;
   skipCompression?: boolean;
-  category: UploadCategory; // Prop is now required
+  tags?: string[];
 }
 
 export function FileUploadInput({
@@ -30,10 +29,9 @@ export function FileUploadInput({
   onUploadingChange,
   customFileName,
   skipCompression = false,
-  category, // Removed default, as it should be explicit
+  tags = ['general'],
 }: FileUploadInputProps) {
-  const { control, setValue } = useFormContext();
-  const { field } = useController({ name, control });
+  const { setValue } = useFormContext();
   const pathname = usePathname();
 
   const [isUploadingInternal, setIsUploadingInternal] = useState(false);
@@ -59,7 +57,6 @@ export function FileUploadInput({
           useWebWorker: true,
         };
         finalFile = await imageCompression(file, options);
-        console.log(`[Compression] Original: ${(file.size / 1024).toFixed(2)} KB, Compressed: ${(finalFile.size / 1024).toFixed(2)} KB`);
       } catch (compressionError: any) {
         logError({
           message: `Image compression failed: ${compressionError.message}`,
@@ -75,30 +72,18 @@ export function FileUploadInput({
         onUploadingChange?.(false);
         return;
       }
-    } else {
-      console.log('[Compression] Skipped for this file type or setting.');
-    }
-
-    let extension = file.name.split('.').pop()?.toLowerCase();
-    const isImage = file.type.startsWith('image/');
-    if (isImage && (!extension || !['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extension))) {
-      extension = 'jpg';
     }
 
     const safeBaseName = customFileName || slugify(file.name.replace(/\.[^/.]+$/, ''));
-    const safeFileName = extension ? `${safeBaseName}.${extension}` : safeBaseName;
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const safeFileName = `${safeBaseName}.${extension}`;
 
-    const mimeType = file.type || (isImage ? `image/${extension === 'jpg' ? 'jpeg' : extension}` : 'application/octet-stream');
-
-    const correctedFile = new File([finalFile], safeFileName, { type: mimeType });
+    const correctedFile = new File([finalFile], safeFileName, { type: file.type });
 
     const formData = new FormData();
-    const userId = 'admin-user'; // Replace with actual user ID if available
-    const fieldNameSlug = slugify(name);
-
     formData.append('file', correctedFile);
     formData.append('platform', 'p3.happymountainnepal');
-    formData.append('contentIds', JSON.stringify(['uploads', userId, fieldNameSlug]));
+    formData.append('contentIds', JSON.stringify(['uploads', 'admin-user', slugify(name)]));
     formData.append('name', safeBaseName);
 
     try {
@@ -108,42 +93,28 @@ export function FileUploadInput({
       });
 
       const responseText = await response.text();
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status} ${responseText}`);
-      }
+      if (!response.ok) throw new Error(`Upload failed: ${response.status} ${responseText}`);
 
       const result = JSON.parse(responseText);
 
       if (result.success && result.url) {
-        const fullUrl = result.url;
-        let storedUrl = fullUrl;
-
-        // If the URL is from NeupCDN (neupgroup.com), format it with {{basePath}} template
-        if (fullUrl.includes('neupgroup.com')) {
-          try {
-            const urlObj = new URL(fullUrl);
-            const relativePath = urlObj.pathname;
-            storedUrl = `{{basePath}}${relativePath}`;
-          } catch (e) {
-            console.warn('URL parsing failed, storing full URL', e);
-          }
-        }
-
-        setValue(name, storedUrl, { shouldValidate: true, shouldDirty: true });
-
-        await logFileUpload({
-          fileName: correctedFile.name,
-          pathType: 'relative',
-          path: storedUrl,
-          url: storedUrl,
-          uploadSource: 'NeupCDN',
-          fileSize: correctedFile.size,
-          fileType: correctedFile.type,
-          category: category,
-          userId: userId,
+        setValue(name, result.url, { shouldValidate: true, shouldDirty: true });
+        
+        await fetch('/api/log-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: correctedFile.name,
+                url: result.url,
+                uploadedBy: 'admin',
+                type: correctedFile.type,
+                size: correctedFile.size,
+                tags,
+                meta: [],
+            }),
         });
 
-        onUploadSuccess?.(storedUrl);
+        onUploadSuccess?.(result.url);
       } else {
         throw new Error(result.message || 'Unknown upload error.');
       }
@@ -166,7 +137,6 @@ export function FileUploadInput({
     }
   };
 
-  // --- Render ---
   if (children) {
     return (
       <label htmlFor={name} className="cursor-pointer w-full">

@@ -128,20 +128,18 @@ export interface SiteError {
 
 export type UploadCategory = 'general' | 'trip' | 'document' | 'background' | 'feature-icon' | 'user-photo' | 'blog' | 'logo' | 'author';
 
-export type FileLocation = 'Local' | 'NeupCDN' | 'HotLinked';
-
 export interface FileUpload {
   id: string;
-  name: string; // original file name
-  caption?: string; // New field for caption/alt text
-  type: string; // file type
-  category: UploadCategory;
-  size: number; // size of file
-  location: FileLocation;
-  meta: any[]; // all meta information
-  uploadedOn: string;
+  name: string;
+  url: string;
   uploadedBy: string;
-  url: string; // {{neupcdn}}... or raw
+  type: string;
+  size: number;
+  tags: string[];
+  meta: any[];
+  uploadedOn: string;
+  uploadedAt: Timestamp;
+  createdAt: Timestamp;
 }
 
 // New Review types for the /manage/reviews section

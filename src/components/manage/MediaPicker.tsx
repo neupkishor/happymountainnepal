@@ -1,8 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useFormContext, useController } from 'react-hook-form';
-import Image from 'next/image';
 import { SmartImage } from '@/components/ui/smart-image';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,24 +11,21 @@ import { cn } from '@/lib/utils';
 import { MediaLibraryDialog } from './MediaLibraryDialog';
 import { FileUploadInput } from './FileUploadInput';
 import { getFileUploads } from '@/lib/db';
-import type { FileUpload, UploadCategory } from '@/lib/types';
+import type { FileUpload } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '../ui/card';
-import { useSiteProfile } from '@/hooks/use-site-profile';
-import { getSelectablePath } from '@/lib/url-utils';
 
 interface MediaPickerProps {
   name: string;
   label?: string;
   maxRecent?: number;
-  category?: UploadCategory;
+  tags?: string[];
 }
 
-export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }: MediaPickerProps) {
+export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'] }: MediaPickerProps) {
   const { control, setValue } = useFormContext();
   const { field } = useController({ name, control });
   const { toast } = useToast();
-  const { profile } = useSiteProfile();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(field.value || null);
   const [recentUploads, setRecentUploads] = useState<FileUpload[]>([]);
@@ -79,19 +76,10 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
     setIsUploading(false);
     toast({ title: 'Upload Successful', description: 'New file uploaded and selected.' });
   };
-
-  // Helper function to get the correct path for a file
-  // For relative paths with basePath, this returns the full absolute URL
-  const getFilePath = (file: FileUpload): string => {
-    return getSelectablePath(file, profile?.basePath);
-  };
-
-  // Sort uploads to show selected media first
+  
   const sortedUploads = [...recentUploads].sort((a, b) => {
-    const aPath = getFilePath(a);
-    const bPath = getFilePath(b);
-    const aIsSelected = aPath === previewUrl;
-    const bIsSelected = bPath === previewUrl;
+    const aIsSelected = a.url === previewUrl;
+    const bIsSelected = b.url === previewUrl;
 
     if (aIsSelected && !bIsSelected) return -1;
     if (!aIsSelected && bIsSelected) return 1;
@@ -99,9 +87,6 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
   });
 
   const displayedRecent = sortedUploads.slice(0, maxRecent);
-
-  // Find the selected file for preview
-  const selectedFile = displayedRecent.find(f => getFilePath(f) === previewUrl);
 
   return (
     <div className="space-y-2">
@@ -127,12 +112,11 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
           </div>
 
           <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-            {/* Upload Box */}
             <FileUploadInput
               name={`${name}-direct-upload`}
               onUploadSuccess={handleDirectUploadSuccess}
               onUploadingChange={setIsUploading}
-              category="general"
+              tags={tags}
             >
               <div className="flex items-center justify-center h-24 w-full rounded-md border-2 border-dashed text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors cursor-pointer">
                 {isUploading ? (
@@ -143,10 +127,8 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
               </div>
             </FileUploadInput>
 
-            {/* Recent Images - Selected items appear first */}
             {displayedRecent.map((file) => {
-              const filePath = getFilePath(file);
-              const isSelected = previewUrl === filePath;
+              const isSelected = previewUrl === file.url;
               return (
                 <div
                   key={file.id}
@@ -156,7 +138,7 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
                       ? 'border-primary ring-2 ring-primary shadow-lg'
                       : 'border-transparent hover:border-muted-foreground'
                   )}
-                  onClick={() => handleSelectImage([filePath])}
+                  onClick={() => handleSelectImage([file.url])}
                 >
                   <SmartImage
                     src={file.url}
@@ -169,7 +151,6 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
                       <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
                         <CheckCircle2 className="h-6 w-6 text-primary-foreground" />
                       </div>
-                      {/* Deselect button on hover */}
                       <Button
                         type="button"
                         variant="destructive"
@@ -188,7 +169,6 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
               );
             })}
 
-            {/* Show More Box */}
             <div
               className="flex items-center justify-center h-24 w-full rounded-md border text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors cursor-pointer"
               onClick={() => setIsLibraryOpen(true)}
@@ -204,6 +184,7 @@ export function MediaPicker({ name, label, maxRecent = 7, category = 'general' }
         onClose={() => setIsLibraryOpen(false)}
         onSelect={handleSelectImage}
         initialSelectedUrls={previewUrl ? [previewUrl] : []}
+        defaultTags={tags}
       />
     </div>
   );

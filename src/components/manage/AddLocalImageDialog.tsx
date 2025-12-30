@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,23 +9,20 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { logFileUpload } from '@/lib/db';
-import type { UploadCategory } from '@/lib/types';
 
 interface AddLocalImageDialogProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    category?: UploadCategory;
+    tags?: string[];
 }
 
-export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'general' }: AddLocalImageDialogProps) {
+export function AddLocalImageDialog({ isOpen, onClose, onSuccess, tags = ['general'] }: AddLocalImageDialogProps) {
     const [fileName, setFileName] = useState('');
     const [relativePath, setRelativePath] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<UploadCategory>(category);
+    const [selectedTags, setSelectedTags] = useState<string[]>(tags);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
-
-    const categories: UploadCategory[] = ['general', 'trip', 'document', 'background', 'feature-icon', 'user-photo', 'blog', 'logo', 'author'];
 
     const handleSubmit = async () => {
         if (!fileName || !relativePath) {
@@ -36,35 +34,28 @@ export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'ge
             return;
         }
 
-        // Ensure path starts with /
-        const normalizedPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
-
-        // Create path with {{local}} template variable
-        // This is used for files that exist in the project's public directory
-        const templatePath = `{{local}}${normalizedPath}`;
+        const templatePath = `{{basePath}}${relativePath.startsWith('/') ? relativePath : `/${relativePath}`}`;
 
         setIsSubmitting(true);
         try {
             await logFileUpload({
                 name: fileName,
-                url: templatePath, // Store with template variable
+                url: templatePath,
                 uploadedBy: 'admin-user',
-                category: selectedCategory,
-                location: 'Local',
-                type: getFileTypeFromPath(normalizedPath),
-                size: 0, // Size unknown for manually added local files
+                tags: selectedTags,
+                type: 'image/jpeg', // Assuming local files are images for now
+                size: 0,
                 meta: [],
             });
 
             toast({
                 title: 'Success',
-                description: 'Local image added to library.',
+                description: 'Local image reference added.',
             });
 
-            // Reset form
             setFileName('');
             setRelativePath('');
-            setSelectedCategory(category);
+            setSelectedTags(tags);
 
             onSuccess();
             onClose();
@@ -73,39 +64,22 @@ export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'ge
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: error.message || 'Failed to add local image.',
+                description: error.message || 'Failed to add local image reference.',
             });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const getFileTypeFromPath = (path: string): string => {
-        const extension = path.split('.').pop()?.toLowerCase();
-        if (!extension) return 'application/octet-stream';
-
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
-        const videoExtensions = ['mp4', 'webm', 'ogg'];
-        const pdfExtensions = ['pdf'];
-
-        if (imageExtensions.includes(extension)) {
-            return `image/${extension === 'jpg' ? 'jpeg' : extension}`;
-        } else if (videoExtensions.includes(extension)) {
-            return `video/${extension}`;
-        } else if (pdfExtensions.includes(extension)) {
-            return 'application/pdf';
-        }
-        return 'application/octet-stream';
-    };
-
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Add Local Image from /public</DialogTitle>
+                    <DialogTitle>Add Local Image Reference</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
+                    <p className="text-sm text-muted-foreground">This feature is for referencing files that already exist in your project's `/public` directory. It does not upload any files.</p>
                     <div className="space-y-2">
                         <Label htmlFor="fileName">File Name *</Label>
                         <Input
@@ -114,9 +88,6 @@ export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'ge
                             value={fileName}
                             onChange={(e) => setFileName(e.target.value)}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            A descriptive name for this file
-                        </p>
                     </div>
 
                     <div className="space-y-2">
@@ -127,28 +98,9 @@ export function AddLocalImageDialog({ isOpen, onClose, onSuccess, category = 'ge
                             value={relativePath}
                             onChange={(e) => setRelativePath(e.target.value)}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Path will be stored as: <code className="bg-muted px-1 rounded">{'{{basePath}}'}/your/path.jpg</code>
+                         <p className="text-xs text-muted-foreground">
+                            Path will be stored as: <code className="bg-muted px-1 rounded">{`{{basePath}}${relativePath || '/your/path.jpg'}`}</code>
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                            The {'{{basePath}}'} template will be replaced with your site's base URL when the image is used.
-                        </p>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="category">Category</Label>
-                        <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as UploadCategory)}>
-                            <SelectTrigger id="category">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {categories.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>
-                                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
                     </div>
                 </div>
 

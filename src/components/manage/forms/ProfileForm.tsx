@@ -167,7 +167,7 @@ export function ProfileForm() {
               <CardDescription>Manage the main text content and background image for your homepage.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <MediaPicker name="heroImage" label="Hero Background Image" category="background" />
+              <MediaPicker name="heroImage" label="Hero Background Image" tags={['background']} />
               <FormField
                 control={form.control}
                 name="heroTitle"
@@ -229,7 +229,7 @@ export function ProfileForm() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <MediaPicker name={`whyUs.${index}.icon`} label="Feature Icon" category="feature-icon" />
+                    <MediaPicker name={`whyUs.${index}.icon`} label="Feature Icon" tags={['feature-icon']} />
                     <FormField
                       control={form.control}
                       name={`whyUs.${index}.title`}
@@ -287,7 +287,7 @@ export function ProfileForm() {
                       <Input placeholder="https://happymountainnepal.com" {...field} disabled={isPending} />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
-                      The base URL of your website. This will be used to replace {'{{basePath}}'} in server-uploaded media URLs.
+                      The base URL of your website. This is required for creating correct links in sitemaps and feeds.
                     </p>
                     <FormMessage />
                   </FormItem>

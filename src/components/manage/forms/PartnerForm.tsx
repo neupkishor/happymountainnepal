@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
@@ -20,7 +21,7 @@ import { addPartner, updatePartner, logError } from '@/lib/db';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { MediaPicker } from '../MediaPicker'; // Updated import
+import { MediaPicker } from '../MediaPicker';
 import { usePathname } from 'next/navigation';
 
 const formSchema = z.object({
@@ -112,7 +113,7 @@ export function PartnerForm({ partner }: PartnerFormProps) {
                 )}
                 />
                 
-                <MediaPicker name="logo" label="Partner Logo" category="logo" />
+                <MediaPicker name="logo" label="Partner Logo" tags={['logo']} />
                 <FormMessage>{form.formState.errors.logo?.message}</FormMessage>
                 
                 <Button type="submit" disabled={isPending}>

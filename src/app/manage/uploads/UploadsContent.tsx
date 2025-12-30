@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,9 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { FileUpload } from '@/lib/types';
-
-import { useSiteProfile } from '@/hooks/use-site-profile';
-import { getFullUrl } from '@/lib/url-utils';
 import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
@@ -29,51 +27,8 @@ export function UploadsContent() {
     const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
-    const { profile } = useSiteProfile();
     const { toast } = useToast();
-
-    // Helper function to get the display URL
-    const getDisplayUrl = (item: FileUpload): string => {
-        // For NeupCDN files, show the URL directly
-        if (item.uploadSource === 'NeupCDN') {
-            return item.url;
-        }
-
-        // For hotlinked files (absolute paths), show the URL directly
-        if (item.pathType === 'absolute') {
-            return item.url;
-        }
-
-        // For server files (relative paths), combine with basePath
-        if (item.pathType === 'relative') {
-            // Use basePath from profile or fallback to default
-            const basePath = profile?.basePath || 'https://neupgroup.com';
-            const cleanBase = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
-            const cleanPath = item.path.startsWith('/') ? item.path : '/' + item.path;
-            return cleanBase + cleanPath;
-        }
-
-        // Fallback to URL
-        return item.url;
-    };
-
-    // Helper function to get viewable URL (for Image component and links)
-    const getSafeViewUrl = (item: FileUpload): string => {
-        const displayUrl = getDisplayUrl(item);
-
-        // If it's a relative path without basePath, construct with current origin for viewing
-        if (!displayUrl.startsWith('http') && !displayUrl.startsWith('//')) {
-            if (typeof window !== 'undefined') {
-                const base = window.location.origin;
-                const cleanPath = displayUrl.startsWith('/') ? displayUrl : '/' + displayUrl;
-                return base + cleanPath;
-            }
-        }
-
-        return displayUrl;
-    };
 
     const handleDelete = async (fileId: string) => {
         if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
@@ -86,7 +41,6 @@ export function UploadsContent() {
                 title: 'File Deleted',
                 description: 'The file has been successfully removed.',
             });
-            // Refresh the list by removing the item locally or fetching again
             setFileItems((prev) => prev.filter((item) => item.id !== fileId));
             setTotalCount((prev) => prev - 1);
         } catch (error) {
@@ -145,7 +99,6 @@ export function UploadsContent() {
     };
 
     const handleUploadComplete = async () => {
-        // Refresh the uploads list
         router.refresh();
         if (currentPage !== 1) {
             router.push('/manage/uploads?page=1');
@@ -180,8 +133,6 @@ export function UploadsContent() {
                 onUploadComplete={handleUploadComplete}
             />
 
-
-
             {isLoading ? (
                 <div className="space-y-4 mb-8">
                     {Array.from({ length: 5 }).map((_, index) => (
@@ -210,10 +161,10 @@ export function UploadsContent() {
                                 className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow bg-card"
                             >
                                 <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                                    {item.fileType?.startsWith('image/') ? (
+                                    {item.type?.startsWith('image/') ? (
                                         <Image
-                                            src={getSafeViewUrl(item)}
-                                            alt={item.fileName}
+                                            src={item.url}
+                                            alt={item.name}
                                             fill
                                             className="object-cover"
                                         />
@@ -224,40 +175,31 @@ export function UploadsContent() {
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium truncate mb-1" title={item.fileName}>
-                                        {item.fileName}
+                                    <h3 className="font-medium truncate mb-1" title={item.name}>
+                                        {item.name}
                                     </h3>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                                         <Badge variant="outline" className="text-xs">
-                                            {item.userId}
+                                            {item.uploadedBy}
                                         </Badge>
-                                        {item.fileSize && (
+                                        {item.size && (
                                             <Badge variant="secondary" className="text-xs">
-                                                {(item.fileSize / 1024).toFixed(2)} KB
+                                                {(item.size / 1024).toFixed(2)} KB
                                             </Badge>
                                         )}
-                                        <Badge
-                                            variant={item.uploadSource === 'NeupCDN' ? 'default' : 'secondary'}
-                                            className="text-xs"
-                                        >
-                                            {item.uploadSource === 'NeupCDN' ? '☁️ NeupCDN' : '🖥️ Server'}
-                                        </Badge>
-                                        <Badge
-                                            variant={item.pathType === 'relative' ? 'outline' : 'secondary'}
-                                            className="text-xs"
-                                        >
-                                            {item.pathType === 'relative' ? '📁 Local' : '🔗 Hotlinked'}
+                                        <Badge variant="default" className="text-xs">
+                                            ☁️ NeupCDN
                                         </Badge>
                                         <span>
-                                            {item.uploadedAt ? formatDistanceToNow(new Date(item.uploadedAt), { addSuffix: true }) : 'N/A'}
+                                            {item.uploadedOn ? formatDistanceToNow(new Date(item.uploadedOn), { addSuffix: true }) : 'N/A'}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1 truncate font-mono" title={getDisplayUrl(item)}>
-                                        URL: {getDisplayUrl(item)}
+                                    <p className="text-xs text-muted-foreground mt-1 truncate font-mono" title={item.url}>
+                                        URL: {item.url}
                                     </p>
                                 </div>
                                 <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
-                                    <Link href={getSafeViewUrl(item)} target="_blank" rel="noopener noreferrer">
+                                    <Link href={item.url} target="_blank" rel="noopener noreferrer">
                                         <ExternalLink className="h-4 w-4 mr-2" />
                                         View
                                     </Link>
@@ -313,4 +255,3 @@ export function UploadsContent() {
         </div>
     );
 }
-

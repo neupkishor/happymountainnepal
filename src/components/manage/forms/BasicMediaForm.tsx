@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
@@ -88,9 +89,13 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
     });
   };
   
-  const handleSelectImages = (images: ImageWithCaption[]) => {
-      form.setValue('allImages', images, { shouldDirty: true, shouldValidate: true });
-      setIsLibraryOpen(false);
+  const handleSelectImages = (selectedUrls: string[]) => {
+    const newImages = selectedUrls.map(url => {
+        const existing = allImages.find(img => img.url === url);
+        return existing || { url, caption: '' };
+    });
+    form.setValue('allImages', newImages, { shouldDirty: true, shouldValidate: true });
+    setIsLibraryOpen(false);
   }
 
   return (
@@ -175,8 +180,8 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
         isOpen={isLibraryOpen}
         onClose={() => setIsLibraryOpen(false)}
         onSelect={handleSelectImages}
-        initialSelectedUrls={allImages}
-        defaultCategory='trip'
+        initialSelectedUrls={allImages.map(i => i.url)}
+        defaultTags={['trip']}
       />
     </FormProvider>
   );

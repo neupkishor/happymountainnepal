@@ -4,8 +4,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Upload, Link2, X, Check } from 'lucide-react';
-import { addExternalMediaLink } from '@/lib/db';
+import { Upload, X } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 
 interface UploadDialogProps {
@@ -17,10 +16,8 @@ interface UploadDialogProps {
 export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDialogProps) {
     const { profile } = useSiteProfile();
 
-    const [uploadMode, setUploadMode] = useState<'file' | 'link'>('file');
     const [isDragging, setIsDragging] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [linkUrl, setLinkUrl] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -55,7 +52,6 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
 
         setIsUploading(true);
         try {
-            // Upload to neupgroup.com API
             const formData = new FormData();
             formData.append('file', selectedFile);
             formData.append('platform', 'p3.happymountainnepal');
@@ -75,7 +71,6 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
             const result = JSON.parse(responseText);
 
             if (result.success && result.url) {
-                // Log to database
                 await fetch('/api/log-upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -85,11 +80,11 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
                         uploadedBy: 'admin',
                         type: selectedFile.type,
                         size: selectedFile.size,
-                        category: 'general',
+                        tags: ['general'],
+                        meta: [],
                     }),
                 });
 
-                // Reset and close
                 setSelectedFile(null);
                 onUploadComplete();
                 onOpenChange(false);
@@ -104,29 +99,8 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
         }
     };
 
-    const handleLinkUpload = async () => {
-        if (!linkUrl.trim()) return;
-
-        setIsUploading(true);
-        try {
-            await addExternalMediaLink(linkUrl, 'admin');
-
-            // Reset and close
-            setLinkUrl('');
-            onUploadComplete();
-            onOpenChange(false);
-        } catch (error) {
-            console.error('Link upload error:', error);
-            alert('Failed to add media link. Please try again.');
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
     const resetDialog = () => {
-        setUploadMode('file');
         setSelectedFile(null);
-        setLinkUrl('');
         setIsDragging(false);
     };
 
@@ -137,135 +111,76 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
         }}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Upload Media</DialogTitle>
+                    <DialogTitle>Upload Media to NeupCDN</DialogTitle>
                     <DialogDescription>
-                        {uploadMode === 'file'
-                            ? 'Drag and drop a file or click to browse'
-                            : 'Enter the URL of the media you want to add'
-                        }
+                        Drag and drop a file or click to browse
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* Mode Toggle */}
-                <div className="flex items-center gap-2 mb-4">
-                    <Button
-                        variant={uploadMode === 'file' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setUploadMode('file')}
-                        className="flex-1"
+                <div className="space-y-4">
+                    <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`
+                            border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                            transition-colors
+                            ${isDragging ? 'border-primary bg-primary/10' : 'border-muted-foreground/25'}
+                            ${selectedFile ? 'bg-muted/50' : ''}
+                        `}
+                        onClick={() => document.getElementById('file-input')?.click()}
                     >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload File
-                    </Button>
+                        <input
+                            id="file-input"
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileSelect}
+                            accept="image/*,video/*"
+                        />
+
+                        {selectedFile ? (
+                            <div className="space-y-2">
+                                <Check className="h-12 w-12 mx-auto text-green-500" />
+                                <p className="font-medium">{selectedFile.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedFile(null);
+                                    }}
+                                >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Remove
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">
+                                    Drag and drop your file here, or click to browse
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Supports images and videos
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
                     <Button
-                        variant={uploadMode === 'link' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setUploadMode('link')}
-                        className="flex-1"
+                        onClick={handleFileUpload}
+                        disabled={!selectedFile || isUploading}
+                        className="w-full"
                     >
-                        <Link2 className="h-4 w-4 mr-2" />
-                        Add by Link
+                        {isUploading ? 'Uploading...' : 'Upload File'}
                     </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                        Files are uploaded to NeupCDN storage.
+                    </p>
                 </div>
-
-                {uploadMode === 'file' ? (
-                    <div className="space-y-4">
-                        {/* Drag and Drop Zone */}
-                        <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            className={`
-                border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                transition-colors
-                ${isDragging ? 'border-primary bg-primary/10' : 'border-muted-foreground/25'}
-                ${selectedFile ? 'bg-muted/50' : ''}
-              `}
-                            onClick={() => document.getElementById('file-input')?.click()}
-                        >
-                            <input
-                                id="file-input"
-                                type="file"
-                                className="hidden"
-                                onChange={handleFileSelect}
-                                accept="image/*,video/*"
-                            />
-
-                            {selectedFile ? (
-                                <div className="space-y-2">
-                                    <Check className="h-12 w-12 mx-auto text-green-500" />
-                                    <p className="font-medium">{selectedFile.name}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                                    </p>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedFile(null);
-                                        }}
-                                    >
-                                        <X className="h-4 w-4 mr-2" />
-                                        Remove
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
-                                    <p className="text-sm text-muted-foreground">
-                                        Drag and drop your file here, or click to browse
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Supports images and videos
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Upload Button */}
-                        <Button
-                            onClick={handleFileUpload}
-                            disabled={!selectedFile || isUploading}
-                            className="w-full"
-                        >
-                            {isUploading ? 'Uploading...' : 'Upload File'}
-                        </Button>
-                        <p className="text-xs text-muted-foreground text-center">
-                            Files are uploaded to NeupCDN storage.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {/* URL Input */}
-                        <div className="space-y-2">
-                            <label htmlFor="media-url" className="text-sm font-medium">
-                                Media URL
-                            </label>
-                            <input
-                                id="media-url"
-                                type="url"
-                                value={linkUrl}
-                                onChange={(e) => setLinkUrl(e.target.value)}
-                                placeholder="https://example.com/image.jpg"
-                                className="w-full px-3 py-2 border rounded-md bg-background"
-                                disabled={isUploading}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                The file will be hotlinked from this URL
-                            </p>
-                        </div>
-
-                        {/* Add Link Button */}
-                        <Button
-                            onClick={handleLinkUpload}
-                            disabled={!linkUrl.trim() || isUploading}
-                            className="w-full"
-                        >
-                            {isUploading ? 'Adding...' : 'Add Link'}
-                        </Button>
-                    </div>
-                )}
             </DialogContent>
         </Dialog>
     );
