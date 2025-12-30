@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { FileUpload, UploadCategory } from '@/lib/types';
 import { logError } from './errors';
