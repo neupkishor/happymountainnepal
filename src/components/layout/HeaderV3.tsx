@@ -316,7 +316,7 @@ export function HeaderV3() {
           {/* Left aligned logo */}
           <div className="flex items-center shrink-0">
             <Link href="/" className="flex items-center space-x-2" onClick={() => setMenuOpen(false)}>
-              <Image src="https://neupgroup.com/content/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
+              <Image src="https://cdn.neupgroup.com/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
               <span className="font-bold font-headline">Happy Mountain Nepal</span>
             </Link>
           </div>

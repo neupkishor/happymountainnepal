@@ -36,7 +36,7 @@ export default function RootLayout({
     "@type": "Organization",
     "name": "Happy Mountain Nepal",
     "url": "https://happymountainnepal.com",
-    "logo": "https://neupgroup.com/content/p3happymountainnepal/logo.png",
+    "logo": "https://cdn.neupgroup.com/p3happymountainnepal/logo.png",
     "contactPoint": {
       "@type": "ContactPoint",
       "telephone": "+977-984-3725521",

@@ -160,7 +160,7 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
       "@type": "Organization",
       "name": "Happy Mountain Nepal",
       "url": "https://happymountainnepal.com",
-      "logo": "https://neupgroup.com/content/p3happymountainnepal/logo.png"
+      "logo": "https://cdn.neupgroup.com/p3happymountainnepal/logo.png"
     },
     ...(averageRating > 0 && {
       "aggregateRating": {
