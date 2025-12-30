@@ -13,6 +13,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { FileUpload } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { SmartImage } from '@/components/ui/smart-image';
+import { UploadDetailDialog } from '@/components/manage/uploads/UploadDetailDialog';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -25,7 +27,8 @@ export function UploadsContent() {
     const [hasMore, setHasMore] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
     const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<FileUpload | null>(null);
 
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const { toast } = useToast();
@@ -121,16 +124,22 @@ export function UploadsContent() {
                     </p>
                 </div>
                 <div>
-                    <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+                    <Button onClick={() => setIsUploadDialogOpen(true)} variant="outline">
                         Upload
                     </Button>
                 </div>
             </div>
 
             <UploadDialog
-                open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
+                open={isUploadDialogOpen}
+                onOpenChange={setIsUploadDialogOpen}
                 onUploadComplete={handleUploadComplete}
+            />
+
+            <UploadDetailDialog
+                isOpen={!!selectedFile}
+                onClose={() => setSelectedFile(null)}
+                file={selectedFile}
             />
 
             {isLoading ? (
@@ -158,18 +167,19 @@ export function UploadsContent() {
                         {fileItems.map((item) => (
                             <div
                                 key={item.id}
-                                className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow bg-card"
+                                className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow bg-card cursor-pointer"
+                                onClick={() => setSelectedFile(item)}
                             >
                                 <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                                     {item.type?.startsWith('image/') ? (
-                                        <Image
+                                        <SmartImage
                                             src={item.url}
                                             alt={item.name}
                                             fill
                                             className="object-cover"
                                         />
                                     ) : (
-                                        <div className="flex items-center justify-center h-full w-full text-muted-foreground">
+                                        <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground">
                                             <FileIcon className="h-10 w-10" />
                                         </div>
                                     )}
@@ -198,17 +208,14 @@ export function UploadsContent() {
                                         URL: {item.url}
                                     </p>
                                 </div>
-                                <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
-                                    <Link href={item.url} target="_blank" rel="noopener noreferrer">
-                                        <ExternalLink className="h-4 w-4 mr-2" />
-                                        View
-                                    </Link>
-                                </Button>
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     className="flex-shrink-0 text-destructive hover:text-destructive"
-                                    onClick={() => handleDelete(item.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(item.id);
+                                    }}
                                 >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Delete
