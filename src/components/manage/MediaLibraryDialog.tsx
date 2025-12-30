@@ -19,6 +19,8 @@ import { FileUploadInput } from './FileUploadInput';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useSiteProfile } from '@/hooks/use-site-profile';
+import { getFullUrl } from '@/lib/url-utils';
 
 interface MediaLibraryDialogProps {
   isOpen: boolean;
@@ -41,6 +43,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   const [selectedTags, setSelectedTags] = useState<string[]>(['all']);
 
   const { toast } = useToast();
+  const { profile } = useSiteProfile();
 
   const fetchUploads = async (tags: string[] = ['all'], isLoadMore = false) => {
     if (!isLoadMore) setIsLoading(true);
@@ -95,8 +98,8 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
       upload.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      const aIsSelected = currentSelection.includes(a.url);
-      const bIsSelected = currentSelection.includes(b.url);
+      const aIsSelected = currentSelection.includes(getFullUrl(a, profile?.basePath));
+      const bIsSelected = currentSelection.includes(getFullUrl(b, profile?.basePath));
       if (aIsSelected && !bIsSelected) return -1;
       if (!aIsSelected && bIsSelected) return 1;
       return 0;
@@ -124,12 +127,13 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
     }
   };
 
-  const handleImageClick = (url: string) => {
+  const handleImageClick = (file: FileUpload) => {
+    const fullUrl = getFullUrl(file, profile?.basePath);
     setCurrentSelection(prev => {
-      if (prev.includes(url)) {
-        return prev.filter(u => u !== url);
+      if (prev.includes(fullUrl)) {
+        return prev.filter(u => u !== fullUrl);
       } else {
-        return [...prev, url];
+        return [...prev, fullUrl];
       }
     });
   };
@@ -180,14 +184,17 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
 
             <ScrollArea className="flex-grow -mr-4 pr-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {filteredUploads.map((file) => (
+                {filteredUploads.map((file) => {
+                    const fullUrl = getFullUrl(file, profile?.basePath);
+                    const isSelected = currentSelection.includes(fullUrl);
+                  return (
                   <div
                     key={file.id}
                     className={cn(
                       'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
-                      currentSelection.includes(file.url) ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                      isSelected ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
                     )}
-                    onClick={() => handleImageClick(file.url)}
+                    onClick={() => handleImageClick(file)}
                   >
                     {file.type?.startsWith('image/') ? (
                       <SmartImage
@@ -201,7 +208,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                         <FileText className="h-8 w-8" />
                       </div>
                     )}
-                    {currentSelection.includes(file.url) && (
+                    {isSelected && (
                       <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
                         <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
                       </div>
@@ -218,7 +225,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                       </Button>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
               {hasMore && (
                 <div className="mt-4 flex justify-center pb-4">
