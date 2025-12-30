@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2 } from 'lucide-react';
 import { getFileUploads, deleteFileUpload } from '@/lib/db';
-import type { FileUpload } from '@/lib/types';
+import type { FileUpload, ImageWithCaption } from '@/lib/types';
 import { SmartImage } from '@/components/ui/smart-image';
 import { cn } from '@/lib/utils';
 import { FileUploadInput } from './FileUploadInput';
@@ -25,14 +25,15 @@ import { getFullUrl } from '@/lib/url-utils';
 interface MediaLibraryDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (urls: string[]) => void;
+  onSelect: (images: ImageWithCaption[]) => void;
   initialSelectedUrls?: string[];
   defaultTags?: string[];
+  defaultCategory?: string;
 }
 
 const DEFAULT_SELECTED_URLS: string[] = [];
 
-export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = DEFAULT_SELECTED_URLS, defaultTags = ['general'] }: MediaLibraryDialogProps) {
+export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = DEFAULT_SELECTED_URLS, defaultTags = ['general'], defaultCategory }: MediaLibraryDialogProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastDocId, setLastDocId] = useState<string | null>(null);
@@ -81,17 +82,12 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedTags(defaultTags || ['all']);
-      fetchUploads(defaultTags || ['all']);
       setCurrentSelection(initialSelectedUrls);
+      const tagsToUse = defaultTags || ['all'];
+      setSelectedTags(tagsToUse);
+      fetchUploads(tagsToUse);
     }
-  }, [isOpen, initialSelectedUrls, defaultTags]);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchUploads(selectedTags);
-    }
-  }, [selectedTags, isOpen]);
+  }, [isOpen]);
 
   const filteredUploads = uploads
     .filter((upload) =>
@@ -145,7 +141,15 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   };
 
   const handleInsertSelected = () => {
-    onSelect(currentSelection);
+    // Convert selected URLs to ImageWithCaption objects
+    const selectedImages: ImageWithCaption[] = currentSelection.map(url => {
+      const file = uploads.find(u => getFullUrl(u, profile?.basePath) === url);
+      return {
+        url,
+        caption: file?.name || ''
+      };
+    });
+    onSelect(selectedImages);
     onClose();
   };
 
@@ -185,47 +189,48 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
             <ScrollArea className="flex-grow -mr-4 pr-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {filteredUploads.map((file) => {
-                    const fullUrl = getFullUrl(file, profile?.basePath);
-                    const isSelected = currentSelection.includes(fullUrl);
+                  const fullUrl = getFullUrl(file, profile?.basePath);
+                  const isSelected = currentSelection.includes(fullUrl);
                   return (
-                  <div
-                    key={file.id}
-                    className={cn(
-                      'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
-                      isSelected ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
-                    )}
-                    onClick={() => handleImageClick(file)}
-                  >
-                    {file.type?.startsWith('image/') ? (
-                      <SmartImage
-                        src={file.url}
-                        alt={file.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
-                        <FileText className="h-8 w-8" />
-                      </div>
-                    )}
-                    {isSelected && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
-                        <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
-                      </div>
-                    )}
+                    <div
+                      key={file.id}
+                      className={cn(
+                        'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
+                        isSelected ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                      )}
+                      onClick={() => handleImageClick(file)}
+                    >
+                      {file.type?.startsWith('image/') ? (
+                        <SmartImage
+                          src={file.url}
+                          alt={file.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
+                          <FileText className="h-8 w-8" />
+                        </div>
+                      )}
+                      {isSelected && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
+                          <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
+                        </div>
+                      )}
 
-                    <div className="absolute top-1 right-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-6 w-6 rounded-full"
-                        onClick={(e) => handleDelete(e, file.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      <div className="absolute top-1 right-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-6 w-6 rounded-full"
+                          onClick={(e) => handleDelete(e, file.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )})}
+                  )
+                })}
               </div>
               {hasMore && (
                 <div className="mt-4 flex justify-center pb-4">

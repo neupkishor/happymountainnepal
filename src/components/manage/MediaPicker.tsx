@@ -58,8 +58,8 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'] }: 
     setPreviewUrl(field.value || null);
   }, [field.value]);
 
-  const handleSelectImage = (urls: string[]) => {
-    const url = urls.length > 0 ? urls[0] : '';
+  const handleSelectImage = (images: { url: string; caption?: string }[]) => {
+    const url = images.length > 0 ? images[0].url : '';
     setValue(name, url, { shouldValidate: true, shouldDirty: true });
     setPreviewUrl(url);
     setIsLibraryOpen(false);
@@ -71,12 +71,12 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'] }: 
   };
 
   const handleDirectUploadSuccess = (url: string) => {
-    handleSelectImage([url]);
+    handleSelectImage([{ url }]);
     fetchRecentUploads();
     setIsUploading(false);
     toast({ title: 'Upload Successful', description: 'New file uploaded and selected.' });
   };
-  
+
   const sortedUploads = [...recentUploads].sort((a, b) => {
     const aIsSelected = a.url === previewUrl;
     const bIsSelected = b.url === previewUrl;
@@ -138,7 +138,7 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'] }: 
                       ? 'border-primary ring-2 ring-primary shadow-lg'
                       : 'border-transparent hover:border-muted-foreground'
                   )}
-                  onClick={() => handleSelectImage([file.url])}
+                  onClick={() => handleSelectImage([{ url: file.url, caption: file.name }])}
                 >
                   <SmartImage
                     src={file.url}
