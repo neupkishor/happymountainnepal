@@ -74,4 +74,3 @@ export async function getInquiries(): Promise<Inquiry[]> {
         throw new Error("Could not fetch inquiries from the database.");
     }
 }
-

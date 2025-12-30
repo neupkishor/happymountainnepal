@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { Redirect } from '@/lib/types';
 import { logError } from './errors';
