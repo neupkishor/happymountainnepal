@@ -60,8 +60,9 @@ export async function getFileUploads(options?: {
             tags: data.tags || ['general'],
             meta: data.meta || [],
             uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
-            uploadedAt: data.uploadedAt,
-            createdAt: data.createdAt,
+            // Convert timestamps to ISO strings
+            uploadedAt: data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString(),
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
         } as FileUpload;
     });
 
