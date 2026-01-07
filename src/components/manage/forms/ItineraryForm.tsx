@@ -17,7 +17,7 @@ import { type Tour } from '@/lib/types';
 import { PlusCircle, Trash2 } from 'lucide-react';
 
 interface ItineraryFormProps {
-  tour: Tour;
+  tour?: Tour; // Make tour optional for reuse
 }
 
 export function ItineraryForm({ tour }: ItineraryFormProps) {
@@ -41,7 +41,7 @@ export function ItineraryForm({ tour }: ItineraryFormProps) {
                 className="absolute top-2 right-2"
                 onClick={() => remove(index)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <FormField

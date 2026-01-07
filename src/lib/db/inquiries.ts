@@ -10,48 +10,35 @@ import { logError } from './errors';
 export type Inquiry = {
     id: string;
     createdAt: Timestamp | string; // Allow string for serialized version
-    type: 'customization' | 'contact';
+    type: 'customization' | 'contact' | 'booking';
     page?: string;
     temporary_id?: string;
     // Optional fields depending on type
     conversation?: CustomizeTripInput;
-    data?: { name: string; email: string; subject: string; message: string; };
+    data?: any; // Generic data field for contact and booking
 };
 
 
-export async function saveInquiry(conversation: CustomizeTripInput): Promise<string> {
+export async function saveInquiry(inquiryData: Omit<Inquiry, 'id' | 'createdAt'>): Promise<string> {
     if (!firestore) throw new Error("Database not available.");
     try {
         const docRef = await addDoc(collection(firestore, 'inquiries'), {
-            conversation,
-            type: 'customization',
+            ...inquiryData,
             createdAt: serverTimestamp(),
         });
         return docRef.id;
     } catch (error: any) {
-        console.error("Error adding document: ", error);
-        await logError({ message: `Failed to save inquiry: ${error.message}`, stack: error.stack, pathname: '/customize', context: { conversation } });
+        console.error("[DB saveInquiry] Error saving inquiry: ", error);
+        await logError({ 
+            message: `Failed to save inquiry of type ${inquiryData.type}: ${error.message}`, 
+            stack: error.stack, 
+            pathname: inquiryData.page, 
+            context: { inquiryData } 
+        });
         throw new Error("Could not save inquiry to the database.");
     }
 }
 
-export async function saveContactInquiry(inquiryData: Omit<Inquiry, 'id' | 'createdAt' | 'type'>): Promise<string> {
-    if (!firestore) {
-        throw new Error("Database not available.");
-    }
-    try {
-        const docRef = await addDoc(collection(firestore, 'inquiries'), {
-            ...inquiryData,
-            type: 'contact',
-            createdAt: serverTimestamp(),
-        });
-        return docRef.id;
-    } catch (error: any) {
-        console.error("[DB saveContactInquiry] Error saving contact inquiry: ", error);
-        await logError({ message: `Failed to save contact inquiry: ${error.message}`, stack: error.stack, pathname: inquiryData.page, context: { inquiryData } });
-        throw new Error("Could not save contact inquiry to the database.");
-    }
-}
 
 export async function getInquiries(): Promise<Inquiry[]> {
     if (!firestore) return [];
