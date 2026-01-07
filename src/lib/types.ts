@@ -54,6 +54,7 @@ export interface BlogPost {
   authorPhoto: string; // New field for author's photo
   date: string | Timestamp;
   image: string;
+  tags?: string[]; // Added tags field
   metaInformation?: string; // Keeping as string for keywords/short meta description
   status: 'draft' | 'published';
   searchKeywords?: string[];

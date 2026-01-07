@@ -44,6 +44,7 @@ export async function createBlogPost(): Promise<string | null> {
         date: serverTimestamp(),
         image: 'https://picsum.photos/seed/blog-placeholder/800/500',
         status: 'draft',
+        tags: [],
         metaInformation: '',
         searchKeywords: [],
     };
@@ -86,6 +87,8 @@ export async function saveBlogPost(id: string | undefined, data: Omit<BlogPost, 
     const keywords = new Set<string>();
     data.title.toLowerCase().split(' ').forEach(word => keywords.add(word.replace(/[^a-z0-9]/gi, '')));
     data.author.toLowerCase().split(' ').forEach(word => keywords.add(word.replace(/[^a-z0-9]/gi, '')));
+    data.tags?.forEach(tag => keywords.add(tag.toLowerCase()));
+    
     const finalData = { ...data, searchKeywords: Array.from(keywords).filter(Boolean) };
 
     if (id) {
@@ -128,12 +131,14 @@ export async function getBlogPosts(options?: {
     page?: number;
     status?: 'published' | 'draft';
     search?: string;
+    tags?: string[];
 }): Promise<{ posts: BlogPost[]; hasMore: boolean; totalPages: number; totalCount: number; }> {
     if (!firestore) return { posts: [], hasMore: false, totalPages: 0, totalCount: 0 };
 
     const limit = options?.limit || 10;
     const page = options?.page || 1;
     const searchTerm = options?.search?.toLowerCase().trim() || '';
+    const tags = options?.tags || [];
 
     let baseQuery = query(collection(firestore, 'blogPosts'));
     
@@ -143,6 +148,10 @@ export async function getBlogPosts(options?: {
     
     if (searchTerm) {
         baseQuery = query(baseQuery, where('searchKeywords', 'array-contains', searchTerm));
+    }
+
+    if (tags.length > 0) {
+        baseQuery = query(baseQuery, where('tags', 'array-contains-any', tags));
     }
 
     const countSnapshot = await getCountFromServer(baseQuery);

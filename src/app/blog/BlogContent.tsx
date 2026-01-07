@@ -2,23 +2,26 @@
 'use client';
 
 import { BlogCard } from '@/components/BlogCard';
-import { getBlogPosts } from '@/lib/db';
 import type { BlogPost } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 const ITEMS_PER_PAGE = 12;
 
 export function BlogContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    
+    // Read state from URL
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const initialSearch = searchParams.get('search') || '';
+    const initialTags = searchParams.get('tags')?.split(',').map(tag => tag.trim()).filter(Boolean) || [];
 
     const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -26,34 +29,49 @@ export function BlogContent() {
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
+    const [activeTags, setActiveTags] = useState<string[]>(initialTags);
+
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (debouncedSearchTerm) {
             params.set('search', debouncedSearchTerm);
-            params.set('page', '1'); // Reset to page 1 on new search
         } else {
             params.delete('search');
         }
 
+        if (activeTags.length > 0) {
+            params.set('tags', activeTags.join(','));
+        } else {
+            params.delete('tags');
+        }
+        
+        // Reset to page 1 when filters change
+        params.set('page', '1');
+
         router.replace(`${window.location.pathname}?${params.toString()}`);
-    }, [debouncedSearchTerm, router]);
+    }, [debouncedSearchTerm, activeTags, router]);
 
     useEffect(() => {
         const fetchPosts = async () => {
             setIsLoading(true);
             try {
-                const result = await getBlogPosts({
-                    limit: ITEMS_PER_PAGE,
-                    page: currentPage,
-                    status: 'published',
-                    search: debouncedSearchTerm
+                const queryParams = new URLSearchParams({
+                    limit: String(ITEMS_PER_PAGE),
+                    page: String(currentPage),
+                    search: debouncedSearchTerm,
+                    tags: activeTags.join(','),
                 });
-                setBlogPosts(result.posts);
-                setHasMore(result.hasMore);
-                setTotalCount(result.totalCount);
-                setTotalPages(result.totalPages);
+
+                const response = await fetch(`/api/blog?${queryParams.toString()}`);
+                const data = await response.json();
+                
+                setBlogPosts(data.posts);
+                setHasMore(data.hasMore);
+                setTotalCount(data.totalCount);
+                setTotalPages(data.totalPages);
             } catch (error) {
                 console.error("Failed to fetch posts", error);
             } finally {
@@ -61,7 +79,7 @@ export function BlogContent() {
             }
         };
         fetchPosts();
-    }, [currentPage, debouncedSearchTerm]);
+    }, [currentPage, debouncedSearchTerm, activeTags]);
     
     const goToPage = (page: number) => {
         if (page >= 1 && page <= totalPages) {
@@ -71,10 +89,14 @@ export function BlogContent() {
             window.scrollTo(0, 0);
         }
     };
+    
+    const removeTag = (tagToRemove: string) => {
+        setActiveTags(prev => prev.filter(t => t !== tagToRemove));
+    };
 
     return (
         <>
-            <div className="max-w-xl mx-auto mb-12">
+            <div className="max-w-xl mx-auto mb-8">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
@@ -85,6 +107,21 @@ export function BlogContent() {
                     />
                 </div>
             </div>
+
+            {activeTags.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+                    <span className="text-sm font-semibold">Filtered by:</span>
+                    {activeTags.map(tag => (
+                        <Badge key={tag} variant="default" className="py-1 px-3">
+                            {tag}
+                            <button onClick={() => removeTag(tag)} className="ml-2 rounded-full hover:bg-background/20 p-0.5">
+                                <X className="h-3 w-3"/>
+                            </button>
+                        </Badge>
+                    ))}
+                </div>
+            )}
+
 
             {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
@@ -126,7 +163,7 @@ export function BlogContent() {
                 </>
             ) : (
                 <div className="text-center py-20">
-                    <p className="text-muted-foreground text-lg">No posts found for your search.</p>
+                    <p className="text-muted-foreground text-lg">No posts found for your search or filter.</p>
                 </div>
             )}
         </>

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Timestamp } from 'firebase/firestore';
 import type { BlogPost } from '@/lib/types'; // Added missing import
+import { Badge } from './ui/badge';
 
 interface BlogCardProps {
   post: BlogPost;
@@ -25,6 +26,15 @@ export function BlogCard({ post }: BlogCardProps) {
           />
         </CardHeader>
         <CardContent className="p-4 flex-grow">
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {post.tags.map(tag => (
+                <Link key={tag} href={`/blog?tags=${encodeURIComponent(tag)}`} onClick={(e) => e.stopPropagation()}>
+                    <Badge variant="secondary" className="hover:bg-primary/20">{tag}</Badge>
+                </Link>
+              ))}
+            </div>
+          )}
           <CardTitle className="text-lg font-bold !font-headline mb-2 leading-tight group-hover:text-primary transition-colors">
             {post.title}
           </CardTitle>

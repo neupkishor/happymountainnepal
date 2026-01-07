@@ -8,8 +8,9 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '10', 10);
         const page = parseInt(searchParams.get('page') || '1', 10);
         const search = searchParams.get('search') || '';
+        const tags = searchParams.get('tags')?.split(',').map(tag => tag.trim()).filter(Boolean) || [];
 
-        const result = await getBlogPosts({ limit, page, search });
+        const result = await getBlogPosts({ limit, page, search, tags });
 
         return NextResponse.json(result);
     } catch (error) {

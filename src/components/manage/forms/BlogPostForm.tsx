@@ -44,6 +44,7 @@ const formSchema = z.object({
   author: z.string().min(2, "Author name is required."),
   authorPhoto: z.string().url("A valid author photo URL is required.").min(1, "Author photo is required."), // New field
   image: z.string().url("A valid image URL is required."),
+  tags: z.string().optional().transform(val => val ? val.split(',').map(tag => tag.trim()).filter(Boolean) : []),
   metaInformation: z.string().optional(),
   status: z.enum(['draft', 'published']),
 });
@@ -68,8 +69,9 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
       content: post.content || '',
       excerpt: post.excerpt || '',
       author: post.author || 'Admin',
-      authorPhoto: post.authorPhoto || '', // Set default for new field
+      authorPhoto: post.authorPhoto || '',
       image: post.image || '',
+      tags: post.tags?.join(', ') || '',
       metaInformation: post.metaInformation || '',
       status: post.status || 'draft',
     },
@@ -78,7 +80,6 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        // Check slug availability
         const isAvailable = await checkBlogSlugAvailability(values.slug, post.id || undefined);
         if (!isAvailable) {
           form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
@@ -86,9 +87,10 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
         }
 
         const isNewPost = !post.id;
+        // @ts-ignore
         const savedPostId = await saveBlogPost(post.id || undefined, {
           ...values,
-          date: post.date, // Preserve original date for updates, will be set by server for new posts
+          date: post.date,
         });
 
         toast({
@@ -155,6 +157,23 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
                       https://happymountainnepal.com/blog/{field.value}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <Input placeholder="trekking, everest, guide" {...field as any} disabled={isPending} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Comma-separated list of tags.
                     </p>
                     <FormMessage />
                   </FormItem>
