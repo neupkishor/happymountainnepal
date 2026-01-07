@@ -247,6 +247,13 @@ export async function getAllToursForSelect(): Promise<{ id: string; name: string
     return querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name, slug: doc.data().slug }));
 }
 
+export async function getAllPublishedTours(): Promise<Tour[]> {
+    if (!firestore) return [];
+    const q = query(collection(firestore, 'packages'), where('status', '==', 'published'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+}
+
 export async function getDestinations(): Promise<Destination[]> {
     if (!firestore) return [];
     const packagesSnapshot = await getDocs(query(collection(firestore, 'packages'), where('status', '==', 'published')));
