@@ -92,7 +92,7 @@ export function ContactDetailsStep({ packageId }: ContactDetailsStepProps) {
         <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold !font-headline">Your Details</h1>
             <p className="mt-4 text-lg text-muted-foreground">
-                Step 3: Tell us who you are.
+                Step 4: Tell us who you are.
             </p>
         </div>
         <FormProvider {...form}>

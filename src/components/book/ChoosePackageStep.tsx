@@ -8,8 +8,14 @@ import type { Tour } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TourCard } from '@/components/TourCard';
 import { CardsGrid } from '../CardsGrid';
+import { Button } from '../ui/button';
+import { ArrowLeft } from 'lucide-react';
 
-export function ChoosePackageStep() {
+interface ChoosePackageStepProps {
+  region: string;
+}
+
+export function ChoosePackageStep({ region }: ChoosePackageStepProps) {
   const [tours, setTours] = useState<Tour[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -17,8 +23,12 @@ export function ChoosePackageStep() {
   useEffect(() => {
     async function fetchTours() {
       try {
-        const tourList = await getAllPublishedTours();
-        setTours(tourList);
+        const allTours = await getAllPublishedTours();
+        // Filter tours by the selected region
+        const filteredTours = allTours.filter(tour => 
+          Array.isArray(tour.region) && tour.region.includes(region)
+        );
+        setTours(filteredTours);
       } catch (error) {
         console.error("Failed to fetch tours:", error);
       } finally {
@@ -26,18 +36,21 @@ export function ChoosePackageStep() {
       }
     }
     fetchTours();
-  }, []);
+  }, [region]);
 
   const handlePackageSelect = (packageId: string) => {
-    router.push(`/book?step=customize&package=${packageId}`);
+    router.push(`/book?step=customize&region=${region}&package=${packageId}`);
   };
 
   return (
     <div>
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold !font-headline">Book Your Custom Trip</h1>
+        <Button variant="ghost" className="mb-4" onClick={() => router.push('/book')}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Change Region
+        </Button>
+        <h1 className="text-4xl md:text-5xl font-bold !font-headline">Book Your Adventure</h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Step 1: Choose your starting adventure.
+          Step 2: Choose your starting adventure in <span className="font-semibold text-primary">{region}</span>.
         </p>
       </div>
       {isLoading ? (

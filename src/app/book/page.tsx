@@ -7,26 +7,35 @@ import { ChoosePackageStep } from '@/components/book/ChoosePackageStep';
 import { CustomizeItineraryStep } from '@/components/book/CustomizeItineraryStep';
 import { ContactDetailsStep } from '@/components/book/ContactDetailsStep';
 import { ConfirmationStep } from '@/components/book/ConfirmationStep';
+import { ChooseRegionStep } from '@/components/book/ChooseRegionStep';
 
 function BookingFlow() {
   const searchParams = useSearchParams();
   const step = searchParams.get('step');
   const packageId = searchParams.get('package');
+  const region = searchParams.get('region');
 
   let currentStepComponent;
 
   switch (step) {
+    case 'package':
+      if (region) {
+        currentStepComponent = <ChoosePackageStep region={region} />;
+      } else {
+        currentStepComponent = <ChooseRegionStep />; // If no region, force region selection
+      }
+      break;
     case 'customize':
-      currentStepComponent = packageId ? <CustomizeItineraryStep packageId={packageId} /> : <ChoosePackageStep />;
+      currentStepComponent = packageId ? <CustomizeItineraryStep packageId={packageId} /> : <ChooseRegionStep />;
       break;
     case 'details':
-      currentStepComponent = packageId ? <ContactDetailsStep packageId={packageId} /> : <ChoosePackageStep />;
+      currentStepComponent = packageId ? <ContactDetailsStep packageId={packageId} /> : <ChooseRegionStep />;
       break;
     case 'complete':
-        currentStepComponent = <ConfirmationStep />;
-        break;
+      currentStepComponent = <ConfirmationStep />;
+      break;
     default:
-      currentStepComponent = <ChoosePackageStep />;
+      currentStepComponent = <ChooseRegionStep />; // Default to choosing a region
       break;
   }
 

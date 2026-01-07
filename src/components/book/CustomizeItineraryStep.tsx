@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -38,6 +38,8 @@ export function CustomizeItineraryStep({ packageId }: CustomizeItineraryStepProp
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const region = searchParams.get('region');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -71,7 +73,7 @@ export function CustomizeItineraryStep({ packageId }: CustomizeItineraryStepProp
   const onSubmit = (values: FormValues) => {
     // Save to localStorage for now to pass to next step
     localStorage.setItem(`booking-${packageId}`, JSON.stringify(values));
-    router.push(`/book?step=details&package=${packageId}`);
+    router.push(`/book?step=details&region=${region}&package=${packageId}`);
   };
 
   if (isLoading) {
@@ -83,7 +85,7 @@ export function CustomizeItineraryStep({ packageId }: CustomizeItineraryStepProp
         <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold !font-headline">Customize Your Itinerary</h1>
             <p className="mt-4 text-lg text-muted-foreground">
-                Step 2: Adjust the plan for <span className="font-semibold text-primary">{tour?.name}</span>.
+                Step 3: Adjust the plan for <span className="font-semibold text-primary">{tour?.name}</span>.
             </p>
         </div>
 
@@ -149,7 +151,7 @@ export function CustomizeItineraryStep({ packageId }: CustomizeItineraryStepProp
             </div>
 
             <div className="mt-8 flex justify-between">
-                <Button type="button" variant="outline" onClick={() => router.push('/book')}>
+                <Button type="button" variant="outline" onClick={() => router.push(`/book?step=package&region=${region}`)}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Packages
                 </Button>
                 <Button type="submit">
