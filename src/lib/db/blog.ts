@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter, getDoc, FieldPath } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter, getDoc, FieldPath,getCountFromServer } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { BlogPost, ImportedBlogData } from '@/lib/types';
 import { slugify } from "@/lib/utils";
@@ -45,6 +45,7 @@ export async function createBlogPost(): Promise<string | null> {
         image: 'https://picsum.photos/seed/blog-placeholder/800/500',
         status: 'draft',
         metaInformation: '',
+        searchKeywords: [],
     };
     const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
     return docRef.id;
@@ -58,6 +59,10 @@ export async function createBlogPostWithData(data: ImportedBlogData): Promise<st
         throw new Error(`A blog post with the slug '${slug}' already exists.`);
     }
 
+    const keywords = new Set<string>();
+    data.title.toLowerCase().split(' ').forEach(word => keywords.add(word));
+    data.author?.toLowerCase().split(' ').forEach(word => keywords.add(word));
+
     const newPost: Omit<BlogPost, 'id' | 'slug' | 'date'> & { date: any } = {
         title: data.title,
         content: data.content,
@@ -68,24 +73,30 @@ export async function createBlogPostWithData(data: ImportedBlogData): Promise<st
         image: data.image,
         status: 'draft',
         metaInformation: '',
+        searchKeywords: Array.from(keywords).filter(Boolean),
     };
     const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
     await updateDoc(docRef, { slug });
     return docRef.id;
 }
 
-export async function saveBlogPost(id: string | undefined, data: Omit<BlogPost, 'id' | 'date'> & { date?: string }): Promise<string> {
+export async function saveBlogPost(id: string | undefined, data: Omit<BlogPost, 'id' | 'date' | 'searchKeywords'> & { date?: string }): Promise<string> {
     if (!firestore) throw new Error("Database not available.");
+
+    const keywords = new Set<string>();
+    data.title.toLowerCase().split(' ').forEach(word => keywords.add(word.replace(/[^a-z0-9]/gi, '')));
+    data.author.toLowerCase().split(' ').forEach(word => keywords.add(word.replace(/[^a-z0-9]/gi, '')));
+    const finalData = { ...data, searchKeywords: Array.from(keywords).filter(Boolean) };
 
     if (id) {
         // Update existing post
         const docRef = doc(firestore, 'blogPosts', id);
-        await updateDoc(docRef, data);
+        await updateDoc(docRef, finalData);
         return id;
     } else {
         // Create new post
         const newPost = {
-            ...data,
+            ...finalData,
             date: serverTimestamp(),
         };
         const docRef = await addDoc(collection(firestore, 'blogPosts'), newPost);
@@ -130,33 +141,17 @@ export async function getBlogPosts(options?: {
         baseQuery = query(baseQuery, where('status', '==', options.status));
     }
     
-    // Apply search filter if provided
-    // This is a basic implementation. For production, consider a search service like Algolia or Typesense.
     if (searchTerm) {
-        // Firestore doesn't support case-insensitive search natively.
-        // A common workaround is to store a lowercase version of fields to be searched.
-        // For this implementation, we will fetch and filter, which is not efficient for large datasets.
+        baseQuery = query(baseQuery, where('searchKeywords', 'array-contains', searchTerm));
     }
-    
-    // Get total count for pagination calculation
-    const countSnapshot = await getDocs(query(baseQuery, where('status', '==', options?.status || 'published')));
-    const allDocs = countSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as Omit<BlogPost, 'id'>}));
 
-    const filteredDocs = searchTerm 
-        ? allDocs.filter(doc => 
-            doc.title.toLowerCase().includes(searchTerm) || 
-            doc.author.toLowerCase().includes(searchTerm)
-          )
-        : allDocs;
-
-    const totalCount = filteredDocs.length;
+    const countSnapshot = await getCountFromServer(baseQuery);
+    const totalCount = countSnapshot.data().count;
     const totalPages = Math.ceil(totalCount / limit);
     
-    // Paginate
     let paginatedQuery = query(baseQuery, orderBy('date', 'desc'), firestoreLimit(limit));
 
     if (page > 1) {
-        // To get the cursor for the start of the desired page, we need to fetch the IDs of the previous pages.
         const offset = (page - 1) * limit;
         const cursorQuery = query(baseQuery, orderBy('date', 'desc'), firestoreLimit(offset));
         const cursorSnapshot = await getDocs(cursorQuery);
@@ -168,8 +163,7 @@ export async function getBlogPosts(options?: {
 
     const postsSnapshot = await getDocs(paginatedQuery);
     
-    // Filter again as pagination was on the base query
-    let posts = postsSnapshot.docs.map(doc => {
+    const posts = postsSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
             id: doc.id,
@@ -178,13 +172,6 @@ export async function getBlogPosts(options?: {
         } as BlogPost;
     });
 
-    if (searchTerm) {
-        posts = posts.filter(post => 
-            post.title.toLowerCase().includes(searchTerm) || 
-            post.author.toLowerCase().includes(searchTerm)
-        );
-    }
-    
     return { 
         posts, 
         hasMore: page < totalPages, 

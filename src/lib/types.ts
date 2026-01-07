@@ -56,6 +56,7 @@ export interface BlogPost {
   image: string;
   metaInformation?: string; // Keeping as string for keywords/short meta description
   status: 'draft' | 'published';
+  searchKeywords?: string[];
 }
 
 export type TeamMember = {
@@ -138,8 +139,8 @@ export interface FileUpload {
   tags: string[];
   meta: any[];
   uploadedOn: string;
-  uploadedAt: Timestamp;
-  createdAt: Timestamp;
+  uploadedAt: string; // Serialized to ISO string
+  createdAt: string; // Serialized to ISO string
 }
 
 // New Review types for the /manage/reviews section
