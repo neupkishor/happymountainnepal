@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, where, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, where, deleteDoc, doc, startAfter, limit as firestoreLimit } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { Log } from '@/lib/types';
 import { logError } from './errors';
@@ -40,20 +40,31 @@ export async function getLogs(options?: {
     const limit = options?.limit || 10;
     const page = options?.page || 1;
 
-    let q = query(collection(firestore, 'logs'), orderBy('timestamp', 'desc'));
+    let baseQuery = query(collection(firestore, 'logs'));
 
-    if (options?.cookieId) q = query(q, where('cookieId', '==', options.cookieId));
-    if (options?.resourceType) q = query(q, where('resourceType', '==', options.resourceType));
-    if (options?.isBot !== undefined) q = query(q, where('isBot', '==', options.isBot));
+    if (options?.cookieId) baseQuery = query(baseQuery, where('cookieId', '==', options.cookieId));
+    if (options?.resourceType) baseQuery = query(baseQuery, where('resourceType', '==', options.resourceType));
+    if (options?.isBot !== undefined) baseQuery = query(baseQuery, where('isBot', '==', options.isBot));
 
-    const countSnapshot = await getDocs(q);
+    const countSnapshot = await getDocs(baseQuery);
     const totalCount = countSnapshot.size;
     const totalPages = Math.ceil(totalCount / limit);
+    
+    let paginatedQuery = query(baseQuery, orderBy('timestamp', 'desc'), firestoreLimit(limit));
+    
+    if (page > 1) {
+        const offset = (page - 1) * limit;
+        const cursorQuery = query(baseQuery, orderBy('timestamp', 'desc'), firestoreLimit(offset));
+        const cursorSnapshot = await getDocs(cursorQuery);
+        const lastVisible = cursorSnapshot.docs[cursorSnapshot.docs.length - 1];
+        if (lastVisible) {
+            paginatedQuery = query(paginatedQuery, startAfter(lastVisible));
+        }
+    }
+    
+    const logsSnapshot = await getDocs(paginatedQuery);
 
-    const startIndex = (page - 1) * limit;
-    const paginatedDocs = countSnapshot.docs.slice(startIndex, startIndex + limit);
-
-    const logs = paginatedDocs.map(doc => {
+    const logs = logsSnapshot.docs.map(doc => {
         const data = doc.data();
         const timestamp = data.timestamp || Timestamp.now();
         return {

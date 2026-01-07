@@ -1,3 +1,4 @@
+
 'use client';
 
 import { BlogCard } from '@/components/BlogCard';
@@ -20,33 +21,21 @@ export function BlogContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
-    const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
-
-    useEffect(() => {
-        async function fetchCount() {
-            const count = await getBlogPostCount('published');
-            setTotalCount(count);
-        }
-        fetchCount();
-    }, []);
+    const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
         const fetchPosts = async () => {
             setIsLoading(true);
             try {
-                if (currentPage > 1 && !pageHistory[currentPage - 1]) {
-                    router.replace('/blog?page=1');
-                    return;
-                }
-
-                const lastDocId = pageHistory[currentPage - 1];
                 const result = await getBlogPosts({
                     limit: ITEMS_PER_PAGE,
-                    lastDocId,
+                    page: currentPage,
                     status: 'published'
                 });
                 setBlogPosts(result.posts);
                 setHasMore(result.hasMore);
+                setTotalCount(result.totalCount);
+                setTotalPages(result.totalPages);
             } catch (error) {
                 console.error("Failed to fetch posts", error);
             } finally {
@@ -54,26 +43,11 @@ export function BlogContent() {
             }
         };
         fetchPosts();
-    }, [currentPage, pageHistory, router]);
-
-    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-    const goToNextPage = () => {
-        if (hasMore && blogPosts.length > 0) {
-            const lastDocId = blogPosts[blogPosts.length - 1].id;
-            setPageHistory(prev => {
-                const newHistory = [...prev];
-                newHistory[currentPage] = lastDocId;
-                return newHistory;
-            });
-            router.push(`/blog?page=${currentPage + 1}`);
-            window.scrollTo(0, 0);
-        }
-    };
-
-    const goToPreviousPage = () => {
-        if (currentPage > 1) {
-            router.push(`/blog?page=${currentPage - 1}`);
+    }, [currentPage]);
+    
+    const goToPage = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            router.push(`/blog?page=${page}`);
             window.scrollTo(0, 0);
         }
     };
@@ -93,7 +67,7 @@ export function BlogContent() {
                     </div>
 
                     {/* Pagination Controls */}
-                    {totalCount > ITEMS_PER_PAGE && (
+                    {totalPages > 1 && (
                         <div className="flex items-center justify-between border-t pt-8 mt-8">
                             <div className="text-sm text-muted-foreground">
                                 Page {currentPage} of {totalPages || 1}
@@ -101,7 +75,7 @@ export function BlogContent() {
                             <div className="flex items-center gap-4">
                                 <Button
                                     variant="outline"
-                                    onClick={goToPreviousPage}
+                                    onClick={() => goToPage(currentPage - 1)}
                                     disabled={currentPage === 1 || isLoading}
                                 >
                                     <ChevronLeft className="h-4 w-4 mr-2" />
@@ -109,7 +83,7 @@ export function BlogContent() {
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    onClick={goToNextPage}
+                                    onClick={() => goToPage(currentPage + 1)}
                                     disabled={!hasMore || isLoading}
                                 >
                                     Next

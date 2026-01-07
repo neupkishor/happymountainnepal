@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { FileUpload } from '@/lib/types';
 import { logError } from './errors';
@@ -30,25 +30,36 @@ export async function deleteFileUpload(id: string): Promise<void> {
 
 export async function getFileUploads(options?: {
     limit?: number;
+    page?: number;
     tags?: string[];
     lastDocId?: string | null;
-}): Promise<{ uploads: FileUpload[]; hasMore: boolean; totalCount?: number }> {
-    if (!firestore) return { uploads: [], hasMore: false };
+}): Promise<{ uploads: FileUpload[]; hasMore: boolean; totalCount: number; totalPages: number }> {
+    if (!firestore) return { uploads: [], hasMore: false, totalCount: 0, totalPages: 0 };
     
-    let q = query(collection(firestore, 'uploads'), orderBy('uploadedAt', 'desc'));
-    
-    if (options?.lastDocId) {
-        const lastDoc = await getDoc(doc(firestore, 'uploads', options.lastDocId));
-        if (lastDoc.exists()) {
-            q = query(q, startAfter(lastDoc));
-        }
-    }
+    let baseQuery = query(collection(firestore, 'uploads'));
+
+    // Count total documents for pagination
+    const countSnapshot = await getDocs(baseQuery);
+    const totalCount = countSnapshot.size;
     
     const limit = options?.limit || 10;
-    q = query(q, firestoreLimit(limit + 1));
+    const page = options?.page || 1;
+    const totalPages = Math.ceil(totalCount / limit);
 
-    const querySnapshot = await getDocs(q);
-    const uploads = querySnapshot.docs.slice(0, limit).map(doc => {
+    let paginatedQuery = query(baseQuery, orderBy('uploadedAt', 'desc'), firestoreLimit(limit));
+
+    if (page > 1) {
+        const offset = (page - 1) * limit;
+        const cursorQuery = query(collection(firestore, 'uploads'), orderBy('uploadedAt', 'desc'), firestoreLimit(offset));
+        const cursorSnapshot = await getDocs(cursorQuery);
+        const lastVisible = cursorSnapshot.docs[cursorSnapshot.docs.length - 1];
+        if (lastVisible) {
+            paginatedQuery = query(paginatedQuery, startAfter(lastVisible));
+        }
+    }
+
+    const querySnapshot = await getDocs(paginatedQuery);
+    const uploads = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
             id: doc.id,
@@ -60,16 +71,16 @@ export async function getFileUploads(options?: {
             tags: data.tags || ['general'],
             meta: data.meta || [],
             uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
-            // Convert timestamps to ISO strings
             uploadedAt: data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString(),
             createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
         } as FileUpload;
     });
 
-    const hasMore = querySnapshot.docs.length > limit;
+    const hasMore = page < totalPages;
 
-    return { uploads, hasMore };
+    return { uploads, hasMore, totalCount, totalPages };
 }
+
 
 export async function getFileUploadsCount(): Promise<number> {
     if (!firestore) return 0;

@@ -72,28 +72,19 @@ export function ManageBlogContent() {
         fetchPosts(currentPage, debouncedSearchTerm);
     }, [debouncedSearchTerm, currentPage]);
 
-    // Update URL when search term changes (reset to page 1)
+    // Update URL when search term changes
     useEffect(() => {
-        const params = new URLSearchParams();
-
+        const params = new URLSearchParams(window.location.search);
         if (debouncedSearchTerm) {
             params.set('search', debouncedSearchTerm);
+            params.set('page', '1'); // Reset to page 1 on new search
+        } else {
+            params.delete('search');
         }
-
-        // Only add page if it's not page 1
-        const currentPageParam = searchParams.get('page');
-        if (currentPageParam && currentPageParam !== '1') {
-            // Reset to page 1 when search changes
-            if (searchParams.get('search') !== debouncedSearchTerm) {
-                params.delete('page');
-            } else {
-                params.set('page', currentPageParam);
-            }
-        }
-
-        const newUrl = params.toString() ? `/manage/blog?${params.toString()}` : '/manage/blog';
+        
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
         router.replace(newUrl, { scroll: false });
-    }, [debouncedSearchTerm]);
+    }, [debouncedSearchTerm, router]);
 
 
     const handlePageChange = (newPage: number) => {

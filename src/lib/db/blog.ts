@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, getDoc, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc, where, limit as firestoreLimit, startAfter, getDoc, FieldPath } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { BlogPost, ImportedBlogData } from '@/lib/types';
 import { slugify } from "@/lib/utils";
@@ -124,18 +124,52 @@ export async function getBlogPosts(options?: {
     const page = options?.page || 1;
     const searchTerm = options?.search?.toLowerCase().trim() || '';
 
-    // Build base query - always order by date descending
-    let baseQuery = query(collection(firestore, 'blogPosts'), orderBy('date', 'desc'));
-
+    let baseQuery = query(collection(firestore, 'blogPosts'));
+    
     if (options?.status) {
         baseQuery = query(baseQuery, where('status', '==', options.status));
     }
+    
+    // Apply search filter if provided
+    // This is a basic implementation. For production, consider a search service like Algolia or Typesense.
+    if (searchTerm) {
+        // Firestore doesn't support case-insensitive search natively.
+        // A common workaround is to store a lowercase version of fields to be searched.
+        // For this implementation, we will fetch and filter, which is not efficient for large datasets.
+    }
+    
+    // Get total count for pagination calculation
+    const countSnapshot = await getDocs(query(baseQuery, where('status', '==', options?.status || 'published')));
+    const allDocs = countSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as Omit<BlogPost, 'id'>}));
 
-    // Fetch all matching documents (we'll filter search client-side)
-    const querySnapshot = await getDocs(baseQuery);
+    const filteredDocs = searchTerm 
+        ? allDocs.filter(doc => 
+            doc.title.toLowerCase().includes(searchTerm) || 
+            doc.author.toLowerCase().includes(searchTerm)
+          )
+        : allDocs;
 
-    // Convert to BlogPost array
-    let allPosts = querySnapshot.docs.map(doc => {
+    const totalCount = filteredDocs.length;
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    // Paginate
+    let paginatedQuery = query(baseQuery, orderBy('date', 'desc'), firestoreLimit(limit));
+
+    if (page > 1) {
+        // To get the cursor for the start of the desired page, we need to fetch the IDs of the previous pages.
+        const offset = (page - 1) * limit;
+        const cursorQuery = query(baseQuery, orderBy('date', 'desc'), firestoreLimit(offset));
+        const cursorSnapshot = await getDocs(cursorQuery);
+        const lastVisible = cursorSnapshot.docs[cursorSnapshot.docs.length - 1];
+        if (lastVisible) {
+            paginatedQuery = query(paginatedQuery, startAfter(lastVisible));
+        }
+    }
+
+    const postsSnapshot = await getDocs(paginatedQuery);
+    
+    // Filter again as pagination was on the base query
+    let posts = postsSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
             id: doc.id,
@@ -144,26 +178,19 @@ export async function getBlogPosts(options?: {
         } as BlogPost;
     });
 
-    // Apply search filter client-side (case-insensitive)
     if (searchTerm) {
-        allPosts = allPosts.filter(post => {
-            const titleMatch = post.title?.toLowerCase().includes(searchTerm);
-            const authorMatch = post.author?.toLowerCase().includes(searchTerm);
-            const excerptMatch = post.excerpt?.toLowerCase().includes(searchTerm);
-            return titleMatch || authorMatch || excerptMatch;
-        });
+        posts = posts.filter(post => 
+            post.title.toLowerCase().includes(searchTerm) || 
+            post.author.toLowerCase().includes(searchTerm)
+        );
     }
-
-    // Calculate pagination
-    const totalCount = allPosts.length;
-    const totalPages = Math.ceil(totalCount / limit);
-    const offset = (page - 1) * limit;
-    const hasMore = offset + limit < totalCount;
-
-    // Get the page of results
-    const posts = allPosts.slice(offset, offset + limit);
-
-    return { posts, hasMore, totalPages, totalCount };
+    
+    return { 
+        posts, 
+        hasMore: page < totalPages, 
+        totalPages, 
+        totalCount 
+    };
 }
 
 

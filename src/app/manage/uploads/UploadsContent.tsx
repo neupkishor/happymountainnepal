@@ -26,7 +26,7 @@ export function UploadsContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
-    const [pageHistory, setPageHistory] = useState<(string | null)[]>([null]);
+    const [totalPages, setTotalPages] = useState(0);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<FileUpload | null>(null);
 
@@ -44,8 +44,7 @@ export function UploadsContent() {
                 title: 'File Deleted',
                 description: 'The file has been successfully removed.',
             });
-            setFileItems((prev) => prev.filter((item) => item.id !== fileId));
-            setTotalCount((prev) => prev - 1);
+            fetchData(currentPage); // Refetch current page
         } catch (error) {
             console.error('Failed to delete file:', error);
             toast({
@@ -56,61 +55,39 @@ export function UploadsContent() {
         }
     };
 
-    useEffect(() => {
-        async function fetchCount() {
-            const count = await getFileUploadsCount();
-            setTotalCount(count);
-        }
-        fetchCount();
-    }, []);
-
-    useEffect(() => {
-        async function fetchUploads() {
-            setIsLoading(true);
-            try {
-                const lastDocId = pageHistory[currentPage - 1];
-                const result = await getFileUploads({
-                    limit: ITEMS_PER_PAGE,
-                    lastDocId
-                });
-                setFileItems(result.uploads);
-                setHasMore(result.hasMore);
-                setIsLoading(false);
-            } catch (error) {
-                console.error('Error fetching uploads:', error);
-                setIsLoading(false);
-            }
-        }
-        fetchUploads();
-    }, [currentPage, pageHistory]);
-
-    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-    const goToNextPage = () => {
-        if (hasMore && fileItems.length > 0) {
-            const lastDocId = fileItems[fileItems.length - 1].id;
-            setPageHistory(prev => [...prev, lastDocId]);
-            router.push(`/manage/uploads?page=${currentPage + 1}`);
-        }
-    };
-
-    const goToPreviousPage = () => {
-        if (currentPage > 1) {
-            setPageHistory(prev => prev.slice(0, -1));
-            router.push(`/manage/uploads?page=${currentPage - 1}`);
-        }
-    };
-
-    const handleUploadComplete = async () => {
-        router.refresh();
-        if (currentPage !== 1) {
-            router.push('/manage/uploads?page=1');
-        } else {
-            const result = await getFileUploads({ limit: ITEMS_PER_PAGE, lastDocId: null });
+    const fetchData = async (page: number) => {
+        setIsLoading(true);
+        try {
+            const result = await getFileUploads({
+                limit: ITEMS_PER_PAGE,
+                page: page
+            });
             setFileItems(result.uploads);
             setHasMore(result.hasMore);
-            const count = await getFileUploadsCount();
-            setTotalCount(count);
+            setTotalCount(result.totalCount || 0);
+            setTotalPages(result.totalPages || 0);
+        } catch (error) {
+            console.error('Error fetching uploads:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData(currentPage);
+    }, [currentPage]);
+
+
+    const goToPage = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            router.push(`/manage/uploads?page=${page}`);
+        }
+    };
+
+    const handleUploadComplete = () => {
+        fetchData(1);
+        if (currentPage !== 1) {
+            router.push('/manage/uploads?page=1');
         }
     };
 
@@ -233,7 +210,7 @@ export function UploadsContent() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={goToPreviousPage}
+                                    onClick={() => goToPage(currentPage - 1)}
                                     disabled={currentPage === 1}
                                 >
                                     <ChevronLeft className="h-4 w-4 mr-1" />
@@ -242,7 +219,7 @@ export function UploadsContent() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={goToNextPage}
+                                    onClick={() => goToPage(currentPage + 1)}
                                     disabled={!hasMore}
                                 >
                                     Next
