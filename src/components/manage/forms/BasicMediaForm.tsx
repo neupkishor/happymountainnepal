@@ -60,7 +60,7 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       map: tour.map || '',
-      allImages: [tour.mainImage, ...(tour.images || [])].filter(Boolean),
+      allImages: [tour.mainImage, ...(tour.images || [])].filter(img => img && img.url),
     },
   });
 
@@ -127,7 +127,7 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
                           <div className="relative h-16 w-24 rounded-md overflow-hidden">
                             <Image src={image.url} alt={`Selected image ${index + 1}`} fill className="object-cover" />
                           </div>
-                          <span className="text-sm text-muted-foreground truncate flex-grow">{image.url.split('/').pop()}</span>
+                          <span className="text-sm text-muted-foreground truncate flex-grow">{(image.url || '').split('/').pop()}</span>
                           {index === 0 && <span className="text-xs font-semibold text-primary-foreground bg-primary px-2 py-1 rounded-full">Main Image</span>}
                         </div>
                         <FormField
