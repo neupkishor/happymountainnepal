@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 export function Footer() {
   const { profile } = useSiteProfile();
-  
+
   const tagline = profile?.footerTagline || 'Your gateway to Himalayan adventures.';
   const address = profile?.address || 'Thamel, Kathmandu, Nepal';
   const phone = profile?.phone || '+977 984-3725521';
@@ -27,32 +27,39 @@ export function Footer() {
               {tagline}
             </p>
             <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 shrink-0" /> <span>{address}</span>
-                </div>
-                 <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 shrink-0" /> <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a>
-                </div>
-                 <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 shrink-0" /> <a href={`mailto:${email}`} className="hover:text-primary">{email}</a>
-                </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 shrink-0" />
+                {profile?.locationUrl ? (
+                  <a href={profile.locationUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary">
+                    {profile?.location || address}
+                  </a>
+                ) : (
+                  <span>{profile?.location || address}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 shrink-0" /> <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 shrink-0" /> <a href={`mailto:${email}`} className="hover:text-primary">{email}</a>
+              </div>
             </div>
-             <div className="flex items-center gap-4 pt-2">
-                {socials?.facebook && (
-                    <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                        <Facebook className="h-5 w-5" />
-                    </a>
-                )}
-                {socials?.instagram && (
-                    <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                        <Instagram className="h-5 w-5" />
-                    </a>
-                )}
-                {socials?.twitter && (
-                    <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                        <Twitter className="h-5 w-5" />
-                    </a>
-                )}
+            <div className="flex items-center gap-4 pt-2">
+              {socials?.facebook && (
+                <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                  <Facebook className="h-5 w-5" />
+                </a>
+              )}
+              {socials?.instagram && (
+                <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                  <Instagram className="h-5 w-5" />
+                </a>
+              )}
+              {socials?.twitter && (
+                <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                  <Twitter className="h-5 w-5" />
+                </a>
+              )}
             </div>
           </div>
           <div>

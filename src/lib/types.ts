@@ -184,6 +184,8 @@ export interface SiteProfile {
   heroTitle?: string;
   heroDescription?: string;
   footerTagline?: string;
+  location?: string; // New: Display text for location
+  locationUrl?: string; // New: URL for location (e.g., Google Maps)
   heroImage?: string; // New field for hero image
   socials?: {
     facebook?: string;

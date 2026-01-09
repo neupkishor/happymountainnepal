@@ -39,6 +39,8 @@ const formSchema = z.object({
   contactEmail: z.string().email({ message: "Please enter a valid email." }).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
+  location: z.string().optional(), // New
+  locationUrl: z.string().url().optional().or(z.literal('')), // New
   heroTitle: z.string().optional(),
   heroDescription: z.string().optional(),
   footerTagline: z.string().optional(),
@@ -73,6 +75,8 @@ export function ProfileForm() {
       contactEmail: '',
       phone: '',
       address: '',
+      location: '',
+      locationUrl: '',
       heroTitle: 'Discover Your Next Adventure',
       heroDescription: 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
       footerTagline: 'Your gateway to Himalayan adventures.',
@@ -105,6 +109,8 @@ export function ProfileForm() {
         contactEmail: profile.contactEmail || '',
         phone: profile.phone || '',
         address: profile.address || '',
+        location: profile.location || '',
+        locationUrl: profile.locationUrl || '',
         heroTitle: profile.heroTitle || 'Discover Your Next Adventure',
         heroDescription: profile.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
         footerTagline: profile.footerTagline || 'Your gateway to Himalayan adventures.',
@@ -337,9 +343,35 @@ export function ProfileForm() {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company Address</FormLabel>
+                    <FormLabel>Company Address (Legacy)</FormLabel>
                     <FormControl>
                       <Input placeholder="123 Mountain Rd, Kathmandu, Nepal" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location Name (Displayed)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Kathmandu, Nepal" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="locationUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location URL (Map Link)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://goo.gl/maps/..." {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

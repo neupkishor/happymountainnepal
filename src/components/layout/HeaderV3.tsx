@@ -201,8 +201,8 @@ function MobileMenuList({ setMenuOpen, navLinks }: { setMenuOpen: (open: boolean
             <div className="mt-8 pt-8 border-t">
               <Button className="w-full justify-start text-lg h-12" asChild>
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                    <Image src="/whatsapp.svg" alt="WhatsApp" width={20} height={20} />
-                    <span className="ml-2">Contact Now</span>
+                  <Image src="/whatsapp.svg" alt="WhatsApp" width={20} height={20} />
+                  <span className="ml-2">Contact Now</span>
                 </a>
               </Button>
             </div>
@@ -293,8 +293,8 @@ export function HeaderV3() {
       },
       {
         title: 'Find Us',
-        href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(profile?.address || '')}`,
-        description: profile?.address || 'Loading...',
+        href: profile?.locationUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(profile?.address || '')}`,
+        description: profile?.location || profile?.address || 'Loading...',
         icon: MapPin,
         target: '_blank'
       },
