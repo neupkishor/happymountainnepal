@@ -29,15 +29,17 @@ export async function saveInquiry(inquiryData: Omit<Inquiry, 'id' | 'createdAt'>
         return docRef.id;
     } catch (error: any) {
         console.error("[DB saveInquiry] Error saving inquiry: ", error);
-        await logError({ 
-            message: `Failed to save inquiry of type ${inquiryData.type}: ${error.message}`, 
-            stack: error.stack, 
-            pathname: inquiryData.page, 
-            context: { inquiryData } 
+        await logError({
+            message: `Failed to save inquiry of type ${inquiryData.type}: ${error.message}`,
+            stack: error.stack,
+
+            pathname: inquiryData.page || 'unknown',
+            context: { inquiryData }
         });
         throw new Error("Could not save inquiry to the database.");
     }
 }
+
 
 
 export async function getInquiries(): Promise<Inquiry[]> {
@@ -61,3 +63,11 @@ export async function getInquiries(): Promise<Inquiry[]> {
         throw new Error("Could not fetch inquiries from the database.");
     }
 }
+
+export async function saveContactInquiry(data: { page: string, temporary_id: string, data: any }): Promise<string> {
+    return saveInquiry({
+        ...data,
+        type: 'contact'
+    });
+}
+
