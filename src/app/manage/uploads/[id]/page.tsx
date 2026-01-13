@@ -77,7 +77,8 @@ export default function UploadDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editedName, setEditedName] = useState('');
-    const [editedTags, setEditedTags] = useState('');
+    const [editedTags, setEditedTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -89,7 +90,7 @@ export default function UploadDetailPage() {
                 if (data) {
                     setFile(data);
                     setEditedName(data.name);
-                    setEditedTags(data.tags?.join(', ') || '');
+                    setEditedTags(data.tags || []);
                 } else {
                     toast({ variant: 'destructive', title: 'Error', description: 'File not found.' });
                     router.push('/manage/uploads');
@@ -108,7 +109,8 @@ export default function UploadDetailPage() {
     const handleEditToggle = () => {
         if (!isEditing && file) {
             setEditedName(file.name);
-            setEditedTags(file.tags?.join(', ') || '');
+            setEditedTags(file.tags || []);
+            setTagInput('');
         }
         setIsEditing(!isEditing);
     };
@@ -117,12 +119,22 @@ export default function UploadDetailPage() {
         if (!file) return;
         setIsSaving(true);
         try {
-            const tagsArray = editedTags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+            // Include anything currently in the tag input
+            let finalTags = [...editedTags];
+            if (tagInput.trim()) {
+                const newTag = tagInput.trim().replace(/,/g, '');
+                if (newTag && !finalTags.includes(newTag)) {
+                    finalTags.push(newTag);
+                }
+            }
+
             await updateFileUpload(file.id, {
                 name: editedName,
-                tags: tagsArray
+                tags: finalTags
             });
-            setFile({ ...file, name: editedName, tags: tagsArray });
+            setFile({ ...file, name: editedName, tags: finalTags });
+            setEditedTags(finalTags);
+            setTagInput('');
             toast({ title: 'Success', description: 'File updated successfully.' });
             setIsEditing(false);
         } catch (error) {
@@ -130,6 +142,25 @@ export default function UploadDetailPage() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === ',' || e.key === 'Enter') {
+            e.preventDefault();
+            const val = tagInput.trim().replace(/,/g, '');
+            if (val && !editedTags.includes(val)) {
+                setEditedTags([...editedTags, val]);
+                setTagInput('');
+            } else {
+                setTagInput('');
+            }
+        } else if (e.key === 'Backspace' && !tagInput && editedTags.length > 0) {
+            setEditedTags(editedTags.slice(0, -1));
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        setEditedTags(editedTags.filter(t => t !== tagToRemove));
     };
 
     const handleDelete = async () => {
@@ -223,12 +254,27 @@ export default function UploadDetailPage() {
                                     <dt className="text-sm font-medium text-muted-foreground mb-1">Tags</dt>
                                     <dd className="text-sm text-foreground break-all">
                                         {isEditing ? (
-                                            <Input
-                                                value={editedTags}
-                                                onChange={(e) => setEditedTags(e.target.value)}
-                                                placeholder="comma, separated, tags"
-                                                className="h-10 bg-background w-full"
-                                            />
+                                            <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-background min-h-[40px] focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 transition-all">
+                                                {editedTags.map((tag) => (
+                                                    <Badge key={tag} variant="secondary" className="flex items-center gap-1 px-2 h-7">
+                                                        {tag}
+                                                        <button
+                                                            onClick={() => removeTag(tag)}
+                                                            className="hover:text-destructive transition-colors"
+                                                            type="button"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </Badge>
+                                                ))}
+                                                <input
+                                                    value={tagInput}
+                                                    onChange={(e) => setTagInput(e.target.value)}
+                                                    onKeyDown={handleAddTag}
+                                                    placeholder={editedTags.length === 0 ? "Type and press comma or enter..." : ""}
+                                                    className="flex-grow bg-transparent outline-none h-7 text-sm min-w-[120px]"
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="flex flex-wrap gap-1 justify-end">
                                                 {file.tags?.map((tag) => <Badge key={tag} variant="secondary" className="px-2">{tag}</Badge>)}

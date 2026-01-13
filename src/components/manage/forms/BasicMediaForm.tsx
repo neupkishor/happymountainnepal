@@ -18,7 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { type Tour, type ImageWithCaption } from '@/lib/types';
 import { updateTour, logError } from '@/lib/db';
 import { useTransition, useState } from 'react';
-import { Loader2, Library, GripVertical, Save } from 'lucide-react';
+import { Loader2, Library, GripVertical, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MediaLibraryDialog } from '../MediaLibraryDialog';
 import { usePathname } from 'next/navigation';
@@ -98,6 +98,12 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
     setIsLibraryOpen(false);
   }
 
+  const removeImage = (indexToRemove: number) => {
+    const currentImages = form.getValues('allImages');
+    const newImages = currentImages.filter((_, idx) => idx !== indexToRemove);
+    form.setValue('allImages', newImages, { shouldDirty: true, shouldValidate: true });
+  };
+
   return (
     <FormProvider {...form}>
       <Form {...form}>
@@ -129,6 +135,16 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
                           </div>
                           <span className="text-sm text-muted-foreground truncate flex-grow">{(image.url || '').split('/').pop()}</span>
                           {index === 0 && <span className="text-xs font-semibold text-primary-foreground bg-primary px-2 py-1 rounded-full">Main Image</span>}
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => removeImage(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                         <FormField
                           control={form.control}
@@ -136,7 +152,7 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <Input {...field} placeholder="Enter caption / alt text..." className="h-8" />
+                                <Input {...field} value={field.value || ''} placeholder="Enter caption / alt text..." className="h-8" />
                               </FormControl>
                             </FormItem>
                           )}
@@ -181,7 +197,7 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
         onClose={() => setIsLibraryOpen(false)}
         onSelect={handleSelectImages}
         initialSelectedUrls={allImages.map(i => i.url)}
-        defaultTags={['trip']}
+        defaultTags={['all']}
       />
     </FormProvider>
   );

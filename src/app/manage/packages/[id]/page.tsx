@@ -68,16 +68,21 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </div>
       </div>
 
-      {allImages.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {allImages.map((img, index) => (
-            <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
-              <Image src={String(img.url)} alt={img.caption || img.story || `Gallery image ${index + 1}`} fill className="object-cover" />
-              {index === 0 && <Badge variant="secondary" className="absolute top-2 left-2">Main Image</Badge>}
-            </div>
-          ))}
-        </div>
-      )}
+      <div>
+        <SectionTitle title="Media & Gallery" editHref={`/manage/packages/${tour.id}/media`} />
+        {allImages.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {allImages.map((img, index) => (
+              <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
+                <Image src={String(img.url)} alt={img.caption || img.story || `Gallery image ${index + 1}`} fill className="object-cover" />
+                {index === 0 && <Badge variant="secondary" className="absolute top-2 left-2">Main Image</Badge>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground italic">No media uploaded yet.</p>
+        )}
+      </div>
 
       <div>
         <SectionTitle title="Key Facts" editHref={`/manage/packages/${tour.id}/basics`} />

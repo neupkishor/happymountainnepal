@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc, where, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc, where, updateDoc, getCountFromServer } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { FileUpload } from '@/lib/types';
 import { logError } from './errors';
@@ -103,11 +103,19 @@ export async function getFileUploads(options?: {
         } as FileUpload;
     });
 
-    // For hasMore, we check if we got 'limit' number of items and if there's possibly more.
-    // A better way is to fetch limit + 1.
-    const hasMore = uploads.length === limit;
+    // Get total count for pagination
+    let totalCount = 0;
+    try {
+        const countSnapshot = await getCountFromServer(baseQuery);
+        totalCount = countSnapshot.data().count;
+    } catch (err) {
+        console.error('Error getting total count:', err);
+    }
 
-    return { uploads, hasMore, totalCount: 0, totalPages: 0 }; // totalCount/totalPages are less used here
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasMore = page < totalPages;
+
+    return { uploads, hasMore, totalCount, totalPages };
 }
 
 
@@ -141,5 +149,17 @@ export async function getFileUpload(id: string): Promise<FileUpload | null> {
     } catch (error) {
         console.error('Error fetching file upload:', error);
         return null;
+    }
+}
+
+export async function checkFileUploadByUrl(url: string): Promise<boolean> {
+    if (!firestore) return false;
+    try {
+        const q = query(collection(firestore, 'uploads'), where('url', '==', url), firestoreLimit(1));
+        const snapshot = await getDocs(q);
+        return !snapshot.empty;
+    } catch (error) {
+        console.error('Error checking file existence:', error);
+        return false;
     }
 }

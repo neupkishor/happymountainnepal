@@ -131,16 +131,30 @@ export function UploadsContent() {
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 mb-8">
                         {currentPage === 1 && (
-                            <div
-                                onClick={() => setIsUploadDialogOpen(true)}
-                                className="relative flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-xl hover:bg-primary/5 hover:border-primary/50 transition-all cursor-pointer group p-4 text-center bg-card/50"
-                            >
-                                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                    <Plus className="h-6 w-6 text-primary" />
+                            <>
+                                <div
+                                    onClick={() => setIsUploadDialogOpen(true)}
+                                    className="relative flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-xl hover:bg-primary/5 hover:border-primary/50 transition-all cursor-pointer group p-4 text-center bg-card/50"
+                                >
+                                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <Plus className="h-6 w-6 text-primary" />
+                                    </div>
+                                    <span className="font-semibold text-sm">Upload New</span>
+                                    <p className="text-[10px] text-muted-foreground mt-1 px-2">Drag & drop or click to browse</p>
                                 </div>
-                                <span className="font-semibold text-sm">Upload New</span>
-                                <p className="text-[10px] text-muted-foreground mt-1 px-2">Drag & drop or click to browse</p>
-                            </div>
+
+                                <Link href="/manage/uploads/linked" className="block">
+                                    <div
+                                        className="relative flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-xl hover:bg-primary/5 hover:border-primary/50 transition-all cursor-pointer group p-4 text-center bg-card/50 h-full"
+                                    >
+                                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <ExternalLink className="h-6 w-6 text-primary" />
+                                        </div>
+                                        <span className="font-semibold text-sm">Add from URL</span>
+                                        <p className="text-[10px] text-muted-foreground mt-1 px-2">Add image via external link</p>
+                                    </div>
+                                </Link>
+                            </>
                         )}
 
                         {fileItems.map((item) => (
