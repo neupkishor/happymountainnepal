@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2 } from 'lucide-react';
+import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2, ExternalLink } from 'lucide-react';
 import { getFileUploads, deleteFileUpload } from '@/lib/db';
 import type { FileUpload, ImageWithCaption } from '@/lib/types';
 import { SmartImage } from '@/components/ui/smart-image';
@@ -21,6 +21,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { getFullUrl } from '@/lib/url-utils';
+import Link from 'next/link';
 
 interface MediaLibraryDialogProps {
   isOpen: boolean;
@@ -172,16 +173,17 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
         </DialogHeader>
 
         <div className="flex-grow flex flex-col gap-4 overflow-hidden">
-          <div className="border border-dashed p-4 rounded-lg space-y-4">
-            <div>
-              <h3 className="font-semibold text-lg">Upload New File</h3>
+          <div className="border border-dashed p-6 rounded-xl bg-muted/30 text-center space-y-3">
+            <div className="flex flex-col items-center gap-2">
+              <h3 className="font-semibold text-lg">Manage Media & Upload</h3>
+              <p className="text-sm text-muted-foreground">Go to the management page to upload, rename, or organize your media library.</p>
             </div>
-            <FileUploadInput
-              name="media-library-upload"
-              onUploadSuccess={handleFileUploadSuccess}
-              onUploadingChange={setIsUploading}
-              tags={defaultTags}
-            />
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href="/manage/uploads" target="_blank">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open Media Management
+              </Link>
+            </Button>
           </div>
 
           <div className="flex-grow flex flex-col gap-4 overflow-hidden">

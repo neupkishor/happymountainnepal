@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc, where } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc, where, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { FileUpload } from '@/lib/types';
 import { logError } from './errors';
@@ -26,6 +26,15 @@ export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt' |
 export async function deleteFileUpload(id: string): Promise<void> {
     if (!firestore) throw new Error("Database not available.");
     await deleteDoc(doc(firestore, 'uploads', id));
+}
+
+export async function updateFileUpload(id: string, data: Partial<FileUpload>): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    const docRef = doc(firestore, 'uploads', id);
+    await updateDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+    });
 }
 
 export async function getFileUploads(options?: {
@@ -106,4 +115,31 @@ export async function getFileUploadsCount(): Promise<number> {
     if (!firestore) return 0;
     const snapshot = await getDocs(collection(firestore, 'uploads'));
     return snapshot.size;
+}
+export async function getFileUpload(id: string): Promise<FileUpload | null> {
+    if (!firestore) return null;
+    try {
+        const docRef = doc(firestore, 'uploads', id);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) return null;
+
+        const data = docSnap.data();
+        return {
+            id: docSnap.id,
+            name: data.name || 'Untitled',
+            url: data.url || '',
+            uploadedBy: data.uploadedBy || 'Unknown',
+            type: data.type || 'application/octet-stream',
+            size: data.size || 0,
+            tags: data.tags || ['general'],
+            meta: data.meta || [],
+            uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
+            uploadedAt: data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString(),
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+        } as FileUpload;
+    } catch (error) {
+        console.error('Error fetching file upload:', error);
+        return null;
+    }
 }

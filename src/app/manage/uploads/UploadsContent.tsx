@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getFileUploads, getFileUploadsCount, deleteFileUpload } from '@/lib/db';
 import { UploadDialog } from '@/components/upload/UploadDialog';
 import { formatDistanceToNow } from 'date-fns';
-import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon, Trash2 } from 'lucide-react';
+import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon, Trash2, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import type { FileUpload } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { SmartImage } from '@/components/ui/smart-image';
-import { UploadDetailDialog } from '@/components/manage/uploads/UploadDetailDialog';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -28,7 +27,6 @@ export function UploadsContent() {
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<FileUpload | null>(null);
 
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const { toast } = useToast();
@@ -100,10 +98,7 @@ export function UploadsContent() {
                         {totalCount} {totalCount === 1 ? 'file' : 'files'} uploaded
                     </p>
                 </div>
-                <div>
-                    <Button onClick={() => setIsUploadDialogOpen(true)} variant="outline">
-                        Upload
-                    </Button>
+                <div className="flex flex-col items-end">
                 </div>
             </div>
 
@@ -111,12 +106,6 @@ export function UploadsContent() {
                 open={isUploadDialogOpen}
                 onOpenChange={setIsUploadDialogOpen}
                 onUploadComplete={handleUploadComplete}
-            />
-
-            <UploadDetailDialog
-                isOpen={!!selectedFile}
-                onClose={() => setSelectedFile(null)}
-                file={selectedFile}
             />
 
             {isLoading ? (
@@ -140,14 +129,27 @@ export function UploadsContent() {
                 </div>
             ) : fileItems.length > 0 ? (
                 <>
-                    <div className="space-y-4 mb-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 mb-8">
+                        {currentPage === 1 && (
+                            <div
+                                onClick={() => setIsUploadDialogOpen(true)}
+                                className="relative flex flex-col items-center justify-center aspect-square border-2 border-dashed rounded-xl hover:bg-primary/5 hover:border-primary/50 transition-all cursor-pointer group p-4 text-center bg-card/50"
+                            >
+                                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                    <Plus className="h-6 w-6 text-primary" />
+                                </div>
+                                <span className="font-semibold text-sm">Upload New</span>
+                                <p className="text-[10px] text-muted-foreground mt-1 px-2">Drag & drop or click to browse</p>
+                            </div>
+                        )}
+
                         {fileItems.map((item) => (
                             <div
                                 key={item.id}
-                                className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow bg-card cursor-pointer"
-                                onClick={() => setSelectedFile(item)}
+                                className="group relative flex flex-col border rounded-xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all bg-card cursor-pointer"
+                                onClick={() => router.push(`/manage/uploads/${item.id}`)}
                             >
-                                <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                                <div className="relative aspect-square bg-muted flex-shrink-0">
                                     {item.type?.startsWith('image/') ? (
                                         <SmartImage
                                             src={item.url}
@@ -157,46 +159,23 @@ export function UploadsContent() {
                                         />
                                     ) : (
                                         <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground">
-                                            <FileIcon className="h-10 w-10" />
+                                            <FileIcon className="h-12 w-12" />
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium break-words mb-1" title={item.name}>
+                                <div className="p-3 flex-1 min-w-0 flex flex-col justify-between">
+                                    <h3 className="text-xs font-medium break-words line-clamp-2 mb-2" title={item.name}>
                                         {item.name}
                                     </h3>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                                        <Badge variant="outline" className="text-xs">
-                                            {item.uploadedBy}
-                                        </Badge>
-                                        {item.size && (
-                                            <Badge variant="secondary" className="text-xs">
-                                                {(item.size / 1024).toFixed(2)} KB
-                                            </Badge>
-                                        )}
-                                        <Badge variant="default" className="text-xs">
-                                            ☁️ NeupCDN
-                                        </Badge>
-                                        <span>
-                                            {item.uploadedOn ? formatDistanceToNow(new Date(item.uploadedOn), { addSuffix: true }) : 'N/A'}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-muted-foreground">
+                                            {item.size ? `${(item.size / 1024).toFixed(0)} KB` : 'N/A'}
                                         </span>
+                                        <Badge variant="outline" className="text-[8px] h-4 px-1 lowercase">
+                                            {item.type?.split('/')[1] || 'file'}
+                                        </Badge>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1 break-all font-mono" title={item.url}>
-                                        URL: {item.url}
-                                    </p>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="flex-shrink-0 text-destructive hover:text-destructive"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(item.id);
-                                    }}
-                                >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete
-                                </Button>
                             </div>
                         ))}
                     </div>
