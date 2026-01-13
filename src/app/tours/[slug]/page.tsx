@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: TourDetailPageProps): Promise
       url: `https://happymountainnepal.com/tours/${tour.slug}`,
       images: [
         {
-          url: tour.mainImage,
+          url: tour.mainImage.url,
           alt: tour.name,
         },
       ],
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: TourDetailPageProps): Promise
       card: 'summary_large_image',
       title: tour.name,
       description: tour.description,
-      images: [tour.mainImage],
+      images: [tour.mainImage.url],
     },
   };
 }

@@ -41,7 +41,7 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
     notFound();
   }
 
-  const allImages = [tour.mainImage, ...(tour.images || [])].filter(Boolean);
+  const allImages = [tour.mainImage, ...(tour.images || [])].filter(img => img && img.url);
 
   const getStatusVariant = (status: Tour['status']) => {
     switch (status) {
@@ -70,9 +70,9 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
 
       {allImages.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {allImages.map((src, index) => (
+          {allImages.map((img, index) => (
             <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
-              <Image src={src} alt={`Gallery image ${index + 1}`} fill className="object-cover" />
+              <Image src={String(img.url)} alt={img.caption || img.story || `Gallery image ${index + 1}`} fill className="object-cover" />
               {index === 0 && <Badge variant="secondary" className="absolute top-2 left-2">Main Image</Badge>}
             </div>
           ))}

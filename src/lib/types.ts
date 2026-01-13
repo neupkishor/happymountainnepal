@@ -5,6 +5,8 @@ import { Timestamp } from "firebase/firestore";
 export interface ImageWithCaption {
   url: string;
   caption?: string;
+  posted_by?: string;
+  story?: string;
 }
 
 export interface Tour {

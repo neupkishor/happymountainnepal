@@ -20,8 +20,8 @@ export function TourCard({ tour }: TourCardProps) {
   const isWishlisted = isInWishlist(tour.id);
 
   // Use a fallback image if tour.mainImage is missing or empty
-  const imageUrl = tour.mainImage && tour.mainImage.length > 0 
-    ? tour.mainImage 
+  const imageUrl = tour.mainImage && tour.mainImage.url && tour.mainImage.url.length > 0
+    ? tour.mainImage.url
     : PlaceHolderImages.find(img => img.id === 'tour-ebc')?.imageUrl || 'https://placehold.co/600x400';
 
   const handleWishlistToggle = (e: React.MouseEvent) => {

@@ -152,8 +152,8 @@ export function ImageViewerDialog({
       <div className="absolute inset-0 flex items-center justify-center p-4 md:p-8">
         <div className="relative w-full h-full overflow-hidden rounded-2xl">
           <Image
-            src={currentImage.url}
-            alt={caption}
+            src={String(currentImage.url)}
+            alt={currentImage.caption || currentImage.story || tourName}
             fill
             className="object-contain"
             priority
@@ -164,17 +164,33 @@ export function ImageViewerDialog({
       </div>
 
       {/* Caption Overlay */}
-      {caption && (
+      {(currentImage.caption || currentImage.story || currentImage.posted_by) && (
         <div className="absolute bottom-0 left-0 right-0 z-50 pointer-events-none">
           <div className="bg-gradient-to-t from-black/90 via-black/70 to-transparent pt-24 pb-8 px-6 pointer-events-auto">
-            <div className="max-w-5xl mx-auto">
-              <p
-                ref={captionRef}
-                className={`text-white text-lg font-medium leading-relaxed ${captionExpanded ? '' : 'line-clamp-1'
-                  }`}
-              >
-                {caption}
-              </p>
+            <div className="max-w-5xl mx-auto space-y-2">
+              {currentImage.posted_by && (
+                <div className="flex items-center gap-2 text-white/80 text-sm">
+                  <span className="font-medium">Posted by: {currentImage.posted_by}</span>
+                </div>
+              )}
+              {currentImage.story && (
+                <p
+                  ref={captionRef}
+                  className={`text-white text-lg font-medium leading-relaxed ${captionExpanded ? '' : 'line-clamp-2'
+                    }`}
+                >
+                  {currentImage.story}
+                </p>
+              )}
+              {currentImage.caption && !currentImage.story && (
+                <p
+                  ref={captionRef}
+                  className={`text-white/90 text-base italic leading-relaxed ${captionExpanded ? '' : 'line-clamp-1'
+                    }`}
+                >
+                  {currentImage.caption}
+                </p>
+              )}
               {isTruncated && (
                 <button
                   onClick={() => setCaptionExpanded(!captionExpanded)}

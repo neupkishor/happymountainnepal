@@ -45,12 +45,12 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
     try {
       const stored = localStorage.getItem(RECENTLY_VIEWED_KEY);
       let recentlyViewed: string[] = stored ? JSON.parse(stored) : [];
-      
+
       recentlyViewed = recentlyViewed.filter(id => id !== tour.id);
       recentlyViewed.unshift(tour.id);
-      
+
       const updatedRecentlyViewed = recentlyViewed.slice(0, MAX_RECENTLY_VIEWED);
-      
+
       localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updatedRecentlyViewed));
     } catch (error) {
       console.error("Failed to update recently viewed tours in localStorage", error);
@@ -126,24 +126,24 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
 
   const hasAnyMoreReviews = hasMorePackageReviews || hasMoreGeneralReviews;
 
-  const averageRating = displayedReviews.length > 0 
-    ? (displayedReviews.reduce((acc, review) => acc + review.stars, 0) / displayedReviews.length) 
+  const averageRating = displayedReviews.length > 0
+    ? (displayedReviews.reduce((acc, review) => acc + review.stars, 0) / displayedReviews.length)
     : 0;
-    
+
   const itineraryItems = tour.itinerary?.map(item => ({
     "@type": "ListItem",
     "position": item.day,
     "name": item.title,
     "description": item.description,
   }));
-  
+
   const faqItems = tour.faq?.map(item => ({
-      "@type": "Question",
-      "name": item.question,
-      "acceptedAnswer": {
-          "@type": "Answer",
-          "text": item.answer
-      }
+    "@type": "Question",
+    "name": item.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": item.answer
+    }
   }));
 
   const currentYear = new Date().getFullYear();
@@ -154,7 +154,7 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
     "@type": "TouristTrip",
     "name": tour.name,
     "description": tour.description,
-    "image": tour.mainImage,
+    "image": tour.mainImage.url,
     "url": `https://happymountainnepal.com/tours/${tour.slug}`,
     "provider": {
       "@type": "Organization",
@@ -178,10 +178,10 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
       "priceValidUntil": priceValidUntil,
     },
     ...(itineraryItems && itineraryItems.length > 0 && {
-        "itinerary": {
-            "@type": "ItemList",
-            "itemListElement": itineraryItems
-        }
+      "itinerary": {
+        "@type": "ItemList",
+        "itemListElement": itineraryItems
+      }
     }),
   }];
 
@@ -203,12 +203,12 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
         />
         <ImageGallery images={tour.images} mainImage={tour.mainImage} tourName={tour.name} />
-        
+
         <TourNav tour={tour} reviews={displayedReviews} />
 
         <div className="container mx-auto py-8 lg:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
-            
+
             <div className="lg:col-span-2 space-y-12">
               <header>
                 <h1 className="text-4xl md:text-5xl font-bold !font-headline text-primary">{tour.name}</h1>
@@ -218,17 +218,17 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
               <div className="lg:hidden my-8">
                 <BookingWidget tour={tour} />
               </div>
-              
+
               <section id="key-facts" className="scroll-m-32">
-                  <KeyFacts tour={tour} />
+                <KeyFacts tour={tour} />
               </section>
               <section id="itinerary" className="scroll-m-32">
-                  <Itinerary items={tour.itinerary} />
+                <Itinerary items={tour.itinerary} />
               </section>
               <section id="inclusions" className="scroll-m-32">
-                  <InclusionsExclusions tour={tour} />
+                <InclusionsExclusions tour={tour} />
               </section>
-              
+
               {tour.map && (
                 <section id="map" className="scroll-m-32">
                   <h2 className="text-3xl font-bold !font-headline mb-6">Trek Map</h2>
@@ -261,14 +261,14 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
               )}
 
               <section id="reviews" className="scroll-m-32">
-                  <Reviews 
-                      reviews={displayedReviews} 
-                      tourId={tour.id}
-                      isLoading={isLoadingReviews}
-                      hasMore={hasAnyMoreReviews}
-                      onLoadMore={handleLoadMore}
-                      allToursMap={allToursMap}
-                  />
+                <Reviews
+                  reviews={displayedReviews}
+                  tourId={tour.id}
+                  isLoading={isLoadingReviews}
+                  hasMore={hasAnyMoreReviews}
+                  onLoadMore={handleLoadMore}
+                  allToursMap={allToursMap}
+                />
               </section>
 
               {tour.additionalInfoSections && tour.additionalInfoSections.length > 0 && (

@@ -3,7 +3,7 @@
 
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, setDoc, where, getDoc, limit as firestoreLimit, updateDoc, deleteDoc, startAfter } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
-import type { Tour, Destination, ImportedTourData } from '@/lib/types';
+import type { Tour, Destination, ImportedTourData, ImageWithCaption } from '@/lib/types';
 import { slugify } from "@/lib/utils";
 import { logError } from './errors';
 
@@ -21,6 +21,50 @@ async function getDocBySlug<T>(collectionName: string, slug: string): Promise<T 
     if (querySnapshot.empty) return null;
     const docSnap = querySnapshot.docs[0];
     return { id: docSnap.id, ...docSnap.data() } as T;
+}
+
+// Helper function to normalize image data
+function normalizeImageData(imageData: any): ImageWithCaption {
+    // If it's already an object with url property, return as is
+    if (imageData && typeof imageData === 'object' && !Array.isArray(imageData) && imageData.url) {
+        return {
+            url: String(imageData.url || ''),
+            caption: imageData.caption || undefined,
+            posted_by: imageData.posted_by || undefined,
+            story: imageData.story || undefined,
+        };
+    }
+
+    // If it's an array [url, posted_by, caption] or [url, posted_by, caption, story]
+    if (Array.isArray(imageData)) {
+        return {
+            url: String(imageData[0] || ''),
+            posted_by: imageData[1] || undefined,
+            caption: imageData[2] || undefined,
+            story: imageData[3] || undefined,
+        };
+    }
+
+    // If it's just a string (legacy format), treat it as URL
+    if (typeof imageData === 'string') {
+        return {
+            url: imageData,
+        };
+    }
+
+    // Fallback
+    return { url: '' };
+}
+
+// Helper function to normalize tour data
+function normalizeTourData(tour: any): Tour {
+    return {
+        ...tour,
+        mainImage: normalizeImageData(tour.mainImage),
+        images: Array.isArray(tour.images)
+            ? tour.images.map(normalizeImageData).filter((img: ImageWithCaption) => img.url && img.url.trim().length > 0)
+            : [],
+    };
 }
 
 export async function createTour(): Promise<string | null> {
@@ -169,11 +213,15 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
 }
 
 export async function getTourById(id: string): Promise<Tour | null> {
-    return getDocById<Tour>('packages', id);
+    const tour = await getDocById<Tour>('packages', id);
+    if (!tour) return null;
+    return normalizeTourData(tour);
 }
 
 export async function getTourBySlug(slug: string): Promise<Tour | null> {
-    return getDocBySlug<Tour>('packages', slug);
+    const tour = await getDocBySlug<Tour>('packages', slug);
+    if (!tour) return null;
+    return normalizeTourData(tour);
 }
 
 export async function getPackagesPaginated(options: {
@@ -192,10 +240,10 @@ export async function getPackagesPaginated(options: {
     let baseQuery = query(collection(firestore, 'packages'), orderBy('name'));
     const allDocsSnapshot = await getDocs(baseQuery);
 
-    let allPackages = allDocsSnapshot.docs.map(doc => ({
+    let allPackages = allDocsSnapshot.docs.map(doc => normalizeTourData({
         id: doc.id,
         ...doc.data()
-    } as Tour));
+    }));
 
     // Apply search filter if provided
     if (search && search.trim()) {
@@ -251,7 +299,7 @@ export async function getAllPublishedTours(): Promise<Tour[]> {
     if (!firestore) return [];
     const q = query(collection(firestore, 'packages'), where('status', '==', 'published'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+    return querySnapshot.docs.map(doc => normalizeTourData({ id: doc.id, ...doc.data() }));
 }
 
 export async function getDestinations(): Promise<Destination[]> {
@@ -343,7 +391,7 @@ export async function getPaginatedTours({ limit, lastDocId }: { limit: number, l
         }
     }
     const querySnapshot = await getDocs(q);
-    const fetchedTours = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
+    const fetchedTours = querySnapshot.docs.map(doc => normalizeTourData({ id: doc.id, ...doc.data() }));
     const hasMore = fetchedTours.length > limit;
     const toursToReturn = hasMore ? fetchedTours.slice(0, limit) : fetchedTours;
     const newLastDocId = toursToReturn.length > 0 ? toursToReturn[toursToReturn.length - 1].id : null;

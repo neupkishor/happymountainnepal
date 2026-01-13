@@ -12,8 +12,8 @@ interface MinimalTourCardProps {
 }
 
 export function MinimalTourCard({ tour, className }: MinimalTourCardProps) {
-  const imageUrl = tour.mainImage && tour.mainImage.length > 0
-    ? tour.mainImage
+  const imageUrl = tour.mainImage && tour.mainImage.url && tour.mainImage.url.length > 0
+    ? tour.mainImage.url
     : PlaceHolderImages.find((img) => img.id === "tour-ebc")?.imageUrl || "https://placehold.co/800x600";
 
   const regions = Array.isArray(tour.region) ? tour.region : [];
