@@ -320,9 +320,9 @@ export function HeaderV3() {
 
           {/* Left aligned logo */}
           <div className="flex items-center shrink-0">
-            <Link href="/" className="flex items-center space-x-2" onClick={() => setMenuOpen(false)}>
-              <Image src="https://cdn.neupgroup.com/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={24} height={24} className="h-6 w-6 object-contain" />
-              <span className="font-bold font-headline">Happy Mountain Nepal</span>
+            <Link href="/" className="flex items-center space-x-2 shrink-0" onClick={() => setMenuOpen(false)}>
+              <Image src="https://cdn.neupgroup.com/p3happymountainnepal/logo.png" alt="Happy Mountain Nepal Logo" width={28} height={28} className="h-7 w-7 object-contain" />
+              <span className="font-bold font-headline truncate">Happy Mountain Nepal</span>
             </Link>
           </div>
 
@@ -332,28 +332,37 @@ export function HeaderV3() {
           </div>
 
           {/* Right aligned section */}
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0">
 
-            {/* Desktop Only Icons/Buttons */}
-            <div className="hidden md:flex items-center gap-2">
-              {isUserLoading ? (
-                <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
-              ) : user ? (
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href="/profile">
-                    <User className="h-5 w-5" />
-                    <span className="sr-only">Profile</span>
-                  </Link>
-                </Button>
-              ) : (
-                <Button asChild>
-                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                    <Image src="/whatsapp.svg" alt="WhatsApp" width={20} height={20} />
-                    <span>Contact Now</span>
-                  </a>
-                </Button>
-              )}
+            {/* Contact Buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/contact"
+              >
+                <a href={`mailto:${profile?.contactEmail || ''}`} className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-primary group-hover/contact:scale-110 transition-transform" />
+                  <span className="hidden sm:inline text-sm font-medium">Email Us</span>
+                  <span className="sm:hidden text-sm font-medium">Email now</span>
+                </a>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/contact"
+              >
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} className="shrink-0 group-hover/contact:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Contact now</span>
+                </a>
+              </Button>
             </div>
+
+
 
             {/* Mobile Only Burger (With Morphing Animation) */}
             <div className="md:hidden">
