@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { MediaPicker } from '../MediaPicker';
+import { MultiMediaPicker } from '../MultiMediaPicker';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -39,12 +40,14 @@ const formSchema = z.object({
   contactEmail: z.string().email({ message: "Please enter a valid email." }).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
-  location: z.string().optional(), // New
-  locationUrl: z.string().url().optional().or(z.literal('')), // New
+  location: z.string().optional(),
+  locationUrl: z.string().url().optional().or(z.literal('')),
   heroTitle: z.string().optional(),
   heroDescription: z.string().optional(),
   footerTagline: z.string().optional(),
   heroImage: z.string().url("Please provide a valid image URL.").optional(),
+  heroImages: z.array(z.string().url()).optional(),
+  heroTransitionInterval: z.coerce.number().min(2, "Minimum 2 seconds").max(60, "Max 60 seconds").optional(),
   socials: z.object({
     facebook: z.string().url().or(z.literal('')).optional(),
     instagram: z.string().url().or(z.literal('')).optional(),
@@ -81,6 +84,8 @@ export function ProfileForm() {
       heroDescription: 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
       footerTagline: 'Your gateway to Himalayan adventures.',
       heroImage: 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg',
+      heroImages: [],
+      heroTransitionInterval: 5,
       socials: {
         facebook: '',
         instagram: '',
@@ -115,6 +120,8 @@ export function ProfileForm() {
         heroDescription: profile.heroDescription || 'Explore breathtaking treks and cultural tours in the heart of the Himalayas. Unforgettable journeys await.',
         footerTagline: profile.footerTagline || 'Your gateway to Himalayan adventures.',
         heroImage: profile.heroImage || 'https://happymountainnepal.com/wp-content/uploads/2022/06/everest-helicopter-tour1.jpg',
+        heroImages: profile.heroImages || (profile.heroImage ? [profile.heroImage] : []),
+        heroTransitionInterval: profile.heroTransitionInterval || 5,
         socials: {
           facebook: profile.socials?.facebook || '',
           instagram: profile.socials?.instagram || '',
@@ -134,6 +141,11 @@ export function ProfileForm() {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
+        // Sync main heroImage to first of heroImages if available
+        if (values.heroImages && values.heroImages.length > 0) {
+          values.heroImage = values.heroImages[0];
+        }
+
         await updateSiteProfile(values);
         // Invalidate session storage cache
         sessionStorage.removeItem('site-profile');
@@ -173,7 +185,24 @@ export function ProfileForm() {
               <CardDescription>Manage the main text content and background image for your homepage.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <MediaPicker name="heroImage" label="Hero Background Image" tags={['background']} />
+              <MultiMediaPicker name="heroImages" label="Hero Background Images" maxItems={12} tags={['all']} description="Select up to 12 images. The first image will be the default background, and others will cycle automatically." />
+
+              <FormField
+                control={form.control}
+                name="heroTransitionInterval"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slide Transition Interval (Seconds)</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={2} max={60} {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="border-t pt-4 mt-4"></div>
+
               <FormField
                 control={form.control}
                 name="heroTitle"

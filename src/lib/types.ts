@@ -189,6 +189,8 @@ export interface SiteProfile {
   location?: string; // New: Display text for location
   locationUrl?: string; // New: URL for location (e.g., Google Maps)
   heroImage?: string; // New field for hero image
+  heroImages?: string[]; // Array of hero images for slider
+  heroTransitionInterval?: number; // Interval in seconds for slider transition
   socials?: {
     facebook?: string;
     instagram?: string;

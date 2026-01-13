@@ -18,12 +18,39 @@ export function HeroSection() {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  
+
   const { profile, isLoading } = useSiteProfile();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
-  // Use a variable for the image to make the logic clearer
-  const heroImageSrc = profile?.heroImage;
+  // Use an array for images
+  const heroImages = profile?.heroImages && profile.heroImages.length > 0
+    ? profile.heroImages
+    : (profile?.heroImage ? [profile.heroImage] : []);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+
+    const intervalTime = (profile?.heroTransitionInterval || 5) * 1000;
+
+    const timer = setInterval(() => {
+      setCurrentIndex(prev => {
+        // Pick a random next index that is different from current
+        let nextIndex;
+        if (heroImages.length === 2) {
+          nextIndex = prev === 0 ? 1 : 0;
+        } else {
+          do {
+            nextIndex = Math.floor(Math.random() * heroImages.length);
+          } while (nextIndex === prev);
+        }
+        return nextIndex;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(timer);
+  }, [heroImages, profile?.heroTransitionInterval]);
 
   const heroContent = {
     title: profile?.heroTitle || 'Discover Your Next Adventure',
@@ -34,7 +61,7 @@ export function HeroSection() {
     if (isSearchActive) {
       const timer = setTimeout(() => {
         searchInputRef.current?.focus();
-      }, 100); // Short delay to allow focus
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [isSearchActive]);
@@ -61,7 +88,7 @@ export function HeroSection() {
     e.preventDefault();
     if (searchTerm.trim()) {
       router.push(`/search/${encodeURIComponent(searchTerm.trim())}`);
-      setIsSearchActive(false); // Reset search state after search
+      setIsSearchActive(false);
     }
   };
 
@@ -71,28 +98,30 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative w-full h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white bg-black">
+    <section className="relative w-full h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white bg-black overflow-hidden">
       <AnimatePresence>
-        {heroImageSrc && (
+        {heroImages.length > 0 && (
           <motion.div
+            key={heroImages[currentIndex]}
             initial={{ opacity: 0 }}
-            animate={{ opacity: isImageLoaded ? 1 : 0 }}
-            transition={{ duration: 1.0, ease: "easeInOut" }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full"
           >
             <Image
-              src={heroImageSrc}
-              alt="Majestic mountain range at sunrise"
+              src={heroImages[currentIndex]}
+              alt="Hero Background"
               fill
               className="object-cover"
               priority
-              data-ai-hint="mountain sunrise"
-              onLoad={() => setIsImageLoaded(true)}
             />
+            {/* Dark Overlay inside the motion div or outside? Outside is better to stay consistent */}
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/50 z-0" />
+
       <div className="relative z-10 p-4 max-w-4xl mx-auto w-full">
         {isLoading ? (
           <div className="flex flex-col items-center w-full">
@@ -102,8 +131,8 @@ export function HeroSection() {
               <Skeleton className="h-6 w-2/3 mx-auto" />
             </div>
             <div className="mt-8 flex gap-4 justify-center">
-                <Skeleton className="h-12 w-32" />
-                <Skeleton className="h-12 w-48" />
+              <Skeleton className="h-12 w-32" />
+              <Skeleton className="h-12 w-48" />
             </div>
           </div>
         ) : (
@@ -118,40 +147,40 @@ export function HeroSection() {
         )}
 
         {!isLoading && (
-        <div ref={searchContainerRef} className="flex flex-col items-center w-full">
-          {isSearchActive ? (
-            <form onSubmit={handleSearch} className="max-w-lg mx-auto animate-fade-in-up relative">
-            <Input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search for tours, e.g., 'Everest'"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-white/90 text-foreground placeholder:text-muted-foreground w-full rounded-full py-6 pl-6 pr-16 border-2 border-primary/50 focus:border-primary focus:ring-primary/20 focus:ring-4 transition-all"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
-            </Button>
-          </form>
-          ) : (
-            <div className="flex gap-4 justify-center animate-fade-in-up">
-              <Link href="/tours">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Explore Tours
+          <div ref={searchContainerRef} className="flex flex-col items-center w-full">
+            {isSearchActive ? (
+              <form onSubmit={handleSearch} className="max-w-lg mx-auto animate-fade-in-up relative">
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search for tours, e.g., 'Everest'"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-white/90 text-foreground placeholder:text-muted-foreground w-full rounded-full py-6 pl-6 pr-16 border-2 border-primary/50 focus:border-primary focus:ring-primary/20 focus:ring-4 transition-all"
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Search className="h-5 w-5" />
+                  <span className="sr-only">Search</span>
                 </Button>
-              </Link>
-              <Button size="lg" variant="secondary" onClick={handleSearchClick}>
+              </form>
+            ) : (
+              <div className="flex gap-4 justify-center animate-fade-in-up">
+                <Link href="/tours">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Explore Tours
+                  </Button>
+                </Link>
+                <Button size="lg" variant="secondary" onClick={handleSearchClick}>
                   <Search className="h-5 w-5 mr-2" />
                   Search for Experience
-              </Button>
-            </div>
-          )}
-        </div>
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </section>
