@@ -36,7 +36,8 @@ const DEFAULT_SELECTED_URLS: string[] = [];
 export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = DEFAULT_SELECTED_URLS, defaultTags = ['general'], defaultCategory }: MediaLibraryDialogProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastDocId, setLastDocId] = useState<string | null>(null);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentSelection, setCurrentSelection] = useState<string[]>(initialSelectedUrls);
@@ -46,28 +47,29 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   const { toast } = useToast();
   const { profile } = useSiteProfile();
 
-  const fetchUploads = async (tags: string[] = ['all'], isLoadMore = false) => {
-    if (!isLoadMore) setIsLoading(true);
-    try {
-      const currentLimit = isLoadMore ? 8 : 16;
-      const cursor = isLoadMore ? lastDocId : null;
+  const fetchUploads = async (tags: string[] = ['all'], currentPage = 1, search = '') => {
+    if (currentPage === 1) setIsLoading(true);
+    else setIsFetchingMore(true);
 
+    try {
+      const limit = 10;
       const { uploads: fetchedUploads, hasMore: moreAvailable } = await getFileUploads({
         tags: tags.includes('all') ? undefined : tags,
-        limit: currentLimit,
-        lastDocId: cursor
+        limit,
+        page: currentPage,
+        searchTerm: search
       });
 
-      if (isLoadMore) {
-        setUploads(prev => [...prev, ...fetchedUploads]);
-      } else {
-        setUploads(fetchedUploads);
-      }
+      setUploads(prev => {
+        if (currentPage === 1) return fetchedUploads;
+        // Merge and ensure uniqueness by ID
+        const combined = [...prev, ...fetchedUploads];
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+        return unique;
+      });
 
       setHasMore(moreAvailable);
-      if (fetchedUploads.length > 0) {
-        setLastDocId(fetchedUploads[fetchedUploads.length - 1].id);
-      }
+      setPage(currentPage);
     } catch (error: any) {
       console.error('Failed to fetch uploads:', error);
       toast({
@@ -77,6 +79,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
       });
     } finally {
       setIsLoading(false);
+      setIsFetchingMore(false);
     }
   };
 
@@ -85,21 +88,29 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
       setCurrentSelection(initialSelectedUrls);
       const tagsToUse = defaultTags || ['all'];
       setSelectedTags(tagsToUse);
-      fetchUploads(tagsToUse);
+      // Reset search and page on open
+      setSearchTerm('');
+      setPage(1);
+      fetchUploads(tagsToUse, 1, '');
     }
   }, [isOpen]);
 
-  const filteredUploads = uploads
-    .filter((upload) =>
-      upload.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      const aIsSelected = currentSelection.includes(getFullUrl(a, profile?.basePath));
-      const bIsSelected = currentSelection.includes(getFullUrl(b, profile?.basePath));
-      if (aIsSelected && !bIsSelected) return -1;
-      if (!aIsSelected && bIsSelected) return 1;
-      return 0;
-    });
+  // Debounced search effect
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
+      fetchUploads(selectedTags, 1, searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm, selectedTags]);
+
+  const filteredUploads = uploads.sort((a, b) => {
+    const aIsSelected = currentSelection.includes(getFullUrl(a, profile?.basePath));
+    const bIsSelected = currentSelection.includes(getFullUrl(b, profile?.basePath));
+    if (aIsSelected && !bIsSelected) return -1;
+    if (!aIsSelected && bIsSelected) return 1;
+    return 0;
+  });
 
   const handleDelete = async (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
@@ -187,58 +198,66 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
             </div>
 
             <ScrollArea className="flex-grow -mr-4 pr-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {filteredUploads.map((file) => {
-                  const fullUrl = getFullUrl(file, profile?.basePath);
-                  const isSelected = currentSelection.includes(fullUrl);
-                  return (
-                    <div
-                      key={file.id}
-                      className={cn(
-                        'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
-                        isSelected ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
-                      )}
-                      onClick={() => handleImageClick(file)}
-                    >
-                      {file.type?.startsWith('image/') ? (
-                        <SmartImage
-                          src={file.url}
-                          alt={file.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
-                          <FileText className="h-8 w-8" />
-                        </div>
-                      )}
-                      {isSelected && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
-                          <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
-                        </div>
-                      )}
-
-                      <div className="absolute top-1 right-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="h-6 w-6 rounded-full"
-                          onClick={(e) => handleDelete(e, file.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              {hasMore && (
-                <div className="mt-4 flex justify-center pb-4">
-                  <Button variant="outline" onClick={() => fetchUploads(selectedTags, true)} disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {isLoading ? 'Loading...' : 'Show More'}
-                  </Button>
+              {isLoading && uploads.length === 0 ? (
+                <div className="flex h-64 items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {filteredUploads.map((file) => {
+                      const fullUrl = getFullUrl(file, profile?.basePath);
+                      const isSelected = currentSelection.includes(fullUrl);
+                      return (
+                        <div
+                          key={file.id}
+                          className={cn(
+                            'relative h-32 w-full rounded-md overflow-hidden cursor-pointer border-2 transition-all group',
+                            isSelected ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground'
+                          )}
+                          onClick={() => handleImageClick(file)}
+                        >
+                          {file.type?.startsWith('image/') ? (
+                            <SmartImage
+                              src={file.url}
+                              alt={file.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-secondary text-secondary-foreground p-2">
+                              <FileText className="h-8 w-8" />
+                            </div>
+                          )}
+                          {isSelected && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-primary/30">
+                              <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
+                            </div>
+                          )}
+
+                          <div className="absolute top-1 right-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-6 w-6 rounded-full"
+                              onClick={(e) => handleDelete(e, file.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {hasMore && (
+                    <div className="mt-4 flex justify-center pb-4">
+                      <Button variant="outline" onClick={() => fetchUploads(selectedTags, page + 1, searchTerm)} disabled={isFetchingMore}>
+                        {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {isFetchingMore ? 'Loading...' : 'Show More'}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </ScrollArea>
           </div>

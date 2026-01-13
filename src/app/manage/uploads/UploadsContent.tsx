@@ -162,7 +162,7 @@ export function UploadsContent() {
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium truncate mb-1" title={item.name}>
+                                    <h3 className="font-medium break-words mb-1" title={item.name}>
                                         {item.name}
                                     </h3>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
@@ -181,7 +181,7 @@ export function UploadsContent() {
                                             {item.uploadedOn ? formatDistanceToNow(new Date(item.uploadedOn), { addSuffix: true }) : 'N/A'}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1 truncate font-mono" title={item.url}>
+                                    <p className="text-xs text-muted-foreground mt-1 break-all font-mono" title={item.url}>
                                         URL: {item.url}
                                     </p>
                                 </div>

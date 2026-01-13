@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc, where } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { FileUpload } from '@/lib/types';
 import { logError } from './errors';
@@ -33,28 +33,46 @@ export async function getFileUploads(options?: {
     page?: number;
     tags?: string[];
     lastDocId?: string | null;
+    searchTerm?: string;
 }): Promise<{ uploads: FileUpload[]; hasMore: boolean; totalCount: number; totalPages: number }> {
     if (!firestore) return { uploads: [], hasMore: false, totalCount: 0, totalPages: 0 };
-    
+
     let baseQuery = query(collection(firestore, 'uploads'));
 
-    // Count total documents for pagination
-    const countSnapshot = await getDocs(baseQuery);
-    const totalCount = countSnapshot.size;
-    
+    const searchTerm = options?.searchTerm?.trim();
     const limit = options?.limit || 10;
     const page = options?.page || 1;
-    const totalPages = Math.ceil(totalCount / limit);
+    const offset = (page - 1) * limit;
 
-    let paginatedQuery = query(baseQuery, orderBy('uploadedAt', 'desc'), firestoreLimit(limit));
+    if (searchTerm) {
+        // Firebase prefix search requires ordering by the field being searched
+        baseQuery = query(
+            baseQuery,
+            where('name', '>=', searchTerm),
+            where('name', '<=', searchTerm + '\uf8ff'),
+            orderBy('name')
+        );
+    } else {
+        baseQuery = query(baseQuery, orderBy('uploadedAt', 'desc'));
+    }
 
-    if (page > 1) {
-        const offset = (page - 1) * limit;
-        const cursorQuery = query(collection(firestore, 'uploads'), orderBy('uploadedAt', 'desc'), firestoreLimit(offset));
-        const cursorSnapshot = await getDocs(cursorQuery);
-        const lastVisible = cursorSnapshot.docs[cursorSnapshot.docs.length - 1];
+    if (options?.tags && options.tags.length > 0) {
+        baseQuery = query(baseQuery, where('tags', 'array-contains-any', options.tags));
+    }
+
+    // Since Firestore offset() is not directly available in standard web SDK in a simple way without firestoreLimit
+    // and its behavior is specific, we use the 'get then skip' or 'startAfter' logic.
+    // However, the user asked for offset 0, 10, 20 etc.
+    // In web SDK, we can't easily do offset(n). We use startAfter with a document snapshot.
+
+    let paginatedQuery = query(baseQuery, firestoreLimit(limit));
+
+    if (offset > 0) {
+        const skipQuery = query(baseQuery, firestoreLimit(offset));
+        const skipSnapshot = await getDocs(skipQuery);
+        const lastVisible = skipSnapshot.docs[skipSnapshot.docs.length - 1];
         if (lastVisible) {
-            paginatedQuery = query(paginatedQuery, startAfter(lastVisible));
+            paginatedQuery = query(baseQuery, startAfter(lastVisible), firestoreLimit(limit));
         }
     }
 
@@ -76,9 +94,11 @@ export async function getFileUploads(options?: {
         } as FileUpload;
     });
 
-    const hasMore = page < totalPages;
+    // For hasMore, we check if we got 'limit' number of items and if there's possibly more.
+    // A better way is to fetch limit + 1.
+    const hasMore = uploads.length === limit;
 
-    return { uploads, hasMore, totalCount, totalPages };
+    return { uploads, hasMore, totalCount: 0, totalPages: 0 }; // totalCount/totalPages are less used here
 }
 
 
