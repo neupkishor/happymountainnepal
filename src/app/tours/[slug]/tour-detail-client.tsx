@@ -212,7 +212,10 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
             <div className="lg:col-span-2 space-y-12">
               <header>
                 <h1 className="text-4xl md:text-5xl font-bold !font-headline text-primary">{tour.name}</h1>
-                <p className="mt-4 text-lg text-muted-foreground">{tour.description}</p>
+                <div
+                  className="mt-4 text-lg text-muted-foreground [&_p]:mb-4 last:[&_p]:mb-0"
+                  dangerouslySetInnerHTML={{ __html: tour.description }}
+                />
               </header>
 
               <div className="lg:hidden my-8">
