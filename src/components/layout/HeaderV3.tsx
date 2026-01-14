@@ -198,7 +198,13 @@ function MobileMenuList({ setMenuOpen, navLinks }: { setMenuOpen: (open: boolean
           </AnimatePresence>
 
           {navigationStack.length === 1 && (
-            <div className="mt-8 pt-8 border-t">
+            <div className="mt-8 pt-8 border-t flex flex-col gap-3">
+              <Button variant="outline" className="w-full justify-start text-lg h-12" asChild>
+                <a href={`mailto:${profile?.contactEmail || ''}`}>
+                  <Mail className="w-5 h-5 mr-2" />
+                  <span className="ml-2">Email Now</span>
+                </a>
+              </Button>
               <Button className="w-full justify-start text-lg h-12" asChild>
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                   <Image src="/whatsapp.svg" alt="WhatsApp" width={20} height={20} />
@@ -335,7 +341,7 @@ export function HeaderV3() {
           <div className="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0">
 
             {/* Contact Buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
