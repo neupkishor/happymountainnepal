@@ -5,42 +5,104 @@ import { Check, Info, Backpack, CircleCheck } from 'lucide-react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface GearsSectionProps {
     gears: GearItem[];
 }
 
+const COOKIE_OPT_OUT = 'hmn_gears_opt_out'; // "Gears.no"
+const COOKIE_OWNED = 'hmn_gears_owned';     // "Gears"
+
+const getJSONCookie = (name: string): string[] => {
+    if (typeof document === 'undefined') return [];
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        try {
+            return JSON.parse(decodeURIComponent(parts.pop()?.split(';').shift() || '[]'));
+        } catch { return []; }
+    }
+    return [];
+};
+
+const setJSONCookie = (name: string, value: string[]) => {
+    if (typeof document === 'undefined') return;
+    const date = new Date();
+    date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 year
+    document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))};expires=${date.toUTCString()};path=/`;
+};
+
 export function GearsSection({ gears }: GearsSectionProps) {
     if (!gears || gears.length === 0) return null;
 
-    const providedGears = gears.filter(g => g.provided);
-    const requiredGears = gears.filter(g => !g.provided);
+    // Use globalId or name as unique identifier for sync
+    const getGearId = (gear: GearItem) => gear.globalId || gear.name;
 
-    // State to track item status: 'provided' | 'unchecked' | 'own'
-    // For provided items, default is 'provided' (if not in state).
-    // For required items, default is 'unchecked'.
-    const [gearStates, setGearStates] = useState<Record<string, 'provided' | 'unchecked' | 'own'>>({});
+    const [optOutList, setOptOutList] = useState<string[]>([]);
+    const [ownedList, setOwnedList] = useState<string[]>([]);
+    const [mounted, setMounted] = useState(false);
 
-    const handleToggle = (id: string, isDefaultProvided: boolean) => {
-        setGearStates(prev => {
-            const currentState = prev[id] || (isDefaultProvided ? 'provided' : 'unchecked');
+    useEffect(() => {
+        setOptOutList(getJSONCookie(COOKIE_OPT_OUT));
+        setOwnedList(getJSONCookie(COOKIE_OWNED));
+        setMounted(true);
+    }, []);
 
-            let nextState: 'provided' | 'unchecked' | 'own';
+    const savePreferences = (newOptOut: string[], newOwned: string[]) => {
+        setOptOutList(newOptOut);
+        setOwnedList(newOwned);
+        setJSONCookie(COOKIE_OPT_OUT, newOptOut);
+        setJSONCookie(COOKIE_OWNED, newOwned);
+    };
 
-            if (isDefaultProvided) {
-                // Cycle: provided -> unchecked -> own -> provided
-                if (currentState === 'provided') nextState = 'unchecked';
-                else if (currentState === 'unchecked') nextState = 'own';
-                else nextState = 'provided';
+    const handleToggle = (gear: GearItem) => {
+        const id = getGearId(gear);
+        const isDefaultProvided = gear.provided;
+
+        let newOptOut = [...optOutList];
+        let newOwned = [...ownedList];
+
+        const isOptedOut = newOptOut.includes(id);
+        const isOwned = newOwned.includes(id);
+
+        // Determine current logical state
+        let currentState: 'provided' | 'unchecked' | 'own' = 'unchecked';
+        if (isDefaultProvided) {
+            if (isOwned) currentState = 'own';
+            else if (isOptedOut) currentState = 'unchecked';
+            else currentState = 'provided';
+        } else {
+            currentState = isOwned ? 'own' : 'unchecked';
+        }
+
+        // Determine next state
+        if (isDefaultProvided) {
+            // Cycle: provided -> unchecked -> own -> provided
+            if (currentState === 'provided') {
+                // To Unchecked: Add to OptOut, Ensure not in Owned
+                if (!newOptOut.includes(id)) newOptOut.push(id);
+                newOwned = newOwned.filter(x => x !== id);
+            } else if (currentState === 'unchecked') {
+                // To Own: Ensure in OptOut (implied), Add to Owned
+                if (!newOptOut.includes(id)) newOptOut.push(id);
+                if (!newOwned.includes(id)) newOwned.push(id);
             } else {
-                // Toggle: unchecked -> own -> unchecked
-                nextState = currentState === 'unchecked' ? 'own' : 'unchecked';
+                // To Provided: Remove from OptOut, Remove from Owned
+                newOptOut = newOptOut.filter(x => x !== id);
+                newOwned = newOwned.filter(x => x !== id);
             }
+        } else {
+            // Toggle: unchecked <-> own
+            if (currentState === 'unchecked') {
+                if (!newOwned.includes(id)) newOwned.push(id);
+            } else {
+                newOwned = newOwned.filter(x => x !== id);
+            }
+        }
 
-            return { ...prev, [id]: nextState };
-        });
+        savePreferences(newOptOut, newOwned);
     };
 
     return (
@@ -54,17 +116,35 @@ export function GearsSection({ gears }: GearsSectionProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {gears.sort((a, b) => (a.provided === b.provided ? 0 : a.provided ? 1 : -1)).map((gear) => {
+                    const id = getGearId(gear);
                     const isDefaultProvided = gear.provided;
-                    const currentState = gearStates[gear.id] || (isDefaultProvided ? 'provided' : 'unchecked');
 
-                    const isProvidedState = currentState === 'provided'; // Visually provided (Primary)
-                    const isOwnState = currentState === 'own'; // Visually own (Green)
+                    // Derive state
+                    let currentState: 'provided' | 'unchecked' | 'own' = 'unchecked';
+                    if (mounted) {
+                        const isOptedOut = optOutList.includes(id);
+                        const isOwned = ownedList.includes(id);
+
+                        if (isDefaultProvided) {
+                            if (isOwned) currentState = 'own';
+                            else if (isOptedOut) currentState = 'unchecked';
+                            else currentState = 'provided';
+                        } else {
+                            currentState = isOwned ? 'own' : 'unchecked';
+                        }
+                    } else {
+                        // Server/Initial render state
+                        currentState = isDefaultProvided ? 'provided' : 'unchecked';
+                    }
+
+                    const isProvidedState = currentState === 'provided';
+                    const isOwnState = currentState === 'own';
                     const isUnchecked = currentState === 'unchecked';
 
                     return (
                         <div
                             key={gear.id}
-                            onClick={() => handleToggle(gear.id, isDefaultProvided)}
+                            onClick={() => handleToggle(gear)}
                             className={cn(
                                 "group relative flex flex-col gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer select-none hover:shadow-md",
                                 isProvidedState && "bg-primary/5 border-primary/20",
