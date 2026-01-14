@@ -64,6 +64,7 @@ function normalizeTourData(tour: any): Tour {
         images: Array.isArray(tour.images)
             ? tour.images.map(normalizeImageData).filter((img: ImageWithCaption) => img.url && img.url.trim().length > 0)
             : [],
+        gears: Array.isArray(tour.gears) ? tour.gears : [],
     };
 }
 

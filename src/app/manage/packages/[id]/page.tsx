@@ -143,6 +143,40 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </div>
       ) : null}
 
+      <div>
+        <SectionTitle title="Gears & Equipment" editHref={`/manage/packages/${tour.id}/gears`} />
+        {tour.gears && tour.gears.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-3">Provided</h3>
+              <ul className="space-y-2">
+                {tour.gears.filter(g => g.provided).map(g => (
+                  <li key={g.id} className="flex items-center gap-2 text-sm">
+                    {g.image && <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0"><Image src={g.image} alt={g.name} fill className="object-cover" /></div>}
+                    <span>{g.name}</span>
+                  </li>
+                ))}
+                {tour.gears.filter(g => g.provided).length === 0 && <li className="text-muted-foreground text-sm italic">Nothing listed as provided.</li>}
+              </ul>
+            </div>
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-3">Bring Yourself</h3>
+              <ul className="space-y-2">
+                {tour.gears.filter(g => !g.provided).map(g => (
+                  <li key={g.id} className="flex items-center gap-2 text-sm">
+                    {g.image && <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0"><Image src={g.image} alt={g.name} fill className="object-cover" /></div>}
+                    <span>{g.name}</span>
+                  </li>
+                ))}
+                {tour.gears.filter(g => !g.provided).length === 0 && <li className="text-muted-foreground text-sm italic">Nothing listed as required.</li>}
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground italic">No gears or equipment listed yet.</p>
+        )}
+      </div>
+
       {tour.map && (
         <div>
           <SectionTitle title="Trek Map" editHref={`/manage/packages/${tour.id}/media`} />

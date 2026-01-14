@@ -9,6 +9,7 @@ import { InclusionsExclusions } from '@/components/tour-details/InclusionsExclus
 import { TourGallery } from '@/components/tour-details/TourGallery';
 import { FaqSection } from '@/components/tour-details/FaqSection';
 import { AdditionalInfoSection } from '@/components/tour-details/AdditionalInfoSection';
+import { GearsSection } from '@/components/tour-details/GearsSection';
 import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
 import type { Tour, ManagedReview } from '@/lib/types';
@@ -273,6 +274,12 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
                   allToursMap={allToursMap}
                 />
               </section>
+
+              {tour.gears && tour.gears.length > 0 && (
+                <section id="gears" className="scroll-m-32">
+                  <GearsSection gears={tour.gears} />
+                </section>
+              )}
 
               {tour.additionalInfoSections && tour.additionalInfoSections.length > 0 && (
                 <section id="additional-info" className="scroll-m-32">

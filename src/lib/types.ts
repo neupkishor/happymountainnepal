@@ -35,6 +35,7 @@ export interface Tour {
   bookingType: 'internal' | 'external'; // New: How the tour is booked
   externalBookingUrl?: string; // New: URL for external booking if bookingType is 'external'
   searchKeywords?: string[]; // New field for searching
+  gears?: GearItem[]; // New field for gear list
 }
 
 // Existing Review interface (for embedded reviews)
@@ -44,6 +45,14 @@ export interface Review {
   author: string;
   comment: string;
   date: string | Timestamp;
+}
+
+export interface GearItem {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  provided: boolean; // true if provided by company, false if user needs to bring
 }
 
 export interface BlogPost {

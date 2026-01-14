@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import type { Tour, ManagedReview } from '@/lib/types';
 
 interface TourNavProps {
-    tour: Tour;
-    reviews: ManagedReview[];
+  tour: Tour;
+  reviews: ManagedReview[];
 }
 
 const allNavItems = [
@@ -21,12 +21,13 @@ const allNavItems = [
   { href: '#faq', label: 'FAQ', isVisible: (tour: Tour) => tour.faq && tour.faq.length > 0 },
   { href: '#additional-info', label: 'More Info', isVisible: (tour: Tour) => tour.additionalInfoSections && tour.additionalInfoSections.length > 0 },
   { href: '#reviews', label: 'Reviews', isVisible: (tour: Tour, reviews: ManagedReview[]) => reviews && reviews.length > 0 },
+  { href: '#gears', label: 'Gears', isVisible: (tour: Tour) => tour.gears && tour.gears.length > 0 },
 ];
 
 export function TourNav({ tour, reviews }: TourNavProps) {
   const [isSticky, setIsSticky] = useState(false);
   const [activeSection, setActiveSection] = useState('');
-  
+
   const navItems = useMemo(() => {
     return allNavItems.filter(item => item.isVisible(tour, reviews));
   }, [tour, reviews]);
@@ -34,7 +35,7 @@ export function TourNav({ tour, reviews }: TourNavProps) {
   useEffect(() => {
     const handleScroll = () => {
       // Adjust this value to be just above the nav bar's usual position
-      const stickyThreshold = 300; 
+      const stickyThreshold = 300;
       if (window.scrollY > stickyThreshold) {
         setIsSticky(true);
       } else {
@@ -43,7 +44,7 @@ export function TourNav({ tour, reviews }: TourNavProps) {
 
       const sections = navItems.map(item => document.getElementById(item.href.substring(1)));
       let currentSection = '';
-      
+
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
         if (section) {
@@ -72,13 +73,13 @@ export function TourNav({ tour, reviews }: TourNavProps) {
         <div className="container mx-auto overflow-x-auto">
           <nav className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 py-2">
             {navItems.map(item => (
-              <a 
-                key={item.href} 
+              <a
+                key={item.href}
                 href={item.href}
                 className={cn(
                   "block whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md",
                   "transition-colors duration-200 cursor-pointer",
-                  activeSection === item.href.substring(1) 
+                  activeSection === item.href.substring(1)
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-primary/10 hover:text-primary'
                 )}
