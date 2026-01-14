@@ -226,6 +226,27 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         )}
       </div>
 
+      <div>
+        <SectionTitle title="Blogs & Guides" editHref={`/manage/packages/${tour.id}/guide`} />
+        {tour.guides && tour.guides.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {tour.guides.map((g) => (
+              <div key={g.id} className="border rounded-lg p-3 flex gap-3 items-start">
+                <div className="relative w-16 h-16 bg-muted rounded overflow-hidden flex-shrink-0">
+                  {g.image && <Image src={g.image} alt={g.title} fill className="object-cover" />}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm line-clamp-2">{g.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">By {g.author}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground italic">No guides linked to this package.</p>
+        )}
+      </div>
+
       {tour.faq && tour.faq.length > 0 && (
         <div>
           <SectionTitle title="Frequently Asked Questions" editHref={`/manage/packages/${tour.id}/faq`} />

@@ -36,6 +36,7 @@ export interface Tour {
   externalBookingUrl?: string; // New: URL for external booking if bookingType is 'external'
   searchKeywords?: string[]; // New field for searching
   gears?: GearItem[]; // New field for gear list
+  guides?: GuideItem[]; // New field for blogs/guides
 }
 
 // Existing Review interface (for embedded reviews)
@@ -55,6 +56,16 @@ export interface GearItem {
   image?: string;
   provided: boolean; // true if provided by company, false if user needs to bring
   globalId?: string; // Reference to the global gear item
+}
+
+export interface GuideItem {
+  id: string; // Local ID
+  title: string;
+  excerpt: string;
+  image: string;
+  slug: string; // To link to the actual blog
+  author: string;
+  globalId?: string; // Reference to the global blog post
 }
 
 export interface BlogPost {

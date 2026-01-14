@@ -19,9 +19,10 @@ const allNavItems = [
   { href: '#map', label: 'Map', isVisible: (tour: Tour) => !!tour.map },
   { href: '#gallery', label: 'Gallery', isVisible: (tour: Tour) => tour.images && tour.images.length > 0 },
   { href: '#faq', label: 'FAQ', isVisible: (tour: Tour) => tour.faq && tour.faq.length > 0 },
-  { href: '#additional-info', label: 'More Info', isVisible: (tour: Tour) => tour.additionalInfoSections && tour.additionalInfoSections.length > 0 },
   { href: '#reviews', label: 'Reviews', isVisible: (tour: Tour, reviews: ManagedReview[]) => reviews && reviews.length > 0 },
   { href: '#gears', label: 'Gears', isVisible: (tour: Tour) => tour.gears && tour.gears.length > 0 },
+  { href: '#additional-info', label: 'More Info', isVisible: (tour: Tour) => tour.additionalInfoSections && tour.additionalInfoSections.length > 0 },
+  { href: '#guides', label: 'Guides', isVisible: (tour: Tour) => tour.guides && tour.guides.length > 0 },
 ];
 
 export function TourNav({ tour, reviews }: TourNavProps) {

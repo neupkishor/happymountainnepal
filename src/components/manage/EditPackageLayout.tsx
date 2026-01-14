@@ -16,6 +16,7 @@ const steps = [
   'faq',
   'gears',
   'reviews',
+  'guide',
   'info',
   'booking',
   'publish'

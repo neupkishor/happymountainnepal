@@ -10,6 +10,7 @@ import { TourGallery } from '@/components/tour-details/TourGallery';
 import { FaqSection } from '@/components/tour-details/FaqSection';
 import { AdditionalInfoSection } from '@/components/tour-details/AdditionalInfoSection';
 import { GearsSection } from '@/components/tour-details/GearsSection';
+import { GuidesSection } from '@/components/tour-details/GuidesSection';
 import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
 import type { Tour, ManagedReview } from '@/lib/types';
@@ -300,6 +301,12 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
               {tour.additionalInfoSections && tour.additionalInfoSections.length > 0 && (
                 <section id="additional-info" className="scroll-m-32">
                   <AdditionalInfoSection sections={tour.additionalInfoSections} />
+                </section>
+              )}
+
+              {tour.guides && tour.guides.length > 0 && (
+                <section id="guides" className="scroll-m-32">
+                  <GuidesSection guides={tour.guides} />
                 </section>
               )}
             </div>
