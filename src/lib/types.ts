@@ -45,6 +45,7 @@ export interface Review {
   author: string;
   comment: string;
   date: string | Timestamp;
+  globalId?: string; // Reference to global review
 }
 
 export interface GearItem {

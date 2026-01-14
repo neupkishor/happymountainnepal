@@ -200,6 +200,32 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </div>
       )}
 
+      <div>
+        <SectionTitle title="Reviews" editHref={`/manage/packages/${tour.id}/reviews`} />
+        {tour.reviews && tour.reviews.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {tour.reviews.map((r, i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold">{r.author}</h4>
+                      <p className="text-sm text-yellow-500 font-bold mb-1">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {typeof r.date === 'string' ? new Date(r.date).toLocaleDateString() : 'Date N/A'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{r.comment}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground italic">No reviews linked to this package.</p>
+        )}
+      </div>
+
       {tour.faq && tour.faq.length > 0 && (
         <div>
           <SectionTitle title="Frequently Asked Questions" editHref={`/manage/packages/${tour.id}/faq`} />
