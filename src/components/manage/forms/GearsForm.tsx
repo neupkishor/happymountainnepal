@@ -19,13 +19,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { type Tour, type GearItem, type ImageWithCaption } from '@/lib/types';
 import { updateTour, logError } from '@/lib/db';
 import { useTransition, useState } from 'react';
-import { Loader2, PlusCircle, Trash2, Image as ImageIcon, Check } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Image as ImageIcon, Check, Backpack } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { MediaLibraryDialog } from '../MediaLibraryDialog';
 import Image from 'next/image';
 import { Reorder } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const gearItemSchema = z.object({
     id: z.string(),
@@ -33,6 +34,7 @@ const gearItemSchema = z.object({
     description: z.string().optional(),
     image: z.string().optional(),
     provided: z.boolean().default(false),
+    globalId: z.string().optional(),
 });
 
 export const gearsFormSchema = z.object({
@@ -43,9 +45,10 @@ type FormValues = z.infer<typeof gearsFormSchema>;
 
 interface GearsFormProps {
     tour: Tour;
+    globalGears: GearItem[];
 }
 
-export function GearsForm({ tour }: GearsFormProps) {
+export function GearsForm({ tour, globalGears }: GearsFormProps) {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
     const pathname = usePathname();
@@ -82,6 +85,33 @@ export function GearsForm({ tour }: GearsFormProps) {
         setMediaPickerOpen({ isOpen: false, index: null });
     };
 
+    const [libraryOpen, setLibraryOpen] = useState(false);
+    const [selectedFromLib, setSelectedFromLib] = useState<string[]>([]);
+
+    const handleLibraryConfirm = () => {
+        const selected = globalGears.filter(g => selectedFromLib.includes(g.id));
+        selected.forEach(g => {
+            append({
+                id: uuidv4(),
+                name: g.name,
+                description: g.description,
+                image: g.image,
+                provided: g.provided,
+                globalId: g.id // Save the global ID
+            });
+        });
+        setLibraryOpen(false);
+        setSelectedFromLib([]);
+    };
+
+    const toggleLibSelection = (id: string) => {
+        if (selectedFromLib.includes(id)) {
+            setSelectedFromLib(selectedFromLib.filter(sid => sid !== id));
+        } else {
+            setSelectedFromLib([...selectedFromLib, id]);
+        }
+    };
+
     return (
         <>
             <Card>
@@ -91,10 +121,16 @@ export function GearsForm({ tour }: GearsFormProps) {
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
                                     <h3 className="text-lg font-medium">Gears & Equipment</h3>
-                                    <Button type="button" variant="outline" size="sm" onClick={() => append({ id: uuidv4(), name: '', provided: false })}>
-                                        <PlusCircle className="mr-2 h-4 w-4" />
-                                        Add Item
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button type="button" variant="secondary" size="sm" onClick={() => setLibraryOpen(true)}>
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Select from Library
+                                        </Button>
+                                        <Button type="button" variant="outline" size="sm" onClick={() => append({ id: uuidv4(), name: '', provided: false })}>
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Add Custom Item
+                                        </Button>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-4">
@@ -137,7 +173,33 @@ export function GearsForm({ tour }: GearsFormProps) {
                                                         render={({ field }) => (
                                                             <FormItem className="flex-grow">
                                                                 <FormControl>
-                                                                    <Input {...field} placeholder="Item Name (e.g., Down Jacket)" disabled={isPending} />
+                                                                    <div className="flex gap-2">
+                                                                        <Input {...field} placeholder="Item Name (e.g., Down Jacket)" disabled={isPending} />
+                                                                        {form.getValues(`gears.${index}.globalId`) && (
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                title="Sync from Global Library"
+                                                                                onClick={() => {
+                                                                                    const gid = form.getValues(`gears.${index}.globalId`);
+                                                                                    const globalItem = globalGears.find(g => g.id === gid);
+                                                                                    if (globalItem) {
+                                                                                        update(index, {
+                                                                                            ...form.getValues(`gears.${index}`),
+                                                                                            name: globalItem.name,
+                                                                                            description: globalItem.description,
+                                                                                            image: globalItem.image,
+                                                                                            provided: globalItem.provided
+                                                                                        });
+                                                                                        toast({ title: 'Synced', description: 'Gear info refreshed from library.' });
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <Backpack className="h-4 w-4 text-orange-500" />
+                                                                            </Button>
+                                                                        )}
+                                                                    </div>
                                                                 </FormControl>
                                                                 <FormMessage />
                                                             </FormItem>
@@ -189,7 +251,9 @@ export function GearsForm({ tour }: GearsFormProps) {
                                     {fields.length === 0 && (
                                         <div className="text-center py-10 border border-dashed rounded-lg">
                                             <p className="text-muted-foreground">No gears added yet.</p>
-                                            <Button type="button" variant="link" onClick={() => append({ id: uuidv4(), name: '', provided: false })}>Add your first gear item</Button>
+                                            <Button type="button" variant="link" onClick={() => setLibraryOpen(true)}>Select from library</Button>
+                                            <span className="text-muted-foreground mx-2">or</span>
+                                            <Button type="button" variant="link" onClick={() => append({ id: uuidv4(), name: '', provided: false })}>Add custom item</Button>
                                         </div>
                                     )}
                                 </div>
@@ -209,6 +273,46 @@ export function GearsForm({ tour }: GearsFormProps) {
                     </Form>
                 </CardContent>
             </Card>
+
+            <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Select from Global Library</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid grid-cols-1 gap-4 py-4">
+                        {globalGears.length === 0 ? (
+                            <p className="text-center text-muted-foreground">No global gears found. Add them in the Gears Library page.</p>
+                        ) : (
+                            globalGears.map(gear => (
+                                <div key={gear.id} className="flex items-start space-x-3 border p-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toggleLibSelection(gear.id)}>
+                                    <Checkbox
+                                        checked={selectedFromLib.includes(gear.id)}
+                                        onCheckedChange={() => toggleLibSelection(gear.id)}
+                                    />
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex justify-between">
+                                            <p className="font-medium leading-none">{gear.name}</p>
+                                            {gear.provided && <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded">Provided</span>}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground line-clamp-2">{gear.description}</p>
+                                    </div>
+                                    {gear.image && (
+                                        <div className="relative h-12 w-12 rounded overflow-hidden flex-shrink-0 bg-muted">
+                                            <Image src={gear.image} alt={gear.name} fill className="object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setLibraryOpen(false)}>Cancel</Button>
+                        <Button onClick={handleLibraryConfirm} disabled={selectedFromLib.length === 0}>
+                            Add Selected ({selectedFromLib.length})
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <MediaLibraryDialog
                 isOpen={mediaPickerOpen.isOpen}

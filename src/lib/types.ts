@@ -53,6 +53,7 @@ export interface GearItem {
   description?: string;
   image?: string;
   provided: boolean; // true if provided by company, false if user needs to bring
+  globalId?: string; // Reference to the global gear item
 }
 
 export interface BlogPost {
