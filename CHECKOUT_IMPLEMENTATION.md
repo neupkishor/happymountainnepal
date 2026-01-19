@@ -16,7 +16,14 @@ This implementation adds a checkout page with wire transfer payment instructions
   - Shows bank transfer information
   - Includes important notices for customers
   - Redirects to home if parameters are missing or invalid
+  - **WhatsApp Integration**: "Contact Us on WhatsApp" button opens WhatsApp with pre-filled message containing:
+    - Package name
+    - Duration
+    - Price
+    - Payment confirmation request
+  - Fallback to contact page if WhatsApp number is not configured
   - Beautiful, modern UI with gradient backgrounds and card layouts
+  - Green WhatsApp-branded button with icon
 
 ### 2. Payment Management Page (`/manage/payment`)
 - **Location**: `/src/app/manage/payment/page.tsx`
@@ -68,7 +75,10 @@ This implementation adds a checkout page with wire transfer payment instructions
 3. Navigate to checkout with: `/checkout?method=wire-transfer&package=[package-id]`
 4. View package details and bank transfer information
 5. Complete wire transfer using provided bank details
-6. Contact company for confirmation
+6. Click "Contact Us on WhatsApp" to send payment confirmation via WhatsApp
+   - Pre-filled message includes booking details
+   - Opens WhatsApp in a new tab/window
+   - Alternative: Use "Back to Package" to return to the tour page
 
 ### For Management:
 1. Navigate to `/manage/payment` in the admin panel
