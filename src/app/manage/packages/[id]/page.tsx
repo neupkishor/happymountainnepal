@@ -261,6 +261,28 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         </div>
       )}
 
+      <div>
+        <h2 className="text-2xl font-bold !font-headline mb-6">Billing & Payment</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Link Management</CardTitle>
+            <CardDescription>
+              Manage payment settings and generate checkout links for this package
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Configure bank transfer information and share the checkout link with customers for this package.
+            </p>
+            <Link href={`/manage/payment?package=${tour.id}`}>
+              <Button className="w-full sm:w-auto">
+                Manage Payment Settings
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   );
 }

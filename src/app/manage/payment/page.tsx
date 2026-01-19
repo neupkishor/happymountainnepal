@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { PaymentSettings } from '@/lib/types';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import type { PaymentSettings, Tour } from '@/lib/types';
 
-export default function ManagePaymentPage() {
+function ManagePaymentContent() {
+    const searchParams = useSearchParams();
+    const packageId = searchParams.get('package');
+
     const [settings, setSettings] = useState<PaymentSettings>({
         id: 'wire-transfer-settings',
         bankName: '',
@@ -15,13 +19,31 @@ export default function ManagePaymentPage() {
         additionalInstructions: '',
         updatedAt: new Date().toISOString(),
     });
+    const [packageInfo, setPackageInfo] = useState<Tour | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [copySuccess, setCopySuccess] = useState(false);
 
     useEffect(() => {
         fetchSettings();
-    }, []);
+        if (packageId) {
+            fetchPackageInfo();
+        }
+    }, [packageId]);
+
+    const fetchPackageInfo = async () => {
+        if (!packageId) return;
+        try {
+            const response = await fetch(`/api/tours/${packageId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setPackageInfo(data);
+            }
+        } catch (error) {
+            console.error('Error fetching package info:', error);
+        }
+    };
 
     const fetchSettings = async () => {
         try {
@@ -110,6 +132,54 @@ export default function ManagePaymentPage() {
                         )}
                         <span className="font-medium">{message.text}</span>
                     </div>
+                </div>
+            )}
+
+            {packageId && packageInfo && (
+                <div className="mb-6 bg-primary/5 border border-primary/20 rounded-xl p-6">
+                    <h2 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                        <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        Checkout Link for {packageInfo.name}
+                    </h2>
+                    <p className="text-sm text-slate-600 mb-4">
+                        Share this link with customers to complete their booking with wire transfer payment.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex-1 bg-white rounded-lg border border-slate-300 p-3 font-mono text-sm overflow-x-auto">
+                            {typeof window !== 'undefined' && `${window.location.origin}/checkout?method=wire-transfer&package=${packageId}`}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const link = `${window.location.origin}/checkout?method=wire-transfer&package=${packageId}`;
+                                navigator.clipboard.writeText(link);
+                                setCopySuccess(true);
+                                setTimeout(() => setCopySuccess(false), 2000);
+                            }}
+                            className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                            {copySuccess ? (
+                                <>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Copied!
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    Copy Link
+                                </>
+                            )}
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-3">
+                        💡 Tip: Make sure to save your payment settings below before sharing this link with customers.
+                    </p>
                 </div>
             )}
 
@@ -273,5 +343,20 @@ export default function ManagePaymentPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function ManagePaymentPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+                    <p className="mt-4 text-muted-foreground font-medium">Loading payment settings...</p>
+                </div>
+            </div>
+        }>
+            <ManagePaymentContent />
+        </Suspense>
     );
 }
