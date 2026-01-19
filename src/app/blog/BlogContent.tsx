@@ -17,7 +17,7 @@ const ITEMS_PER_PAGE = 12;
 export function BlogContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    
+
     // Read state from URL
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const initialSearch = searchParams.get('search') || '';
@@ -47,7 +47,7 @@ export function BlogContent() {
         } else {
             params.delete('tags');
         }
-        
+
         // Reset to page 1 when filters change
         params.set('page', '1');
 
@@ -67,20 +67,35 @@ export function BlogContent() {
 
                 const response = await fetch(`/api/blog?${queryParams.toString()}`);
                 const data = await response.json();
-                
-                setBlogPosts(data.posts);
-                setHasMore(data.hasMore);
-                setTotalCount(data.totalCount);
-                setTotalPages(data.totalPages);
+
+                // Check if the response is successful and has the expected data
+                if (response.ok && data.posts) {
+                    setBlogPosts(data.posts);
+                    setHasMore(data.hasMore);
+                    setTotalCount(data.totalCount);
+                    setTotalPages(data.totalPages);
+                } else {
+                    // Handle error response
+                    console.error("API error:", data.error || "Unknown error");
+                    setBlogPosts([]);
+                    setHasMore(false);
+                    setTotalCount(0);
+                    setTotalPages(0);
+                }
             } catch (error) {
                 console.error("Failed to fetch posts", error);
+                // Ensure state is reset on error
+                setBlogPosts([]);
+                setHasMore(false);
+                setTotalCount(0);
+                setTotalPages(0);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchPosts();
     }, [currentPage, debouncedSearchTerm, activeTags]);
-    
+
     const goToPage = (page: number) => {
         if (page >= 1 && page <= totalPages) {
             const params = new URLSearchParams(searchParams);
@@ -89,7 +104,7 @@ export function BlogContent() {
             window.scrollTo(0, 0);
         }
     };
-    
+
     const removeTag = (tagToRemove: string) => {
         setActiveTags(prev => prev.filter(t => t !== tagToRemove));
     };
@@ -115,7 +130,7 @@ export function BlogContent() {
                         <Badge key={tag} variant="default" className="py-1 px-3">
                             {tag}
                             <button onClick={() => removeTag(tag)} className="ml-2 rounded-full hover:bg-background/20 p-0.5">
-                                <X className="h-3 w-3"/>
+                                <X className="h-3 w-3" />
                             </button>
                         </Badge>
                     ))}

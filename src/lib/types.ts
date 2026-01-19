@@ -288,3 +288,15 @@ export interface Log {
   isBot?: boolean; // Whether this appears to be a bot
   metadata?: Record<string, any>; // Any additional information
 }
+
+export interface PaymentSettings {
+  id: string;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  swiftCode?: string;
+  iban?: string;
+  bankAddress?: string;
+  additionalInstructions?: string;
+  updatedAt: Timestamp | string;
+}
