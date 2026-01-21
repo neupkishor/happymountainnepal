@@ -16,3 +16,5 @@ export * from './db/team';
 export * from './db/tours';
 export * from './db/uploads';
 export * from './db/gears';
+export * from './db/feedbacks';
+

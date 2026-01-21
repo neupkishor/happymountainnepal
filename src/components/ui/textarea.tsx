@@ -1,13 +1,11 @@
 import * as React from 'react';
 
-import {cn} from '@/lib/utils';
-import { useFormField } from './form';
+import { cn } from '@/lib/utils';
+
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'>>(
-  ({className, ...props}, ref) => {
-    const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
-    const body = error ? String(error?.message) : null
-    
+  ({ className, ...props }, ref) => {
+
     const handleInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
       const textarea = event.currentTarget;
       textarea.style.height = 'auto';
@@ -29,4 +27,4 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
 );
 Textarea.displayName = 'Textarea';
 
-export {Textarea};
+export { Textarea };

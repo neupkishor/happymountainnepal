@@ -2,7 +2,7 @@
 'use client';
 
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarProvider, SidebarMenuItem } from "@/components/ui/sidebar";
-import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare, LogOut, Layout, ArrowRightLeft, Backpack, CreditCard } from "lucide-react";
+import { LayoutGrid, Mail, Users, Mountain, ArrowLeft, UsersRound, Package, Handshake, ShieldAlert, PictureInPicture, PenSquare, Star, UserCircle2, Landmark, MessageSquare, LogOut, Layout, ArrowRightLeft, Backpack, CreditCard, ListTodo } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 import { AutoHideScrollbar } from "@/components/ui/AutoHideScrollbar";
@@ -144,6 +144,12 @@ export default function ManageLayout({
                                                 <SidebarMenuButton href="/" tooltip="Back to Site">
                                                     <ArrowLeft />
                                                     <span>Back to Site</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton href="/manage/feedbacks" isActive={pathname.startsWith('/manage/feedbacks')} tooltip="Feedbacks">
+                                                    <ListTodo />
+                                                    <span>Feedbacks</span>
                                                 </SidebarMenuButton>
                                             </SidebarMenuItem>
                                             <SidebarMenuItem>
