@@ -22,7 +22,7 @@ export function WhyUs() {
             {[...Array(4)].map((_, index) => (
               <Card key={index} className="text-center bg-card p-6">
                 <CardHeader className="items-center p-0 mb-4">
-                  <Skeleton className="h-16 w-16 rounded-full" />
+                  <Skeleton className="h-20 w-20 rounded-full" />
                 </CardHeader>
                 <CardContent className="p-0">
                   <Skeleton className="h-6 w-3/4 mx-auto mb-2" />
@@ -37,12 +37,12 @@ export function WhyUs() {
             {features.map((feature, index) => (
               <Card key={index} className="text-center bg-card">
                 <CardHeader className="items-center">
-                  <div className="bg-primary/10 p-3 rounded-full relative h-14 w-14">
+                  <div className="bg-primary/10 rounded-full relative h-20 w-20 overflow-hidden">
                     <Image
                       src={feature.icon}
                       alt={`${feature.title} icon`}
                       fill
-                      className="object-contain"
+                      className="object-cover"
                     />
                   </div>
                 </CardHeader>
