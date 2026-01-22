@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { LegalContent, LegalDocument } from '@/lib/types';
 import { logError } from './errors';
@@ -72,4 +72,20 @@ export async function updateLegalDocument(id: string, data: Partial<Omit<LegalDo
     if (!firestore) throw new Error("Database not available.");
     const docRef = doc(firestore, 'legalDocuments', id);
     await updateDoc(docRef, { ...data });
+}
+
+export async function getLegalSettings(): Promise<{ requireEmailProtection: boolean }> {
+    if (!firestore) return { requireEmailProtection: true };
+    const docRef = doc(firestore, 'settings', 'legal');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as { requireEmailProtection: boolean };
+    }
+    return { requireEmailProtection: true };
+}
+
+export async function updateLegalSettings(settings: { requireEmailProtection: boolean }): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    const docRef = doc(firestore, 'settings', 'legal');
+    await setDoc(docRef, settings, { merge: true });
 }

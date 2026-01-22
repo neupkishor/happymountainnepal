@@ -141,6 +141,11 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // 4. Legal documents paywall
+  // MOVED TO PAGE LEVEL: The check is now done in /legal/documents/[id] and other pages
+  // so that we can fetch the 'requireEmailProtection' setting from Firestore.
+  // Middleware cannot easily fetch that dynamic setting.
+
+  /*
   // Skip the check if there's a verification token (user just authenticated)
   const hasVerificationToken = request.nextUrl.searchParams.has('verified');
 
@@ -157,6 +162,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     // but we won't redirect - just continue processing
     // The verification token will be in the URL but that's okay
   }
+  */
 
   // 5. Manager authentication
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {

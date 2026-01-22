@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { getLegalDocumentById, updateLegalDocument } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Save, Upload as UploadIcon, FileText } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Upload as UploadIcon, FileText, Eye, EyeOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function EditLegalDocumentPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -26,6 +28,7 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
     // Form state
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [isHidden, setIsHidden] = useState(false);
     const [currentFileUrl, setCurrentFileUrl] = useState('');
 
     // New file upload state
@@ -40,6 +43,7 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
                     setDocument(doc);
                     setTitle(doc.title);
                     setDescription(doc.description || '');
+                    setIsHidden(doc.isHidden || false);
                     setCurrentFileUrl(doc.url);
                 } else {
                     toast({ variant: 'destructive', title: 'Error', description: 'Document not found.' });
@@ -151,6 +155,7 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
                 title: title.trim(),
                 description: description.trim(),
                 url: fileUrl,
+                isHidden: isHidden,
             });
 
             toast({ title: 'Success', description: 'Document updated successfully.' });
@@ -191,6 +196,33 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
                     <CardDescription>Update the title, description, or replace the file.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                    {/* Visibility Settings */}
+                    <div className={cn(
+                        "flex flex-row items-center justify-between rounded-lg border p-4 transition-colors",
+                        isHidden
+                            ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
+                            : "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900"
+                    )}>
+                        <div className="space-y-0.5">
+                            <Label className="text-base flex items-center gap-2">
+                                {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                Public Visibility
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                                {isHidden
+                                    ? "Document is hidden from the public site."
+                                    : "Document is visible on the public site."
+                                }
+                            </p>
+                        </div>
+                        <Switch
+                            checked={!isHidden}
+                            onCheckedChange={(checked) => setIsHidden(!checked)}
+                            disabled={isSaving}
+                            className="data-[state=checked]:bg-green-600"
+                        />
+                    </div>
+
                     {/* Title */}
                     <div className="space-y-2">
                         <Label htmlFor="title">Document Title *</Label>
@@ -219,16 +251,26 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
                     {/* Current File Info */}
                     <div className="space-y-2">
                         <Label>Current File</Label>
-                        <div className="flex items-center p-3 border rounded-md bg-muted/50">
-                            <FileText className="h-5 w-5 mr-3 text-muted-foreground" />
-                            <a
-                                href={currentFileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-blue-600 hover:underline truncate flex-1"
-                            >
-                                {currentFileUrl}
-                            </a>
+                        <div className="flex flex-col gap-2 p-3 border rounded-md bg-muted/50">
+                            <div className="flex items-center">
+                                <FileText className="h-5 w-5 mr-3 text-muted-foreground" />
+                                <a
+                                    href={currentFileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:underline truncate flex-1"
+                                >
+                                    {currentFileUrl}
+                                </a>
+                            </div>
+                            <div className="mt-2 relative w-full h-48 bg-white rounded border overflow-hidden">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={currentFileUrl}
+                                    alt="Document Preview"
+                                    className="w-full h-full object-contain"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -237,7 +279,7 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
                         <Label className="text-base font-semibold">Replace File (Optional)</Label>
                         <div
                             className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors mt-2"
-                            onClick={() => document.getElementById('edit-file-input')?.click()}
+                            onClick={() => window.document.getElementById('edit-file-input')?.click()}
                         >
                             <input
                                 id="edit-file-input"

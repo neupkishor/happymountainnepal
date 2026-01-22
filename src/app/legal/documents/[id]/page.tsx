@@ -1,7 +1,7 @@
 
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { getLegalDocumentById } from '@/lib/db';
+import { getLegalDocumentById, getLegalSettings } from '@/lib/db';
 import { FileText, ChevronLeft, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,22 +14,36 @@ export default async function LegalDocumentPage({ params }: { params: Promise<{ 
     const userEmail = cookieStore.get('user_email')?.value;
     const isManager = cookieStore.has('manager_username');
 
-    if (!userEmail) {
-        redirect('/legal/documents/gate');
-    }
-
-    const document = await getLegalDocumentById(id);
+    const [document, settings] = await Promise.all([
+        getLegalDocumentById(id),
+        getLegalSettings()
+    ]);
 
     if (!document) {
         notFound();
     }
+
+    if (document.isHidden && !isManager) {
+        notFound();
+    }
+
+    // Use global setting for protection
+    const requireProtection = settings.requireEmailProtection;
+
+    if (requireProtection && !userEmail) {
+        redirect('/legal/documents/gate');
+    }
+
+    // If protection is OFF, we do not watermark with an email (passing empty string)
+    // The visual watermark "DO NOT DISTRIBUTE" still applies from the API logic if implemented there
+    const viewerEmail = requireProtection ? (userEmail || '') : '';
 
     return (
         <div className="container mx-auto py-8">
             <AdminPageControl editPath={`/manage/legal/documents/${id}`} />
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
-                    <Button variant="ghost" asChild className="pl-0 hover:bg-transparent">
+                    <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
                         <Link href="/legal/documents">
                             <ChevronLeft className="mr-2 h-4 w-4" /> Back to Documents
                         </Link>
@@ -39,22 +53,22 @@ export default async function LegalDocumentPage({ params }: { params: Promise<{ 
                             <FileText className="h-8 w-8 text-primary" />
                             {document.title}
                         </h1>
-                        {isManager && (
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href={`/manage/legal/documents/${id}`}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Edit Document
-                                </Link>
-                            </Button>
-                        )}
+
                     </div>
-                    <p className="text-muted-foreground mt-2">
-                        Authorized access for: <span className="font-semibold text-foreground">{userEmail}</span>
-                    </p>
+                    {document.isHidden && isManager && (
+                        <div className="mt-2 inline-flex items-center rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
+                            HIDDEN FROM PUBLIC
+                        </div>
+                    )}
+                    {requireProtection && (
+                        <p className="text-muted-foreground mt-2">
+                            Authorized access for: <span className="font-semibold text-foreground">{userEmail}</span>
+                        </p>
+                    )}
                 </div>
 
                 <div className="relative bg-muted/20 border rounded-lg overflow-hidden">
-                    <DocumentViewer url={document.url} email={userEmail} deviceId={cookieStore.get('temp_account')?.value || 'unknown'} />
+                    <DocumentViewer url={document.url} email={viewerEmail} deviceId={cookieStore.get('temp_account')?.value || 'unknown'} />
                 </div>
             </div>
         </div>

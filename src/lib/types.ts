@@ -233,6 +233,8 @@ export interface LegalDocument {
   description?: string;
   url: string;
   createdAt: string;
+  requireEmailProtection?: boolean;
+  isHidden?: boolean;
 }
 
 
