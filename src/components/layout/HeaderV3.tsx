@@ -245,25 +245,87 @@ export function HeaderV3() {
   const [isManager, setIsManager] = React.useState(false);
 
   React.useEffect(() => {
-    const checkManagerCookie = () => {
-      const match = document.cookie.match(new RegExp('(^| )manager_username=([^;]+)'));
-      setIsManager(!!match);
+    // Check sessionStorage first (persists across page reloads in same tab)
+    const checkManagerStatus = () => {
+      let hasManager = false;
+
+      // Check sessionStorage
+      const sessionManager = sessionStorage.getItem('isManager');
+      if (sessionManager === 'true') {
+        hasManager = true;
+      } else {
+        // Fallback: check cookies for manager_username
+        const cookies = document.cookie;
+        const managerCookie = cookies.split('; ').find(row => row.startsWith('manager_username='));
+        if (managerCookie) {
+          const value = managerCookie.split('=')[1];
+          // Only set as manager if the cookie value is not empty
+          hasManager = !!(value && value.trim() !== '');
+
+          // Store in sessionStorage for future checks
+          if (hasManager) {
+            sessionStorage.setItem('isManager', 'true');
+          }
+        }
+      }
+
+      setIsManager(hasManager);
     };
-    checkManagerCookie();
+
+    // Check on mount
+    checkManagerStatus();
+
+    // Listen for custom event when login happens
+    const handleLoginEvent = () => {
+      checkManagerStatus();
+    };
+
+    window.addEventListener('managerLoginSuccess', handleLoginEvent);
+
+    return () => {
+      window.removeEventListener('managerLoginSuccess', handleLoginEvent);
+    };
   }, []);
 
   let managerEditTarget: string | null = null;
+  let managerButtonText = 'Edit This Page';
+
   if (isManager) {
+    // If a specific edit URL is set via AdminPageControl, use it
     if (editUrl) {
       managerEditTarget = editUrl;
-    } else if (pathname === '/blogs' || pathname === '/blog') { // Handle potential singular/plural mismatch
+      // Determine button text based on the edit URL
+      if (editUrl.includes('/manage/packages/')) {
+        managerButtonText = 'Edit Tour';
+      } else if (editUrl.includes('/manage/blog/')) {
+        managerButtonText = 'Edit Blog';
+      } else if (editUrl.includes('/manage/team/')) {
+        managerButtonText = 'Edit Team Member';
+      } else if (editUrl.includes('/manage/legal/documents/')) {
+        managerButtonText = 'Edit Document';
+      }
+    }
+    // For specific pages, link to the appropriate management section
+    else if (pathname === '/') {
+      managerEditTarget = '/manage';
+      managerButtonText = 'Manage Site';
+    } else if (pathname === '/blog') {
       managerEditTarget = '/manage/blog';
+      managerButtonText = 'Manage Blogs';
     } else if (pathname === '/tours') {
       managerEditTarget = '/manage/packages';
+      managerButtonText = 'Manage Tours';
     } else if (pathname === '/legal/documents') {
       managerEditTarget = '/manage/legal/documents';
+      managerButtonText = 'Manage Documents';
     } else if (pathname === '/about/teams') {
       managerEditTarget = '/manage/team';
+      managerButtonText = 'Manage Team';
+    }
+    // For all other pages, default to the main manage page
+    else {
+      managerEditTarget = '/manage';
+      managerButtonText = 'Manage Site';
     }
   }
 
@@ -373,14 +435,14 @@ export function HeaderV3() {
             <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
               {managerEditTarget ? (
                 <Button
-                  variant="default"
+                  variant="outline"
                   size="sm"
                   asChild
-                  className="h-9 px-3 transition-all group/contact bg-blue-600 hover:bg-blue-700 text-white border-none"
+                  className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/edit"
                 >
                   <Link href={managerEditTarget} className="flex items-center gap-2">
-                    <Edit className="h-4 w-4" />
-                    <span className="hidden sm:inline text-sm font-medium">Edit This Page</span>
+                    <Edit className="h-4 w-4 text-primary group-hover/edit:scale-110 transition-transform" />
+                    <span className="hidden sm:inline text-sm font-medium">{managerButtonText}</span>
                   </Link>
                 </Button>
               ) : (

@@ -26,7 +26,8 @@ export default function ManagerLoginPage() {
                 const data = await response.json();
 
                 if (data.valid) {
-                    // User is already authenticated, redirect to dashboard
+                    // User is already authenticated, set sessionStorage and redirect
+                    sessionStorage.setItem('isManager', 'true');
                     router.push('/manage');
                     return;
                 }
@@ -57,6 +58,12 @@ export default function ManagerLoginPage() {
             const data = await response.json();
 
             if (response.ok) {
+                // Set manager status in sessionStorage
+                sessionStorage.setItem('isManager', 'true');
+
+                // Dispatch event to update header immediately
+                window.dispatchEvent(new Event('managerLoginSuccess'));
+
                 // Redirect to manage page
                 router.push('/manage');
                 router.refresh();

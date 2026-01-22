@@ -18,6 +18,9 @@ export default function ManageLayout({
 
     const handleLogout = async () => {
         try {
+            // Clear sessionStorage
+            sessionStorage.removeItem('isManager');
+
             await fetch('/api/manager-auth', {
                 method: 'DELETE',
             });
