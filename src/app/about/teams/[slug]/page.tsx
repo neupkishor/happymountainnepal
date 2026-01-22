@@ -3,6 +3,7 @@ import { getTeamMemberBySlug } from '@/lib/db';
 import TeamMemberClient from './team-member-client';
 import { notFound } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
 
 type TeamMemberPageProps = {
   params: Promise<{
@@ -18,5 +19,10 @@ export default async function TeamMemberPage({ params }: TeamMemberPageProps) {
     notFound();
   }
 
-  return <TeamMemberClient member={member} />;
+  return (
+    <>
+      <AdminPageControl editPath={`/manage/team/${member.id}`} />
+      <TeamMemberClient member={member} />
+    </>
+  );
 }

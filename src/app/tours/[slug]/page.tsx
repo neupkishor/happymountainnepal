@@ -3,6 +3,7 @@ import TourDetailClient from './tour-detail-client';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next'; // Import Metadata type
 import { headers } from 'next/headers';
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
 
 type TourDetailPageProps = {
   params: Promise<{
@@ -65,5 +66,10 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
   const headersList = await headers();
   const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';
 
-  return <TourDetailClient tour={tour} tempUserId={tempUserId} />;
+  return (
+    <>
+      <AdminPageControl editPath={`/manage/packages/${tour.id}`} />
+      <TourDetailClient tour={tour} tempUserId={tempUserId} />
+    </>
+  );
 }

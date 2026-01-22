@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight, LogIn, Phone, Mail, MapPin } from 'lucide-react';
+import { Mountain, Search, User, Menu, X, ChevronDown, ChevronRight, LogIn, Phone, Mail, MapPin, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HeaderV3Nav, type NavLink } from './HeaderV3Nav';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useUser } from '@/firebase';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { useHeaderLinks } from '@/hooks/use-navigation-data';
+import { useAdminControl } from '@/context/AdminControlContext';
+import { usePathname } from 'next/navigation';
 
 // Fallback data if API fails
 const defaultNavLinks: NavLink[] = [
@@ -238,6 +240,33 @@ export function HeaderV3() {
   const { links: apiLinks, loading: linksLoading } = useHeaderLinks();
   const whatsappLink = `https://wa.me/${profile?.phone?.replace(/\D/g, '')}`;
 
+  const { editUrl } = useAdminControl();
+  const pathname = usePathname();
+  const [isManager, setIsManager] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkManagerCookie = () => {
+      const match = document.cookie.match(new RegExp('(^| )manager_username=([^;]+)'));
+      setIsManager(!!match);
+    };
+    checkManagerCookie();
+  }, []);
+
+  let managerEditTarget: string | null = null;
+  if (isManager) {
+    if (editUrl) {
+      managerEditTarget = editUrl;
+    } else if (pathname === '/blogs' || pathname === '/blog') { // Handle potential singular/plural mismatch
+      managerEditTarget = '/manage/blog';
+    } else if (pathname === '/tours') {
+      managerEditTarget = '/manage/packages';
+    } else if (pathname === '/legal/documents') {
+      managerEditTarget = '/manage/legal/documents';
+    } else if (pathname === '/about/teams') {
+      managerEditTarget = '/manage/team';
+    }
+  }
+
   // Use API links if available, otherwise use default links
   const navLinks = apiLinks.length > 0 ? apiLinks : defaultNavLinks;
 
@@ -340,32 +369,48 @@ export function HeaderV3() {
           {/* Right aligned section */}
           <div className="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0">
 
-            {/* Contact Buttons */}
+            {/* Contact Buttons or Manager Edit Button */}
             <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/contact"
-              >
-                <a href={`mailto:${profile?.contactEmail || ''}`} className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-primary group-hover/contact:scale-110 transition-transform" />
-                  <span className="hidden sm:inline text-sm font-medium">Email Us</span>
-                  <span className="sm:hidden text-sm font-medium">Email now</span>
-                </a>
-              </Button>
+              {managerEditTarget ? (
+                <Button
+                  variant="default"
+                  size="sm"
+                  asChild
+                  className="h-9 px-3 transition-all group/contact bg-blue-600 hover:bg-blue-700 text-white border-none"
+                >
+                  <Link href={managerEditTarget} className="flex items-center gap-2">
+                    <Edit className="h-4 w-4" />
+                    <span className="hidden sm:inline text-sm font-medium">Edit This Page</span>
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/contact"
+                  >
+                    <a href={`mailto:${profile?.contactEmail || ''}`} className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary group-hover/contact:scale-110 transition-transform" />
+                      <span className="hidden sm:inline text-sm font-medium">Email Us</span>
+                      <span className="sm:hidden text-sm font-medium">Email now</span>
+                    </a>
+                  </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/contact"
-              >
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                  <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} className="shrink-0 group-hover/contact:scale-110 transition-transform" />
-                  <span className="text-sm font-medium">Contact now</span>
-                </a>
-              </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/contact"
+                  >
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                      <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} className="shrink-0 group-hover/contact:scale-110 transition-transform" />
+                      <span className="text-sm font-medium">Contact now</span>
+                    </a>
+                  </Button>
+                </>
+              )}
             </div>
 
 

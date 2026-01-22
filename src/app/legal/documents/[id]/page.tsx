@@ -6,6 +6,7 @@ import { FileText, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DocumentViewer } from './viewer';
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
 
 export default async function LegalDocumentPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -24,6 +25,7 @@ export default async function LegalDocumentPage({ params }: { params: Promise<{ 
 
     return (
         <div className="container mx-auto py-8">
+            <AdminPageControl editPath={`/manage/legal/documents/${id}`} />
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
                     <Button variant="ghost" asChild className="pl-0 hover:bg-transparent">

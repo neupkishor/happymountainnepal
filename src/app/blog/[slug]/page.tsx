@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next'; // Import Metadata type
 import { Timestamp } from 'firebase/firestore';
 import { headers } from 'next/headers';
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
 
 type BlogDetailPageProps = {
   params: Promise<{
@@ -80,5 +81,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const headersList = await headers();
   const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';
 
-  return <BlogPostClient post={serializablePost} tempUserId={tempUserId} />;
+  return (
+    <>
+      <AdminPageControl editPath={`/manage/blog/${post.id}`} />
+      <BlogPostClient post={serializablePost} tempUserId={tempUserId} />
+    </>
+  );
 }

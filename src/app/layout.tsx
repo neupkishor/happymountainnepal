@@ -9,6 +9,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import 'quill/dist/quill.snow.css'; // Import Quill's CSS
 import { ConditionalFooter } from '@/components/layout/ConditionalFooter';
 import { PageViewTracker } from '@/lib/client-logger';
+import { AdminControlProvider } from '@/context/AdminControlContext';
 
 export const metadata: Metadata = {
   title: {
@@ -60,13 +61,15 @@ export default function RootLayout({
         <ProgressBar />
         <FirebaseClientProvider>
           <WishlistProvider>
-            <div className="flex flex-col min-h-screen">
-              <div className="relative z-50">
-                <Header />
+            <AdminControlProvider>
+              <div className="flex flex-col min-h-screen">
+                <div className="relative z-50">
+                  <Header />
+                </div>
+                <main className="flex-grow pt-16">{children}</main>
+                <ConditionalFooter />
               </div>
-              <main className="flex-grow pt-16">{children}</main>
-              <ConditionalFooter />
-            </div>
+            </AdminControlProvider>
             {/* Chatbot removed from here, will be added to specific pages */}
             <Toaster />
             <PageViewTracker />
