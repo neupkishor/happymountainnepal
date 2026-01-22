@@ -92,26 +92,49 @@ export function OurPartners() {
                   onMouseEnter={() => autoplay.current.stop()}
                   onMouseLeave={() => autoplay.current.play()}
                 >
-                  {/* === CARD START === */}
-                  <Card className="rounded-xl overflow-hidden bg-white">
-                    <CardContent className="p-0">
-                      <div className="relative h-48 w-full bg-white flex items-center justify-center">
-                        <Image
-                          src={partner.logo}
-                          alt={partner.name}
-                          fill
-                          className="object-contain p-6"
-                          data-ai-hint="company logo"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  {/* === CARD END === */}
+                  {/* Wrap content in link if it exists */}
+                  {partner.link ? (
+                    <a href={partner.link} target="_blank" rel="noopener noreferrer" className="block group cursor-pointer">
+                      <Card className="rounded-xl overflow-hidden bg-white group-hover:shadow-lg transition-shadow">
+                        <CardContent className="p-0">
+                          <div className="relative h-48 w-full bg-white flex items-center justify-center">
+                            <Image
+                              src={partner.logo}
+                              alt={partner.name}
+                              fill
+                              className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+                              data-ai-hint="company logo"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                  {/* Text outside card */}
-                  <h3 className="mt-4 text-lg font-semibold">
-                    {partner.name}
-                  </h3>
+                      <h3 className="mt-4 text-lg font-semibold group-hover:text-primary transition-colors">
+                        {partner.name}
+                      </h3>
+                    </a>
+                  ) : (
+                    <div>
+                      <Card className="rounded-xl overflow-hidden bg-white">
+                        <CardContent className="p-0">
+                          <div className="relative h-48 w-full bg-white flex items-center justify-center">
+                            <Image
+                              src={partner.logo}
+                              alt={partner.name}
+                              fill
+                              className="object-contain p-6"
+                              data-ai-hint="company logo"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <h3 className="mt-4 text-lg font-semibold">
+                        {partner.name}
+                      </h3>
+                    </div>
+                  )}
+
                   <p className="mt-1 text-sm text-muted-foreground">
                     {partner.description}
                   </p>

@@ -27,6 +27,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   logo: z.string().url({ message: "Please upload a logo." }).min(1, "Logo is required."),
+  link: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -42,10 +43,11 @@ export function PartnerForm({ partner }: PartnerFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: partner || {
-      name: '',
-      description: '',
-      logo: '',
+    defaultValues: {
+      name: partner?.name || '',
+      description: partner?.description || '',
+      logo: partner?.logo || '',
+      link: partner?.link || '',
     },
   });
 
@@ -62,8 +64,8 @@ export function PartnerForm({ partner }: PartnerFormProps) {
       } catch (error: any) {
         console.error("Failed to save partner:", error);
         const context = {
-            partnerId: partner?.id,
-            values: values
+          partnerId: partner?.id,
+          values: values
         };
         logError({ message: `Failed to save partner: ${error.message}`, stack: error.stack, pathname, context });
         toast({
@@ -111,10 +113,24 @@ export function PartnerForm({ partner }: PartnerFormProps) {
                   </FormItem>
                 )}
               />
-              
+
+              <FormField
+                control={form.control}
+                name="link"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website Link (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., https://www.welcomenepal.com" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <MediaPicker name="logo" label="Partner Logo" /> {/* Using MediaPicker */}
               <FormMessage>{form.formState.errors.logo?.message}</FormMessage>
-              
+
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {partner ? 'Update Partner' : 'Create Partner'}
