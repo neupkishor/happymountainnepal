@@ -1,6 +1,9 @@
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
+
 export default function PrivacyPolicyPage() {
     return (
         <div className="container mx-auto py-16">
+            <AdminPageControl editPath="/manage/legal/privacy" />
             <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl md:text-5xl font-bold !font-headline">Privacy Policy</h1>
@@ -11,7 +14,7 @@ export default function PrivacyPolicyPage() {
                     <p>
                         Welcome to Happy Mountain Nepal. We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website.
                     </p>
-                    
+
                     <h2>2. Information We Collect</h2>
                     <p>
                         We may collect personal information such as your name, email address, and phone number when you fill out our contact or booking forms. We also collect non-personal information, such as browser type and pages visited, to improve our website.

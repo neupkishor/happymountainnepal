@@ -1,8 +1,9 @@
 import { ContactForm } from '@/components/ContactForm';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
 
 export default function ContactPage() {
-    const jsonLdSchema = {
+  const jsonLdSchema = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
     "mainEntity": {
@@ -25,7 +26,8 @@ export default function ContactPage() {
 
   return (
     <div className="bg-background">
-       <script
+      <AdminPageControl editPath="/manage/profile" />
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
       />

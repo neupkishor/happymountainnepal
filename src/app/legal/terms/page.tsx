@@ -1,6 +1,9 @@
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
+
 export default function TermsOfServicePage() {
     return (
         <div className="container mx-auto py-16">
+            <AdminPageControl editPath="/manage/legal/terms" />
             <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl md:text-5xl font-bold !font-headline">Terms of Service</h1>
@@ -11,7 +14,7 @@ export default function TermsOfServicePage() {
                     <p>
                         By using our website and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
                     </p>
-                    
+
                     <h2>2. Booking and Payments</h2>
                     <p>
                         All bookings are subject to availability. A deposit is required to secure your booking. The final payment schedule will be communicated to you upon booking confirmation. Cancellation policies apply and will be detailed in your booking agreement.

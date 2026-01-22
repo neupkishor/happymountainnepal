@@ -7,6 +7,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import type { TeamMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState, useEffect } from 'react';
+import { AdminPageControl } from '@/components/admin/AdminPageControl';
 
 export default function AboutPage() {
   const firestore = useFirestore();
@@ -53,7 +54,8 @@ export default function AboutPage() {
 
   return (
     <div className="bg-background">
-       <script
+      <AdminPageControl editPath="/manage/profile" />
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
       />
@@ -66,7 +68,7 @@ export default function AboutPage() {
         </div>
 
         <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Experts</h2>
+          <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Experts</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12 lg:gap-x-12 lg:gap-y-16">
           {teamMembers?.map((member) => (
@@ -75,7 +77,7 @@ export default function AboutPage() {
         </div>
       </div>
 
-       <div className="bg-secondary py-16 lg:py-24">
+      <div className="bg-secondary py-16 lg:py-24">
         <div className="container mx-auto">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-bold !font-headline">Our Mission</h2>
