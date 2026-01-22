@@ -79,6 +79,7 @@ export function Footer() {
               <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
               <li><Link href="/legal/privacy" className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</Link></li>
               <li><Link href="/legal/terms" className="text-sm text-muted-foreground hover:text-primary">Terms of Service</Link></li>
+              <li><Link href="/checkout?method=wireTransfer" className="text-sm text-muted-foreground hover:text-primary">Bank Payment</Link></li>
               <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">Contact</Link></li>
             </ul>
           </div>
