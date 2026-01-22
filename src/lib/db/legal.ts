@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, Timestamp, doc, setDoc, deleteDoc, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import type { LegalContent, LegalDocument } from '@/lib/types';
 import { logError } from './errors';
@@ -31,13 +31,21 @@ export async function getLegalDocuments(): Promise<LegalDocument[]> {
     const docsRef = collection(firestore, 'legalDocuments');
     const q = query(docsRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => {
+    const docs = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
             id: doc.id,
             ...data,
             createdAt: (data.createdAt as Timestamp).toDate().toISOString()
         } as LegalDocument;
+    });
+
+    // Sort by orderIndex ascending, then by createdAt descending
+    return docs.sort((a, b) => {
+        const orderA = a.orderIndex ?? Number.MAX_SAFE_INTEGER;
+        const orderB = b.orderIndex ?? Number.MAX_SAFE_INTEGER;
+        if (orderA !== orderB) return orderA - orderB;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 }
 
@@ -88,4 +96,15 @@ export async function updateLegalSettings(settings: { requireEmailProtection: bo
     if (!firestore) throw new Error("Database not available.");
     const docRef = doc(firestore, 'settings', 'legal');
     await setDoc(docRef, settings, { merge: true });
+}
+export async function updateLegalDocumentsOrder(updates: { id: string, orderIndex: number }[]): Promise<void> {
+    if (!firestore) throw new Error("Database not available.");
+    const batch = writeBatch(firestore);
+
+    updates.forEach(({ id, orderIndex }) => {
+        const docRef = doc(firestore, 'legalDocuments', id);
+        batch.update(docRef, { orderIndex });
+    });
+
+    await batch.commit();
 }

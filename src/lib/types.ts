@@ -235,6 +235,7 @@ export interface LegalDocument {
   createdAt: string;
   requireEmailProtection?: boolean;
   isHidden?: boolean;
+  orderIndex?: number;
 }
 
 

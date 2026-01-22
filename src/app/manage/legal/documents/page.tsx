@@ -7,18 +7,82 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getLegalDocuments, getLegalSettings, updateLegalSettings } from '@/lib/db';
+import { getLegalDocuments, getLegalSettings, updateLegalSettings, updateLegalDocumentsOrder } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Upload as UploadIcon, Plus, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Upload as UploadIcon, Plus, ChevronRight, ShieldCheck, GripVertical } from 'lucide-react';
 import Link from 'next/link';
 import { Switch } from "@/components/ui/switch";
+import { Reorder, useDragControls } from "framer-motion";
+import { useRef } from 'react';
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
+function DraggableDocumentCard({ doc, isLast }: { doc: LegalDocument; isLast: boolean }) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={doc}
+      id={doc.id}
+      dragListener={false}
+      dragControls={dragControls}
+      className="relative bg-card"
+    >
+      <div className={cn(
+        "flex items-center gap-4 p-4 hover:bg-accent/5 transition-colors",
+        !isLast && "border-b"
+      )}>
+        <div
+          onPointerDown={(e) => dragControls.start(e)}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground p-2 hover:bg-muted rounded transition-colors touch-none"
+        >
+          <GripVertical className="h-5 w-5" />
+        </div>
+
+        <Link
+          href={`/manage/legal/documents/${doc.id}`}
+          className="flex-1 flex items-center gap-4 min-w-0 group"
+        >
+          <div className="h-20 w-20 bg-muted rounded flex items-center justify-center overflow-hidden border">
+            <div className="relative w-full h-full bg-white flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={doc.url}
+                alt={doc.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate text-base group-hover:text-primary transition-colors">{doc.title}</p>
+            {doc.description ? (
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                {doc.description}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic mt-1">
+                No description provided
+              </p>
+            )}
+          </div>
+
+          <div className="flex-shrink-0 text-muted-foreground group-hover:text-primary transition-colors">
+            <ChevronRight className="h-5 w-5" />
+          </div>
+        </Link>
+      </div>
+    </Reorder.Item>
+  );
+}
 
 export default function LegalDocumentsPage() {
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGlobalProtectionEnabled, setIsGlobalProtectionEnabled] = useState(true);
   const { toast } = useToast();
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -68,6 +132,28 @@ export default function LegalDocumentsPage() {
     }
   };
 
+  const handleReorder = (newOrder: LegalDocument[]) => {
+    setDocuments(newOrder);
+
+    // Debounce save
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const updates = newOrder.map((doc, index) => ({ id: doc.id, orderIndex: index }));
+        await updateLegalDocumentsOrder(updates);
+        toast({ title: "Order saved" });
+      } catch (error) {
+        console.error("Failed to save order", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to save document order."
+        });
+      }
+    }, 1000); // 1 second debounce
+  };
+
 
 
   return (
@@ -100,41 +186,48 @@ export default function LegalDocumentsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Global Settings Card */}
-          <Card className="mb-6 border-blue-200 bg-blue-50/50 dark:bg-blue-950/10 dark:border-blue-900">
-            <CardContent className="p-4">
+          {/* Settings & Upload Block */}
+          <Card className="mb-6 overflow-hidden border-blue-200/50">
+            {/* Global Settings */}
+            {/* Global Settings */}
+            <div
+              className="p-6 cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleToggleGlobalProtection(!isGlobalProtectionEnabled)}
+            >
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <h3 className="font-semibold text-base flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <ShieldCheck className={cn("h-4 w-4", isGlobalProtectionEnabled ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
                     Global Protection
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    If enabled, all documents require users to verify their email before viewing.
+                    {isGlobalProtectionEnabled
+                      ? "Documents protected by email gate."
+                      : "Documents open, semi protected."
+                    }
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Switch
-                    checked={isGlobalProtectionEnabled}
-                    onCheckedChange={handleToggleGlobalProtection}
-                  />
-                  <span className="text-sm font-medium w-16 text-right">
-                    {isGlobalProtectionEnabled ? 'Enabled' : 'Disabled'}
+                  <span className={cn(
+                    "text-sm font-medium w-16 text-right",
+                    isGlobalProtectionEnabled ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+                  )}>
+                    {isGlobalProtectionEnabled ? 'On' : 'Off'}
                   </span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Add New Document Card */}
-          <Link href="/manage/legal/documents/upload" className="block">
-            <Card className="cursor-pointer border-dashed hover:bg-primary/5 transition-colors">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="h-16 w-24 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <UploadIcon className="h-8 w-8 text-primary" />
+            <Separator />
+
+            {/* Upload New Document */}
+            <Link href="/manage/legal/documents/upload" className="block hover:bg-muted/50 transition-colors">
+              <div className="p-6 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <UploadIcon className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-primary">Upload New Document</h3>
+                  <h3 className="font-semibold text-base text-primary">Upload New Document</h3>
                   <p className="text-sm text-muted-foreground">
                     Click to upload a new legal document, certificate, or license.
                   </p>
@@ -142,50 +235,24 @@ export default function LegalDocumentsPage() {
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Plus className="h-5 w-5 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          {/* Document List */}
-          {documents.map(doc => (
-            <Link
-              key={doc.id}
-              href={`/manage/legal/documents/${doc.id}`}
-              className="block"
-            >
-              <Card className="hover:bg-accent/5 transition-colors">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-20 w-20 bg-muted rounded flex items-center justify-center overflow-hidden border">
-                    <div className="relative w-full h-full bg-white flex items-center justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={doc.url}
-                        alt={doc.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-base">{doc.title}</p>
-                    {doc.description ? (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                        {doc.description}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic mt-1">
-                        No description provided
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex-shrink-0 text-muted-foreground">
-                    <ChevronRight className="h-5 w-5" />
-                  </div>
-                </CardContent>
-              </Card>
+              </div>
             </Link>
-          ))}
+          </Card>
+
+          {/* Document List Block */}
+          {documents.length > 0 && (
+            <Card className="overflow-hidden">
+              <Reorder.Group axis="y" values={documents} onReorder={handleReorder} className="flex flex-col">
+                {documents.map((doc, i) => (
+                  <DraggableDocumentCard
+                    key={doc.id}
+                    doc={doc}
+                    isLast={i === documents.length - 1}
+                  />
+                ))}
+              </Reorder.Group>
+            </Card>
+          )}
 
           {documents.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
