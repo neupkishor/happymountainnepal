@@ -231,7 +231,7 @@ const hasLevel3 = (children: NavLink[] | undefined): boolean => {
   return children.some(child => hasChildren(child));
 }
 
-export function HeaderV3() {
+export function HeaderV3({ initialIsManager = false }: { initialIsManager?: boolean }) {
   const [isMenuOpen, setMenuOpen] = React.useState(false);
   const [activeSubMenu, setActiveSubMenu] = React.useState<NavLink | null>(null);
   const [activeLevel2Item, setActiveLevel2Item] = React.useState<string | null>(null);
@@ -242,11 +242,18 @@ export function HeaderV3() {
 
   const { editUrl } = useAdminControl();
   const pathname = usePathname();
-  const [isManager, setIsManager] = React.useState(false);
+  const [isManager, setIsManager] = React.useState(initialIsManager);
 
   React.useEffect(() => {
     // Check sessionStorage first (persists across page reloads in same tab)
     const checkManagerStatus = () => {
+      // If we received initialIsManager as true from server, trust it
+      if (initialIsManager) {
+        sessionStorage.setItem('isManager', 'true');
+        setIsManager(true);
+        return;
+      }
+
       let hasManager = false;
 
       // Check sessionStorage
@@ -254,16 +261,14 @@ export function HeaderV3() {
       if (sessionManager === 'true') {
         hasManager = true;
       } else {
-        // Fallback: check cookies for manager_username
+        // Fallback: check cookies only if they are accessible (though HttpOnly ones won't be visible)
+        // This is mostly for non-HttpOnly dev cookies or historic reasons
         const cookies = document.cookie;
         const managerCookie = cookies.split('; ').find(row => row.startsWith('manager_username='));
         if (managerCookie) {
           const value = managerCookie.split('=')[1];
-          // Only set as manager if the cookie value is not empty
-          hasManager = !!(value && value.trim() !== '');
-
-          // Store in sessionStorage for future checks
-          if (hasManager) {
+          if (value && value.trim() !== '') {
+            hasManager = true;
             sessionStorage.setItem('isManager', 'true');
           }
         }
@@ -277,7 +282,8 @@ export function HeaderV3() {
 
     // Listen for custom event when login happens
     const handleLoginEvent = () => {
-      checkManagerStatus();
+      sessionStorage.setItem('isManager', 'true');
+      setIsManager(true);
     };
 
     window.addEventListener('managerLoginSuccess', handleLoginEvent);
@@ -285,7 +291,7 @@ export function HeaderV3() {
     return () => {
       window.removeEventListener('managerLoginSuccess', handleLoginEvent);
     };
-  }, []);
+  }, [initialIsManager]);
 
   let managerEditTarget: string | null = null;
   let managerButtonText = 'Edit This Page';

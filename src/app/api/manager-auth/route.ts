@@ -1,6 +1,17 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getManagerData } from '@/lib/base-edge'; // Use the edge-safe fetcher
+
+// Check auth status
+export async function GET(request: NextRequest) {
+    const username = request.cookies.get('manager_username')?.value;
+    const password = request.cookies.get('manager_password')?.value;
+
+    if (username && password) {
+        return NextResponse.json({ valid: true }, { status: 200 });
+    }
+
+    return NextResponse.json({ valid: false }, { status: 200 });
+}
 
 // Login endpoint
 export async function POST(request: NextRequest) {

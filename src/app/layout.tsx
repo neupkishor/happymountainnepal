@@ -1,5 +1,6 @@
 
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { WishlistProvider } from '@/context/WishlistContext';
@@ -26,11 +27,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const isManager = cookieStore.has('manager_username');
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -64,7 +68,7 @@ export default function RootLayout({
             <AdminControlProvider>
               <div className="flex flex-col min-h-screen">
                 <div className="relative z-50">
-                  <Header />
+                  <Header initialIsManager={isManager} />
                 </div>
                 <main className="flex-grow pt-16">{children}</main>
                 <ConditionalFooter />
