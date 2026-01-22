@@ -1,23 +1,30 @@
 
-import { getLegalDocuments } from '@/lib/db';
+import { getLegalDocuments, getLegalSettings } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
 import { FileText } from 'lucide-react';
 import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { DocumentViewer as DocumentCard } from './components/document-card';
 import { UrlCleaner } from './components/url-cleaner';
 
 
 export default async function LegalDocumentsPage() {
+  const cookieStore = await cookies();
+  const userEmail = cookieStore.get('user_email')?.value || 'guest';
+
+  // Check global protection settings
+  const settings = await getLegalSettings();
+  if (settings.requireEmailProtection && userEmail === 'guest') {
+    redirect('/legal/documents/gate?returnTo=/legal/documents');
+  }
+
   let documents: LegalDocument[] = [];
   try {
     documents = await getLegalDocuments();
   } catch (error) {
     console.error("Failed to load legal documents", error);
   }
-
-  const cookieStore = await cookies();
-  const userEmail = cookieStore.get('user_email')?.value || 'guest';
 
   // Get request metadata for device ID
   const headerList = await headers();
