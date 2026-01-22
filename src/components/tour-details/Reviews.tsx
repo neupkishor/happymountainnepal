@@ -14,13 +14,13 @@ import { useState } from 'react';
 interface ReviewsProps {
   reviews: ManagedReview[];
   tourId: string;
-  isLoading: boolean;
-  hasMore: boolean;
-  onLoadMore: () => void;
-  allToursMap: Map<string, string>; // Map of tourId -> tourName
+  isLoading?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  allToursMap?: Map<string, string>; // Map of tourId -> tourName
 }
 
-export function Reviews({ reviews, tourId, isLoading, hasMore, onLoadMore, allToursMap }: ReviewsProps) {
+export function Reviews({ reviews, tourId, isLoading = false, hasMore = false, onLoadMore, allToursMap = new Map() }: ReviewsProps) {
   if (reviews.length === 0 && !isLoading) {
     return (
       <div>
@@ -57,7 +57,7 @@ export function Reviews({ reviews, tourId, isLoading, hasMore, onLoadMore, allTo
     const nextCount = visibleCount + 5;
     setVisibleCount(nextCount);
     if (nextCount > reviews.length && hasMore) {
-      onLoadMore();
+      onLoadMore?.();
     }
   };
 

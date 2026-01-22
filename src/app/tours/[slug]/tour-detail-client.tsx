@@ -14,12 +14,8 @@ import { GuidesSection } from '@/components/tour-details/GuidesSection';
 import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
 import type { Tour, ManagedReview } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getReviewsForPackage, logError, getAllTourNamesMap, getGeneralReviews } from '@/lib/db';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
-import { Timestamp } from 'firebase/firestore';
 import { Chatbot } from '@/components/Chatbot';
 import { getTourChatMessage } from '@/lib/chat-messages';
 
@@ -32,14 +28,6 @@ const RECENTLY_VIEWED_KEY = 'happy-mountain-recent-tours';
 const MAX_RECENTLY_VIEWED = 10;
 
 export default function TourDetailClient({ tour, tempUserId }: TourDetailClientProps) {
-  const [displayedReviews, setDisplayedReviews] = useState<ManagedReview[]>([]);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
-  const [hasMorePackageReviews, setHasMorePackageReviews] = useState(true);
-  const [hasMoreGeneralReviews, setHasMoreGeneralReviews] = useState(true);
-  const [lastPackageReviewDocId, setLastPackageReviewDocId] = useState<string | null>(null);
-  const [lastGeneralReviewDocId, setLastGeneralReviewDocId] = useState<string | null>(null);
-  const [allToursMap, setAllToursMap] = useState<Map<string, string>>(new Map());
-  const { toast } = useToast();
   const pathname = usePathname();
 
   // Log recently viewed tour
@@ -59,90 +47,19 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
     }
   }, [tour.id]);
 
-  const fetchReviews = useCallback(async (isInitialLoad: boolean = false) => {
-    setIsLoadingReviews(true);
-    try {
-      if (isInitialLoad) {
-        // Use reviews directly embedded in the tour object
-        // Map to ManagedReview structure if necessary, though Review and ManagedReview are similar.
-        // Review type: { id, author, comment, rating, date, globalId? }
-        // ManagedReview type: { id, userName, reviewBody, stars, reviewedOn, ... }
-        // We need to transform Tour Review -> ManagedReview format for the Reviews component
-        const localReviews = (tour.reviews || []).map(r => ({
-          id: r.id,
-          type: 'onSite', // Defaulting since it's local
-          userName: r.author,
-          reviewBody: r.comment,
-          stars: r.rating as 1 | 2 | 3 | 4 | 5,
-          reviewedOn: r.date,
-          reviewFor: tour.id
-        } as ManagedReview));
+  // Transform tour.reviews to ManagedReview format
+  const displayedReviews: ManagedReview[] = (tour.reviews || []).map(r => ({
+    id: r.id,
+    type: 'onSite' as const,
+    userId: 'embedded', // These are embedded reviews, not tied to a specific user account
+    userName: r.author,
+    reviewBody: r.comment,
+    stars: r.rating as 1 | 2 | 3 | 4 | 5,
+    reviewedOn: r.date,
+    reviewFor: tour.id
+  }));
 
-        if (localReviews.length > 0) {
-          setDisplayedReviews(localReviews);
-          setHasMorePackageReviews(false); // Local reviews are all loaded at once
-          setHasMoreGeneralReviews(false);
-        } else {
-          // If no local reviews, fallback to general reviews? Or valid to show empty?
-          // Previous logic fell back to general reviews. Let's keep that behavior if requested, 
-          // BUT the prompt says "i don't the reviews we're fetching on the reviews page is directly from the reviews key in the package. we're still looking for reviews on the reviews collection directly. make the change."
-          // This phrasing is slightly ambiguous: "I don't [think/want/like] the reviews... is directly from the reviews key... we're still looking for reviews on the reviews collection directly."
-          // WAIT. The prompt likely means: "I DO NOT WANT the reviews to be fetched from the reviews collection. I WANT them to be from the reviews key in the package."
-          // OR "I don't [see that] the reviews... [are] directly from the reviews key... we're still looking [at the collection]. Make the change [to use the key]."
-          // Context: I just implemented the reviews key management.
-          // So, I should switch to using tour.reviews.
-
-          // If empty, maybe fetch general?
-          if (localReviews.length === 0) {
-            const generalReviewsResult = await getGeneralReviews(tour.id, null);
-            setDisplayedReviews(generalReviewsResult.reviews);
-            setLastGeneralReviewDocId(generalReviewsResult.lastDocId);
-            setHasMoreGeneralReviews(generalReviewsResult.hasMore);
-          }
-        }
-      } else {
-        // Load more logic... 
-        // If we started with local reviews (tour.reviews), we probably don't have "more" of them since they are all in the object.
-        // So only general reviews would be "more".
-        if (hasMoreGeneralReviews) {
-          const generalReviewsResult = await getGeneralReviews(tour.id, lastGeneralReviewDocId);
-          setDisplayedReviews(prev => [...prev, ...generalReviewsResult.reviews]);
-          setLastGeneralReviewDocId(generalReviewsResult.lastDocId);
-          setHasMoreGeneralReviews(generalReviewsResult.hasMore);
-        }
-      }
-    } catch (error: any) {
-      console.error("Error fetching reviews:", error);
-      // logError...
-    } finally {
-      setIsLoadingReviews(false);
-    }
-  }, [tour.id, tour.reviews, lastGeneralReviewDocId, hasMoreGeneralReviews, pathname, toast]);
-
-  useEffect(() => {
-    // Reset state
-    // setDisplayedReviews([]); // Don't allow empty flash if we have data
-    setLastPackageReviewDocId(null);
-    setLastGeneralReviewDocId(null);
-    setHasMorePackageReviews(false); // Default to false since we load from props
-    setHasMoreGeneralReviews(true);
-
-    fetchReviews(true);
-
-    const fetchAllTourNames = async () => {
-      const map = await getAllTourNamesMap();
-      setAllToursMap(map);
-    };
-    fetchAllTourNames();
-  }, [tour.id, fetchReviews]);
-
-  const handleLoadMore = () => {
-    if ((hasMorePackageReviews || hasMoreGeneralReviews) && !isLoadingReviews) {
-      fetchReviews();
-    }
-  };
-
-  const hasAnyMoreReviews = hasMorePackageReviews || hasMoreGeneralReviews;
+  const hasReviews = displayedReviews.length > 0;
 
   const averageRating = displayedReviews.length > 0
     ? (displayedReviews.reduce((acc, review) => acc + review.stars, 0) / displayedReviews.length)
@@ -281,16 +198,14 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
                 </section>
               )}
 
-              <section id="reviews" className="scroll-m-32">
-                <Reviews
-                  reviews={displayedReviews}
-                  tourId={tour.id}
-                  isLoading={isLoadingReviews}
-                  hasMore={hasAnyMoreReviews}
-                  onLoadMore={handleLoadMore}
-                  allToursMap={allToursMap}
-                />
-              </section>
+              {hasReviews && (
+                <section id="reviews" className="scroll-m-32">
+                  <Reviews
+                    reviews={displayedReviews}
+                    tourId={tour.id}
+                  />
+                </section>
+              )}
 
               {tour.gears && tour.gears.length > 0 && (
                 <section id="gears" className="scroll-m-32">
