@@ -15,7 +15,6 @@ import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
 import type { Tour, ManagedReview } from '@/lib/types';
 import { useEffect, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
 import { Chatbot } from '@/components/Chatbot';
 import { getTourChatMessage } from '@/lib/chat-messages';
 
@@ -28,7 +27,6 @@ const RECENTLY_VIEWED_KEY = 'happy-mountain-recent-tours';
 const MAX_RECENTLY_VIEWED = 10;
 
 export default function TourDetailClient({ tour, tempUserId }: TourDetailClientProps) {
-  const pathname = usePathname();
 
   // Log recently viewed tour
   useEffect(() => {
@@ -139,7 +137,7 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
         />
         <ImageGallery images={tour.images} mainImage={tour.mainImage} tourName={tour.name} />
 
-        <TourNav tour={tour} reviews={displayedReviews} />
+        <TourNav tour={tour} hasReviews={hasReviews} />
 
         <div className="container mx-auto py-8 lg:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">

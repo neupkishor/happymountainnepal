@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import type { Tour, ManagedReview } from '@/lib/types';
+import type { Tour } from '@/lib/types';
 
 interface TourNavProps {
   tour: Tour;
