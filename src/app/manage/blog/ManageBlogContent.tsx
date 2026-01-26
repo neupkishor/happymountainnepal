@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
     Card,
-    CardContent
+    CardContent,
+    CardHeader,
+    CardTitle
 } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { BlogManagementCard } from '@/components/manage/BlogTableRow';
@@ -81,7 +84,7 @@ export function ManageBlogContent() {
         } else {
             params.delete('search');
         }
-        
+
         const newUrl = `${window.location.pathname}?${params.toString()}`;
         router.replace(newUrl, { scroll: false });
     }, [debouncedSearchTerm, router]);
@@ -111,37 +114,71 @@ export function ManageBlogContent() {
                     <h1 className="text-3xl font-bold !font-headline">Blog Posts</h1>
                     <p className="text-muted-foreground mt-2">Create and manage your articles.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button asChild>
-                        <Link href="/manage/blog/create">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Create New Post
-                        </Link>
-                    </Button>
+            </div>
+            {/* Action Card */}
+            <Card className="overflow-hidden border-blue-200/50">
+                {/* Create New Post */}
+                <Link href="/manage/blog/create" className="block hover:bg-muted/50 transition-colors">
+                    <div className="p-6 flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <PlusCircle className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-base text-primary">Create New Post</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Write a new article for your blog.
+                            </p>
+                        </div>
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <ChevronRight className="h-5 w-5 text-primary" />
+                        </div>
+                    </div>
+                </Link>
+
+                <Separator />
+
+                {/* Search */}
+                <div className="p-6 flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 relative">
+                        <Input
+                            placeholder="Search by title or author..."
+                            className="h-10 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground text-base"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {/* Visual indicator that this is an input field if needed, but text-base usually implies it.
+                             Actually, let's make it look like a list item but with an input inside.
+                             To make it feel 'clickable' or active, maybe just the input is fine.
+                             Let's match the style: Title/Desc structure?
+                             No, search is an action. Let's make it look like the rows but with an input.
+                         */}
+                    </div>
                 </div>
-            </div>
+            </Card>
 
-            <div className="relative pt-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    placeholder="Search by title or author..."
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-
+            {/* List Card */}
             <div className="space-y-4">
                 {loading ? (
-                    [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
+                    <div className="space-y-4">
+                        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+                    </div>
                 ) : posts.length > 0 ? (
-                    posts.map((post) => (
-                        <BlogManagementCard key={post.id} post={post} />
-                    ))
+                    <Card className="overflow-hidden">
+                        <div className="flex flex-col">
+                            {posts.map((post) => (
+                                <BlogManagementCard key={post.id} post={post} />
+                            ))}
+                        </div>
+                    </Card>
                 ) : (
                     <Card>
                         <CardContent className="text-center py-16 text-muted-foreground">
-                            No posts found for your search query.
+                            <Search className="mx-auto h-12 w-12 opacity-50 mb-4" />
+                            <h3 className="text-lg font-semibold">No posts found</h3>
+                            <p>Try adjusting your search terms.</p>
                         </CardContent>
                     </Card>
                 )}

@@ -37,41 +37,43 @@ export function BlogManagementCard({ post }: BlogTableRowProps) {
   };
 
   return (
-    <Card>
-      <CardContent className="p-4 flex items-center gap-4">
-        <div className="relative h-16 w-24 rounded-md overflow-hidden bg-muted flex-shrink-0">
-          <Image src={post.image} alt={post.title} fill className="object-cover" />
+    <div className="flex items-center gap-4 p-4 hover:bg-accent/5 transition-colors border-b last:border-0 relative group">
+      <Link href={`/manage/blog/${post.id}/edit`} className="absolute inset-0 z-10">
+        <span className="sr-only">Edit {post.title}</span>
+      </Link>
+      <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0 border">
+        <Image src={post.image} alt={post.title} fill className="object-cover" />
+      </div>
+      <div className="flex-1 min-w-0 pointer-events-none">
+        <p className="font-medium text-base group-hover:text-primary transition-colors truncate">{post.title}</p>
+        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+          <span className="font-medium text-foreground">{post.author}</span>
+          <span>&bull;</span>
+          <span>{displayDate}</span>
+          <span>&bull;</span>
+          <Badge variant={getStatusVariant(post.status)} className="h-5 px-1.5 text-[10px] pointer-events-auto">
+            {post.status}
+          </Badge>
         </div>
-        <div className="flex-1 min-w-0">
-          <Link href={`/manage/blog/${post.id}/edit`} className="font-medium hover:underline line-clamp-1">{post.title}</Link>
-          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-            <span>By {post.author}</span>
-            <span>&bull;</span>
-            <span>{displayDate}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-            <Badge variant={getStatusVariant(post.status)} className="hidden sm:inline-flex">
-              {post.status}
-            </Badge>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/blog/${post.slug}`} target="_blank">View Public Page</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/manage/blog/${post.id}/edit`}>Edit</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex items-center gap-2 relative z-20">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href={`/blog/${post.slug}`} target="_blank">View Public Page</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/manage/blog/${post.id}/edit`}>Edit</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 }

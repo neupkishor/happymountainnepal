@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, ChevronRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { PackageManagementCard } from '@/components/manage/PackageTableRow';
 import type { Tour } from '@/lib/types';
 import { useState, useEffect } from 'react';
@@ -72,37 +74,66 @@ export default function PackagesListPage() {
             Create, edit, and manage your tour packages.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/manage/packages/create">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Package
-          </Link>
-        </Button>
       </div>
 
-      <div className="relative pt-2">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input
-          placeholder="Search by name..."
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+      <Card className="overflow-hidden border-blue-200/50">
+        {/* Create New Package */}
+        <Link href="/manage/packages/create" className="block hover:bg-muted/50 transition-colors">
+          <div className="p-6 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <PlusCircle className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-base text-primary">Create New Package</h3>
+              <p className="text-sm text-muted-foreground">
+                Create, edit, and manage your tour packages.
+              </p>
+            </div>
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <ChevronRight className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+        </Link>
+        <Separator />
+        {/* Search */}
+        <div className="p-6 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+            <Search className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <div className="flex-1 relative">
+            <Input
+              placeholder="Search by name..."
+              className="h-10 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground text-base"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+      </Card>
 
       <div className="space-y-4">
         {loading ? (
-          Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="h-20 w-full" />
-          ))
-        ) : tours.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
-            No packages found.
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-20 w-full" />
+            ))}
           </div>
+        ) : tours.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-16 text-muted-foreground">
+              <Search className="mx-auto h-12 w-12 opacity-50 mb-4" />
+              <h3 className="text-lg font-semibold">No packages found</h3>
+              <p>Try adjusting your search terms.</p>
+            </CardContent>
+          </Card>
         ) : (
-          tours.map((tour) => (
-            <PackageManagementCard key={tour.id} tour={tour} />
-          ))
+          <Card className="overflow-hidden">
+            <div className="flex flex-col">
+              {tours.map((tour) => (
+                <PackageManagementCard key={tour.id} tour={tour} />
+              ))}
+            </div>
+          </Card>
         )}
       </div>
 
