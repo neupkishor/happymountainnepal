@@ -4,7 +4,8 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import sharp from 'sharp';
-import { logFileUpload, getSiteProfile } from '@/lib/db';
+import { logFileUpload } from '@/lib/db';
+import { getSiteProfileAction } from '@/app/actions/profile';
 
 export async function POST(request: NextRequest) {
     try {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
 
         // Check if basePath is configured for server uploads
         if (uploadType === 'server') {
-            const profile = await getSiteProfile();
+            const profile = await getSiteProfileAction();
             if (!profile?.basePath) {
                 return NextResponse.json({
                     error: 'Local uploads are disabled. Please configure basePath in site settings or use CDN uploads.'
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
         if (compress && isImage) {
             try {
                 // Compress image using sharp
-                finalBuffer = await sharp(buffer)
+                finalBuffer = await sharp(buffer as any)
                     .resize(1920, 1920, {
                         fit: 'inside',
                         withoutEnlargement: true
@@ -78,13 +79,12 @@ export async function POST(request: NextRequest) {
                 // Log to database
                 await logFileUpload({
                     url: mockApiUrl, // Direct URL from API
-                    path: mockApiUrl, // Same as URL for absolute paths
-                    pathType: 'absolute', // API uploads are absolute URLs
-                    uploadSource: 'NeupCDN', // Uploaded to external CDN
-                    fileName: finalFileName,
-                    fileType: compress && isImage ? 'image/jpeg' : file.type,
-                    userId: 'admin',
-                    category: 'general',
+                    name: finalFileName,
+                    type: compress && isImage ? 'image/jpeg' : file.type,
+                    uploadedBy: 'admin',
+                    size: finalBuffer.length,
+                    tags: ['general', 'neupcdn'],
+                    meta: [{ path: mockApiUrl, pathType: 'absolute', uploadSource: 'NeupCDN', category: 'general' }],
                 });
 
                 return NextResponse.json({
@@ -126,13 +126,12 @@ export async function POST(request: NextRequest) {
             // Log to database
             await logFileUpload({
                 url: templatePath, // Store with template
-                path: templatePath, // Store with template
-                pathType: 'relative', // Server files are relative
-                uploadSource: 'Application', // Uploaded to application server
-                fileName: finalFileName,
-                fileType: compress && isImage ? 'image/jpeg' : file.type,
-                userId: 'admin',
-                category: 'general',
+                name: finalFileName,
+                type: compress && isImage ? 'image/jpeg' : file.type,
+                uploadedBy: 'admin',
+                size: finalBuffer.length,
+                tags: ['general'],
+                meta: [{ path: templatePath, pathType: 'relative', uploadSource: 'Application', category: 'general' }],
             });
 
             return NextResponse.json({

@@ -16,7 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Partner } from '@/lib/types';
-import { addPartner, updatePartner, logError } from '@/lib/db';
+import { logError } from '@/lib/db';
+import { createPartnerAction, updatePartnerAction } from '@/app/actions/partners';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -55,10 +56,10 @@ export function PartnerForm({ partner }: PartnerFormProps) {
     startTransition(async () => {
       try {
         if (partner) {
-          await updatePartner(partner.id, values);
+          await updatePartnerAction(partner.id, values);
           toast({ title: 'Success', description: 'Partner updated.' });
         } else {
-          await addPartner(values);
+          await createPartnerAction(values);
           toast({ title: 'Success', description: 'Partner created.' });
         }
       } catch (error: any) {

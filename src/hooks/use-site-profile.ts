@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { SiteProfile } from '@/lib/types';
-import { getSiteProfile } from '@/lib/db';
+import { getSiteProfileAction } from '@/app/actions/profile';
 import { useToast } from './use-toast';
 
 const SESSION_STORAGE_KEY = 'site-profile';
@@ -11,6 +11,7 @@ const SESSION_STORAGE_KEY = 'site-profile';
 export function useSiteProfile() {
   const [profile, setProfile] = useState<SiteProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,7 +30,8 @@ export function useSiteProfile() {
 
       // 2. If not in cache, fetch from Firestore
       try {
-        const firestoreProfile = await getSiteProfile();
+        setError(null);
+        const firestoreProfile = await getSiteProfileAction();
         if (firestoreProfile) {
           setProfile(firestoreProfile);
           // 3. Save to sessionStorage
@@ -39,8 +41,9 @@ export function useSiteProfile() {
             console.error("Failed to write to sessionStorage:", error);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch site profile:", error);
+        setError(error);
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -54,5 +57,5 @@ export function useSiteProfile() {
     fetchProfile();
   }, [toast]);
 
-  return { profile, isLoading };
+  return { profile, isLoading, error };
 }

@@ -20,7 +20,11 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 const ITEMS_PER_PAGE = 10;
 
-export function ManageBlogContent() {
+interface ManageBlogContentProps {
+    status?: 'published' | 'draft';
+}
+
+export function ManageBlogContent({ status = 'published' }: ManageBlogContentProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
@@ -45,6 +49,7 @@ export function ManageBlogContent() {
                     limit: String(ITEMS_PER_PAGE),
                     page: String(page),
                     search: search,
+                    status: status,
                 });
 
                 const response = await fetch(`/api/blog?${queryParams.toString()}`);
@@ -73,7 +78,7 @@ export function ManageBlogContent() {
         };
 
         fetchPosts(currentPage, debouncedSearchTerm);
-    }, [debouncedSearchTerm, currentPage]);
+    }, [debouncedSearchTerm, currentPage, status]);
 
     // Update URL when search term changes
     useEffect(() => {
@@ -102,7 +107,8 @@ export function ManageBlogContent() {
                 params.set('page', String(newPage));
             }
 
-            const newUrl = params.toString() ? `/manage/blog?${params.toString()}` : '/manage/blog';
+            const basePath = status === 'draft' ? '/manage/blog/drafts' : '/manage/blog';
+            const newUrl = params.toString() ? `${basePath}?${params.toString()}` : basePath;
             router.push(newUrl, { scroll: false });
         }
     };
@@ -111,8 +117,12 @@ export function ManageBlogContent() {
         <div className="space-y-8">
             <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
                 <div>
-                    <h1 className="text-3xl font-bold !font-headline">Blog Posts</h1>
-                    <p className="text-muted-foreground mt-2">Create and manage your articles.</p>
+                    <h1 className="text-3xl font-bold !font-headline">
+                        {status === 'draft' ? 'Draft Blog Posts' : 'Blog Posts'}
+                    </h1>
+                    <p className="text-muted-foreground mt-2">
+                        {status === 'draft' ? 'Manage your unpublished drafts.' : 'Create and manage your articles.'}
+                    </p>
                 </div>
             </div>
             {/* Action Card */}
@@ -131,6 +141,37 @@ export function ManageBlogContent() {
                         </div>
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                             <ChevronRight className="h-5 w-5 text-primary" />
+                        </div>
+                    </div>
+                </Link>
+
+                <Separator />
+
+                {/* Drafts / Published Toggle Link */}
+                <Link
+                    href={status === 'published' ? "/manage/blog/drafts" : "/manage/blog"}
+                    className="block hover:bg-muted/50 transition-colors"
+                >
+                    <div className="p-6 flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center flex-shrink-0">
+                            {status === 'published' ? (
+                                <span className="font-bold text-lg">D</span>
+                            ) : (
+                                <span className="font-bold text-lg">P</span>
+                            )}
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-base text-foreground">
+                                {status === 'published' ? 'View Drafts' : 'View Published Posts'}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                                {status === 'published'
+                                    ? 'Check your unpublished articles.'
+                                    : 'Go back to your published articles.'}
+                            </p>
+                        </div>
+                        <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center">
+                            <ChevronRight className="h-5 w-5 text-secondary-foreground" />
                         </div>
                     </div>
                 </Link>

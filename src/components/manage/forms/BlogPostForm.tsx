@@ -38,15 +38,25 @@ import { DeleteBlogPostDialog } from '../DeleteBlogPostDialog';
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
   slug: z.string().min(5, "Slug must be at least 5 characters.")
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must contain only lowercase letters, numbers, and hyphens."),
-  content: z.string().min(20, "Content must be at least 20 characters."),
-  excerpt: z.string().min(10).max(200, "Excerpt must be between 10 and 200 characters."),
-  author: z.string().min(2, "Author name is required."),
-  authorPhoto: z.string().url("A valid author photo URL is required.").min(1, "Author photo is required."), // New field
-  image: z.string().url("A valid image URL is required."),
-  tags: z.string().optional().transform(val => val ? val.split(',').map(tag => tag.trim()).filter(Boolean) : []),
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must contain only lowercase letters, numbers, and hyphens.")
+    .or(z.literal('')), // Allow empty slug for drafts
+  content: z.string().optional(),
+  excerpt: z.string().optional(),
+  author: z.string().optional(),
+  authorPhoto: z.string().optional(),
+  image: z.string().optional(),
+  tags: z.string().optional(),
   metaInformation: z.string().optional(),
   status: z.enum(['draft', 'published']),
+}).superRefine((data, ctx) => {
+  if (data.status === 'published') {
+    if (!data.slug) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Slug is required for publishing.", path: ['slug'] });
+    if (!data.content || data.content.length < 20) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Content must be at least 20 characters.", path: ['content'] });
+    if (!data.excerpt || data.excerpt.length < 10) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Excerpt must be between 10 and 200 characters.", path: ['excerpt'] });
+    if (!data.author || data.author.length < 2) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Author name is required.", path: ['author'] });
+    if (!data.authorPhoto) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Author photo is required.", path: ['authorPhoto'] });
+    if (!data.image) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Featured image is required.", path: ['image'] });
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -80,24 +90,44 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        const isAvailable = await checkBlogSlugAvailability(values.slug, post.id || undefined);
-        if (!isAvailable) {
-          form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
+        if (values.slug) {
+          const isAvailable = await checkBlogSlugAvailability(values.slug, post.id || undefined);
+          if (!isAvailable) {
+            form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
+            return;
+          }
+        } else if (values.status === 'published') {
+          form.setError('slug', { type: 'manual', message: 'Slug is required.' });
           return;
         }
 
         const isNewPost = !post.id;
-        // @ts-ignore
-        const savedPostId = await saveBlogPost(post.id || undefined, {
+
+        // Transform tags and ensure required fields
+        const postData = {
           ...values,
-          date: post.date,
-        });
+          content: values.content || '',
+          excerpt: values.excerpt || '',
+          author: values.author || '',
+          authorPhoto: values.authorPhoto || '',
+          image: values.image || '',
+          metaInformation: values.metaInformation || '',
+          tags: values.tags ? values.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+        };
+
+        const savedPostId = await saveBlogPost(post.id || undefined, postData);
 
         toast({
           title: 'Success',
           description: isNewPost ? 'Blog post created successfully.' : 'Blog post updated successfully.'
         });
-        router.push('/manage/blog');
+
+        // Redirect based on status
+        if (values.status === 'draft') {
+          router.push('/manage/blog/drafts');
+        } else {
+          router.push('/manage/blog');
+        }
       } catch (error: any) {
         logError({ message: `Failed to save blog post ${post.id || 'new'}`, stack: error.stack, pathname, context: { postId: post.id, values } });
         toast({
@@ -107,6 +137,11 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
         });
       }
     });
+  };
+
+  const handleSaveDraft = () => {
+    form.setValue('status', 'draft');
+    form.handleSubmit(onSubmit)();
   };
 
   return (
@@ -187,8 +222,8 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                   <FormItem>
                     <FormLabel>Content (HTML)</FormLabel>
                     <FormControl>
-                      <RichTextEditor // Using RichTextEditor here
-                        value={field.value}
+                      <RichTextEditor
+                        value={field.value || ''}
                         onChange={field.onChange}
                         placeholder="Start writing your amazing blog post here..."
                         disabled={isPending}
@@ -199,7 +234,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                 )}
               />
 
-              <MediaPicker name="image" label="Featured Image" category="blog" />
+              <MediaPicker name="image" label="Featured Image" tags={['blog']} />
 
               <FormField
                 control={form.control}
@@ -235,7 +270,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                   )}
                 />
 
-                <MediaPicker name="authorPhoto" label="Author Photo" category="author" />
+                <MediaPicker name="authorPhoto" label="Author Photo" tags={['author']} />
               </div>
 
               <FormField
@@ -274,11 +309,17 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
                 )}
               />
 
-              <div className="flex justify-between items-center">
-                <Button type="submit" disabled={isPending}>
-                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {post.id ? 'Save Post' : 'Create Post'}
-                </Button>
+              <div className="flex justify-between items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="secondary" disabled={isPending} onClick={handleSaveDraft}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save as Draft
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {post.id ? 'Save & Publish' : 'Publish Post'}
+                  </Button>
+                </div>
 
                 {post.id && (
                   <DeleteBlogPostDialog post={post}>

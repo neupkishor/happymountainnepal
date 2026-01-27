@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { useFirestore } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { getPartnersAction } from '@/app/actions/partners';
 import type { Partner } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -11,7 +10,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import { Card, CardContent } from './ui/card';
 
 export function OurPartners() {
-  const firestore = useFirestore();
+
   const [partners, setPartners] = useState<Partner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,15 +33,10 @@ export function OurPartners() {
   );
 
   useEffect(() => {
-    if (!firestore) return;
-
     const fetchPartners = async () => {
       setIsLoading(true);
       try {
-        const snapshot = await getDocs(collection(firestore, 'partners'));
-        const data = snapshot.docs.map(
-          doc => ({ id: doc.id, ...doc.data() } as Partner)
-        );
+        const data = await getPartnersAction();
         setPartners(data);
       } catch (err) {
         console.error('Error fetching partners:', err);
@@ -52,7 +46,7 @@ export function OurPartners() {
     };
 
     fetchPartners();
-  }, [firestore]);
+  }, []);
 
   return (
     <section className="py-16 lg:py-24 bg-secondary/50">

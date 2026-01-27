@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChevronRight, PlusCircle } from 'lucide-react';
-import { useFirestore } from '@/firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { getPartnersAction } from '@/app/actions/partners';
 import type { Partner } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,20 +15,19 @@ import { cn } from '@/lib/utils';
 export default function PartnersListPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
-  const firestore = useFirestore();
-
   useEffect(() => {
-    if (!firestore) return;
     const fetchPartners = async () => {
       setLoading(true);
-      const partnersRef = collection(firestore, 'partners');
-      const q = query(partnersRef);
-      const querySnapshot = await getDocs(q);
-      setPartners(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Partner)));
+      try {
+        const data = await getPartnersAction();
+        setPartners(data);
+      } catch (err) {
+        console.error('Failed to fetch partners:', err);
+      }
       setLoading(false);
     };
     fetchPartners();
-  }, [firestore]);
+  }, []);
 
   return (
     <div>

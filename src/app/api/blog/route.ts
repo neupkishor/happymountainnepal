@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
         const search = searchParams.get('search') || '';
         const tags = searchParams.get('tags')?.split(',').map(tag => tag.trim()).filter(Boolean) || [];
 
-        const result = await getBlogPosts({ limit, page, search, tags });
+        const status = searchParams.get('status') as 'published' | 'draft' | undefined;
+
+        const result = await getBlogPosts({ limit, page, search, tags, status });
 
         return NextResponse.json(result);
     } catch (error) {

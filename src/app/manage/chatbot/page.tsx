@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { updateSiteProfile, logError } from '@/lib/db';
+import { logError } from '@/lib/db';
+import { updateSiteProfileAction } from '@/app/actions/profile';
 import { useTransition, useEffect } from 'react';
 import { Loader2, MessageSquare, Save, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -64,7 +65,7 @@ export default function ChatbotSettingsPage() {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        await updateSiteProfile({ chatbot: values });
+        await updateSiteProfileAction({ chatbot: values });
         sessionStorage.removeItem('site-profile'); // Invalidate cache
         toast({ title: 'Success', description: 'Chatbot settings updated.' });
       } catch (error: any) {
@@ -98,13 +99,13 @@ export default function ChatbotSettingsPage() {
     <FormProvider {...form}>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-            <h1 className="text-3xl font-bold !font-headline flex items-center gap-2">
-                <MessageSquare className="h-8 w-8" />
-                Chatbot Settings
-            </h1>
-            <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold !font-headline flex items-center gap-2">
+            <MessageSquare className="h-8 w-8" />
+            Chatbot Settings
+          </h1>
+          <p className="text-muted-foreground mt-2">
             Configure the customer-facing chat widget.
-            </p>
+          </p>
         </div>
 
         <Form {...form}>
@@ -198,7 +199,7 @@ export default function ChatbotSettingsPage() {
                 />
               </CardContent>
             </Card>
-            
+
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Save className="mr-2 h-4 w-4" />

@@ -113,6 +113,8 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
                 <ul className="space-y-1">
                   {tour.departureDates.map((d, i) => {
                     const date = d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date);
+                    if (isNaN(date.getTime())) return null;
+
                     return (
                       <li key={i} className="flex justify-between text-sm">
                         <span>{format(date, 'PPP')}</span>
@@ -213,7 +215,15 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
                       <p className="text-sm text-yellow-500 font-bold mb-1">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</p>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {typeof r.date === 'string' ? new Date(r.date).toLocaleDateString() : 'Date N/A'}
+                      {(() => {
+                        try {
+                          if (!r.date) return 'Date N/A';
+                          const d = r.date instanceof Timestamp ? r.date.toDate() : new Date(r.date);
+                          return isNaN(d.getTime()) ? 'Invalid Date' : d.toLocaleDateString();
+                        } catch (e) {
+                          return 'Date Error';
+                        }
+                      })()}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{r.comment}</p>

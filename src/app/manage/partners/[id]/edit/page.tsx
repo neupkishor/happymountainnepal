@@ -1,5 +1,5 @@
 
-import { getPartnerById } from '@/lib/db';
+import { getPartnerByIdAction } from '@/app/actions/partners';
 import { PartnerForm } from '@/components/manage/PartnerForm';
 import { notFound } from 'next/navigation';
 
@@ -9,7 +9,7 @@ type EditPartnerPageProps = {
 
 export default async function EditPartnerPage({ params }: EditPartnerPageProps) {
   const { id } = await params;
-  const partner = await getPartnerById(id);
+  const partner = await getPartnerByIdAction(id);
 
   if (!partner) {
     notFound();
