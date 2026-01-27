@@ -304,3 +304,15 @@ export interface PaymentSettings {
   additionalInstructions?: string;
   updatedAt: Timestamp | string;
 }
+
+export interface Location {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  isFeatured: boolean;
+  parentId?: string | null; // For sub-locations
+  createdAt: string; // ISO string
+  parentName?: string; // Derived field
+}

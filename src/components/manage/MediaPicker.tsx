@@ -20,10 +20,14 @@ interface MediaPickerProps {
   label?: string;
   maxRecent?: number;
   tags?: string[];
+  category?: string;
 }
 
-export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'] }: MediaPickerProps) {
+export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'], category }: MediaPickerProps) {
   const { control, setValue } = useFormContext();
+
+  // Merge category into tags if provided
+  const searchTags = category ? [...new Set([...tags, category])] : tags;
   const { field } = useController({ name, control });
   const { toast } = useToast();
 
@@ -116,7 +120,7 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'] }: 
               name={`${name}-direct-upload`}
               onUploadSuccess={handleDirectUploadSuccess}
               onUploadingChange={setIsUploading}
-              tags={tags}
+              tags={searchTags}
             >
               <div className="flex items-center justify-center h-24 w-full rounded-md border-2 border-dashed text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors cursor-pointer">
                 {isUploading ? (
@@ -184,7 +188,7 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'] }: 
         onClose={() => setIsLibraryOpen(false)}
         onSelect={handleSelectImage}
         initialSelectedUrls={previewUrl ? [previewUrl] : []}
-        defaultTags={tags}
+        defaultTags={searchTags}
       />
     </div>
   );
