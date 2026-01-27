@@ -59,6 +59,22 @@ export function initDb() {
       createdAt TEXT,
       FOREIGN KEY (parentId) REFERENCES locations(id) ON DELETE SET NULL
     );
+
+    CREATE TABLE IF NOT EXISTS posts (
+      id TEXT PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      excerpt TEXT,
+      content TEXT,
+      author TEXT,
+      authorPhoto TEXT,
+      image TEXT,
+      tags TEXT, -- JSON array
+      metaInformation TEXT,
+      status TEXT, -- 'draft' | 'published'
+      searchKeywords TEXT, -- JSON array
+      createdAt TEXT -- ISO string
+    );
   `);
 
   // Migration for adding parentId to existing table if needed
@@ -191,4 +207,139 @@ export function getChildLocations(parentId: string) {
     isFeatured: Boolean(row.isFeatured),
     parentId: row.parentId || null
   }));
+}
+
+// --- Blog Post Helpers ---
+
+export interface PostDB {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  authorPhoto: string;
+  createdAt: string; // ISO string
+  image: string;
+  tags: string; // JSON string array
+  metaInformation: string;
+  status: string; // 'draft' | 'published'
+  searchKeywords: string; // JSON string array
+}
+
+export function getPosts(options?: {
+  limit?: number;
+  page?: number;
+  status?: string;
+  search?: string;
+  tags?: string[];
+}) {
+  const limit = options?.limit || 10;
+  const page = options?.page || 1;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT * FROM posts';
+  const conditions: string[] = [];
+  const params: any[] = [];
+
+  if (options?.status) {
+    conditions.push('status = ?');
+    params.push(options.status);
+  }
+
+  if (options?.search) {
+    conditions.push('(title LIKE ? OR content LIKE ? OR searchKeywords LIKE ?)');
+    const term = `%${options.search}%`;
+    params.push(term, term, term);
+  }
+
+  if (options?.tags && options.tags.length > 0) {
+    const tagConditions = options.tags.map(() => 'tags LIKE ?');
+    conditions.push(`(${tagConditions.join(' OR ')})`);
+    options.tags.forEach(tag => params.push(`%${tag}%`));
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
+  params.push(limit, offset);
+
+  const rows = db.prepare(query).all(...params) as PostDB[];
+
+  // Get total count
+  let countQuery = 'SELECT COUNT(*) as count FROM posts';
+  const countParams = params.slice(0, params.length - 2);
+
+  if (conditions.length > 0) {
+    countQuery += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  const totalCount = (db.prepare(countQuery).get(...countParams) as { count: number }).count;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    posts: rows.map(row => ({
+      ...row,
+      date: row.createdAt, // Map for compatibility
+      tags: JSON.parse(row.tags || '[]'),
+      searchKeywords: JSON.parse(row.searchKeywords || '[]'),
+    })),
+    totalCount,
+    totalPages,
+    hasMore: page < totalPages
+  };
+}
+
+export function getPostById(id: string) {
+  const row = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as PostDB | undefined;
+  if (!row) return null;
+  return {
+    ...row,
+    tags: JSON.parse(row.tags || '[]'),
+    searchKeywords: JSON.parse(row.searchKeywords || '[]'),
+  };
+}
+
+export function getPostBySlug(slug: string) {
+  const row = db.prepare('SELECT * FROM posts WHERE slug = ?').get(slug) as PostDB | undefined;
+  if (!row) return null;
+  return {
+    ...row,
+    tags: JSON.parse(row.tags || '[]'),
+    searchKeywords: JSON.parse(row.searchKeywords || '[]'),
+  };
+}
+
+export function savePost(post: Omit<PostDB, 'tags' | 'searchKeywords'> & { tags: string[], searchKeywords: string[] }) {
+  const existing = db.prepare('SELECT id FROM posts WHERE id = ?').get(post.id);
+
+  // Convert arrays to JSON strings
+  const serializedPost = {
+    ...post,
+    tags: JSON.stringify(post.tags),
+    searchKeywords: JSON.stringify(post.searchKeywords)
+  };
+
+  if (existing) {
+    db.prepare(`
+            UPDATE posts 
+            SET slug = @slug, title = @title, excerpt = @excerpt, content = @content, 
+                author = @author, authorPhoto = @authorPhoto, image = @image, 
+                tags = @tags, metaInformation = @metaInformation, status = @status, 
+                searchKeywords = @searchKeywords
+            WHERE id = @id
+        `).run(serializedPost);
+  } else {
+    db.prepare(`
+            INSERT INTO posts (id, slug, title, excerpt, content, author, authorPhoto, createdAt, image, tags, metaInformation, status, searchKeywords)
+            VALUES (@id, @slug, @title, @excerpt, @content, @author, @authorPhoto, @createdAt, @image, @tags, @metaInformation, @status, @searchKeywords)
+        `).run(serializedPost);
+  }
+  return post.id;
+}
+
+export function deletePost(id: string) {
+  db.prepare('DELETE FROM posts WHERE id = ?').run(id);
 }

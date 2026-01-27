@@ -12,24 +12,17 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 export function RecentBlogs() {
-  const firestore = useFirestore();
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!firestore) return;
     const fetchPosts = async () => {
       setIsLoading(true);
       try {
-        const postsQuery = query(
-          collection(firestore, 'blogPosts'),
-          where('status', '==', 'published'),
-          orderBy('date', 'desc'),
-          limit(3)
-        );
-        const querySnapshot = await getDocs(postsQuery);
-        const posts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
-        setRecentPosts(posts);
+        const response = await fetch('/api/blog?limit=3&status=published');
+        if (!response.ok) throw new Error('Failed to fetch');
+        const data = await response.json();
+        setRecentPosts(data.posts || []);
       } catch (error) {
         console.error("Error fetching recent blog posts:", error);
       } finally {
@@ -37,7 +30,7 @@ export function RecentBlogs() {
       }
     };
     fetchPosts();
-  }, [firestore]);
+  }, []);
 
   return (
     <section className="py-16 lg:py-24">
@@ -49,29 +42,29 @@ export function RecentBlogs() {
           </p>
         </div>
         {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(3)].map((_, i) => (
-                    <Card key={i}>
-                        <CardContent className="p-0">
-                            <Skeleton className="h-48 w-full" />
-                            <div className="p-4 space-y-2">
-                                <Skeleton className="h-6 w-3/4" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-5/6" />
-                            </div>
-                        </CardContent>
-                         <CardFooter className="p-4">
-                            <Skeleton className="h-4 w-1/2" />
-                        </CardFooter>
-                    </Card>
-                ))}
-            </div>
-        ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recentPosts?.map((post) => (
-                <BlogCard key={post.id} post={post} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-0">
+                  <Skeleton className="h-48 w-full" />
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                  </div>
+                </CardContent>
+                <CardFooter className="p-4">
+                  <Skeleton className="h-4 w-1/2" />
+                </CardFooter>
+              </Card>
             ))}
-            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {recentPosts?.map((post) => (
+              <BlogCard key={post.id} post={post} />
+            ))}
+          </div>
         )}
         <div className="text-center mt-12">
           <Link href="/blog">

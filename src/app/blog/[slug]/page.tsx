@@ -1,10 +1,11 @@
-import { getBlogPostBySlug } from '@/lib/db';
+
+import { getPostBySlug } from '@/lib/db/sqlite';
 import BlogPostClient from './blog-post-client';
 import { notFound } from 'next/navigation';
-import { Metadata } from 'next'; // Import Metadata type
-import { Timestamp } from 'firebase/firestore';
+import { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { AdminPageControl } from '@/components/admin/AdminPageControl';
+import { BlogPost } from '@/lib/types';
 
 type BlogDetailPageProps = {
   params: Promise<{
@@ -15,7 +16,7 @@ type BlogDetailPageProps = {
 // Generate dynamic metadata for each blog post
 export async function generateMetadata({ params }: BlogDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getBlogPostBySlug(slug);
+  const post = getPostBySlug(slug);
 
   if (!post) {
     return {
@@ -26,15 +27,16 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 
   const serializablePost = {
     ...post,
-    date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
-  };
-
+    date: post.createdAt, // Map createdAt to date
+    tags: post.tags,
+    searchKeywords: post.searchKeywords
+  } as unknown as BlogPost;
 
   return {
     title: serializablePost.title,
     description: serializablePost.excerpt,
     alternates: {
-      canonical: `https://happymountainnepal.com/blog/${serializablePost.slug}`, // Replace with your actual domain
+      canonical: `https://happymountainnepal.com/blog/${serializablePost.slug}`,
       languages: {
         'en': `https://happymountainnepal.com/blog/${serializablePost.slug}`,
         'x-default': `https://happymountainnepal.com/blog/${serializablePost.slug}`,
@@ -52,7 +54,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
       ],
       type: 'article',
       siteName: 'Happy Mountain Nepal',
-      publishedTime: new Date(serializablePost.date).toISOString(),
+      publishedTime: new Date(serializablePost.date as string).toISOString(),
       authors: [serializablePost.author],
     },
     twitter: {
@@ -66,17 +68,19 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const { slug } = await params;
-  const post = await getBlogPostBySlug(slug);
+  const post = getPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
 
-  // Convert timestamp for client component
+  // Convert for client component
   const serializablePost = {
     ...post,
-    date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
-  };
+    date: post.createdAt,
+    tags: post.tags,
+    searchKeywords: post.searchKeywords
+  } as unknown as BlogPost;
 
   const headersList = await headers();
   const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';

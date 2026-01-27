@@ -17,7 +17,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { type BlogPost } from '@/lib/types';
-import { saveBlogPost, logError, checkBlogSlugAvailability } from '@/lib/db';
 import { slugify } from '@/lib/utils';
 import { useTransition } from 'react';
 import { Loader2, RefreshCw, Trash2 } from 'lucide-react';
@@ -31,9 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Timestamp } from 'firebase/firestore';
-import { RichTextEditor } from '@/components/ui/RichTextEditor'; // Import the new RichTextEditor
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { DeleteBlogPostDialog } from '../DeleteBlogPostDialog';
+
+// ... schema definition remains same ...
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
@@ -68,7 +68,6 @@ interface BlogPostFormProps {
 export function BlogPostForm({ post }: BlogPostFormProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const pathname = usePathname();
   const router = useRouter();
 
   const form = useForm<FormValues>({
@@ -83,27 +82,18 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
       image: post.image || '',
       tags: post.tags?.join(', ') || '',
       metaInformation: post.metaInformation || '',
-      status: post.status || 'draft',
+      status: post.status as 'draft' | 'published' || 'draft', // Type cast for safety
     },
   });
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        if (values.slug) {
-          const isAvailable = await checkBlogSlugAvailability(values.slug, post.id || undefined);
-          if (!isAvailable) {
-            form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
-            return;
-          }
-        } else if (values.status === 'published') {
-          form.setError('slug', { type: 'manual', message: 'Slug is required.' });
-          return;
-        }
-
         const isNewPost = !post.id;
+        const url = isNewPost ? '/api/blog' : `/api/blog/${post.id}`;
+        const method = isNewPost ? 'POST' : 'PUT';
 
-        // Transform tags and ensure required fields
+        // Prepare data
         const postData = {
           ...values,
           content: values.content || '',
@@ -112,10 +102,29 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           authorPhoto: values.authorPhoto || '',
           image: values.image || '',
           metaInformation: values.metaInformation || '',
+          // Assuming basic tag splitting
           tags: values.tags ? values.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+          // Regenerate search keywords
+          searchKeywords: [
+            ...values.title.toLowerCase().split(' '),
+            ...(values.author || '').toLowerCase().split(' ')
+          ].filter(Boolean)
         };
 
-        const savedPostId = await saveBlogPost(post.id || undefined, postData);
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(postData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (response.status === 409) {
+            form.setError('slug', { type: 'manual', message: 'This slug is already taken.' });
+            return;
+          }
+          throw new Error(errorData.error || 'Failed to save post');
+        }
 
         toast({
           title: 'Success',
@@ -128,12 +137,13 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
         } else {
           router.push('/manage/blog');
         }
+        router.refresh();
+
       } catch (error: any) {
-        logError({ message: `Failed to save blog post ${post.id || 'new'}`, stack: error.stack, pathname, context: { postId: post.id, values } });
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Could not save post. Please try again.',
+          description: error.message || 'Could not save post. Please try again.',
         });
       }
     });

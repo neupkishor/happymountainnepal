@@ -1,7 +1,8 @@
-import { getBlogPostById } from '@/lib/db';
+
+import { getPostById } from '@/lib/db/sqlite';
 import { BlogPostForm } from '@/components/manage/forms/BlogPostForm';
 import { notFound } from 'next/navigation';
-import { Timestamp } from 'firebase/firestore'; // Import Timestamp
+import { BlogPost } from '@/lib/types';
 
 type EditBlogPostPageProps = {
   params: Promise<{ id: string }>;
@@ -9,17 +10,18 @@ type EditBlogPostPageProps = {
 
 export default async function EditBlogPostPage({ params }: EditBlogPostPageProps) {
   const { id } = await params;
-  const post = await getBlogPostById(id);
+  const post = getPostById(id);
 
   if (!post) {
     notFound();
   }
 
-  // Convert Firestore Timestamp to ISO string for client component serialization
+  // Ensure compatibility with BlogPost type
   const serializablePost = {
     ...post,
-    date: post.date instanceof Timestamp ? post.date.toDate().toISOString() : post.date,
-  };
+    date: post.createdAt,
+    // tags are already parsed arrays from getPostById
+  } as unknown as BlogPost;
 
   return (
     <div className="max-w-4xl mx-auto">

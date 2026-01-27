@@ -1,6 +1,6 @@
 
 import { notFound } from 'next/navigation';
-import { getLocationBySlug, getLocationById, getChildLocations } from '@/lib/db/sqlite';
+import { getLocationBySlug, getLocationById, getChildLocations, getPosts } from '@/lib/db/sqlite';
 import { getDocs, query, collection, where, limit } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase-server';
 import { TourCard } from '@/components/TourCard';
@@ -32,18 +32,19 @@ async function getRelatedTours(locationName: string) {
 
 // Helper to fetch blogs
 async function getRelatedBlogs(locationName: string) {
-    if (!firestore) return [];
     try {
-        // Tag search is case-sensitive usually, might need adjustment logic
-        // Trying exact match first
-        const q = query(
-            collection(firestore, 'posts'),
-            where('status', '==', 'published'),
-            where('tags', 'array-contains', locationName),
-            limit(3)
-        );
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+        const { posts } = getPosts({
+            limit: 3,
+            status: 'published',
+            // Simple tag filtering
+            tags: [locationName]
+        });
+
+        // Map to ensure date format compatibility if needed
+        return posts.map(p => ({
+            ...p,
+            date: p.createdAt // BlogPost expects date, PostDB provides createdAt (mapped in getPosts but let's be safe)
+        })) as BlogPost[];
     } catch (error) {
         console.error("Error fetching blogs:", error);
         return [];
