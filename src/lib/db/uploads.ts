@@ -1,40 +1,79 @@
 
 'use server';
 
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit as firestoreLimit, startAfter, doc, deleteDoc, Timestamp, getDoc, where, updateDoc, getCountFromServer } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase-server';
+import { saveUpload, deleteUpload, getUploads, getUploadById, getUploadByUrl } from '@/lib/db/sqlite';
 import type { FileUpload } from '@/lib/types';
-import { logError } from './errors';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function logFileUpload(data: Omit<FileUpload, 'id' | 'uploadedAt' | 'createdAt' | 'uploadedOn'>): Promise<void> {
-    if (!firestore) {
-        console.error("Firestore is not initialized. Cannot log file upload.");
+    // Check for existing URL to avoid duplicates
+    const existing = getUploadByUrl(data.url);
+    if (existing) {
         return;
     }
-    try {
-        await addDoc(collection(firestore, 'uploads'), {
-            ...data,
-            uploadedOn: new Date().toISOString(),
-            uploadedAt: serverTimestamp(),
-            createdAt: serverTimestamp(),
-        });
-    } catch (error) {
-        console.error('Failed to log file upload to Firestore:', error);
-    }
+
+    const now = new Date().toISOString();
+    const id = uuidv4();
+
+    // Convert to the format expected by saveUpload
+    const uploadData = {
+        id,
+        ...data,
+        uploadedOn: now, // Simplification: using full ISO string as uploadedOn matches sqlite expectations if updated
+        uploadedAt: now,
+        createdAt: now,
+        size: data.size || 0,
+        tags: data.tags || [],
+        meta: data.meta || []
+    };
+
+    saveUpload(uploadData);
 }
 
 export async function deleteFileUpload(id: string): Promise<void> {
-    if (!firestore) throw new Error("Database not available.");
-    await deleteDoc(doc(firestore, 'uploads', id));
+    deleteUpload(id);
 }
 
 export async function updateFileUpload(id: string, data: Partial<FileUpload>): Promise<void> {
-    if (!firestore) throw new Error("Database not available.");
-    const docRef = doc(firestore, 'uploads', id);
-    await updateDoc(docRef, {
+    const existing = getUploadById(id);
+    if (!existing) {
+        throw new Error(`Upload with id ${id} not found`);
+    }
+
+    const updated = {
+        ...existing,
         ...data,
-        updatedAt: serverTimestamp(),
-    });
+        updatedAt: new Date().toISOString(),
+        tags: data.tags || existing.tags, // specific handling if tags are replaced
+        meta: data.meta || existing.meta
+    };
+
+    // saveUpload expects specific fields. We construct it carefully from FileUpload type to UploadDB type
+    // existing is UploadDB compatible (from getUploadById return), plus our overrides.
+    // wait, getUploadById returns object with tags/meta as arrays (parsed). saveUpload expects arrays.
+    // So this is compatible.
+
+    // We need to make sure we don't pass extra fields that saveUpload might not handle if type mismatch?
+    // saveUpload takes Omit<UploadDB, ...> & { tags: string[], meta: any[] }.
+    // UploadDB has id, name, url, uploadedBy, type, size, tags(string), meta(string), uploadedOn, uploadedAt, createdAt.
+    // But saveUpload arguments are slightly different (clean arrays).
+
+    // Let's reconstruct the object for saveUpload to be safe
+    const toSave = {
+        id: updated.id,
+        name: updated.name,
+        url: updated.url,
+        uploadedBy: updated.uploadedBy,
+        type: updated.type,
+        size: updated.size,
+        tags: updated.tags as string[],
+        meta: updated.meta as any[],
+        uploadedOn: updated.uploadedOn,
+        uploadedAt: updated.uploadedAt,
+        createdAt: updated.createdAt
+    };
+
+    saveUpload(toSave);
 }
 
 export async function getFileUploads(options?: {
@@ -44,122 +83,44 @@ export async function getFileUploads(options?: {
     lastDocId?: string | null;
     searchTerm?: string;
 }): Promise<{ uploads: FileUpload[]; hasMore: boolean; totalCount: number; totalPages: number }> {
-    if (!firestore) return { uploads: [], hasMore: false, totalCount: 0, totalPages: 0 };
 
-    let baseQuery = query(collection(firestore, 'uploads'));
-
-    const searchTerm = options?.searchTerm?.trim();
-    const limit = options?.limit || 10;
-    const page = options?.page || 1;
-    const offset = (page - 1) * limit;
-
-    if (searchTerm) {
-        // Firebase prefix search requires ordering by the field being searched
-        baseQuery = query(
-            baseQuery,
-            where('name', '>=', searchTerm),
-            where('name', '<=', searchTerm + '\uf8ff'),
-            orderBy('name')
-        );
-    } else {
-        baseQuery = query(baseQuery, orderBy('uploadedAt', 'desc'));
-    }
-
-    if (options?.tags && options.tags.length > 0) {
-        baseQuery = query(baseQuery, where('tags', 'array-contains-any', options.tags));
-    }
-
-    // Since Firestore offset() is not directly available in standard web SDK in a simple way without firestoreLimit
-    // and its behavior is specific, we use the 'get then skip' or 'startAfter' logic.
-    // However, the user asked for offset 0, 10, 20 etc.
-    // In web SDK, we can't easily do offset(n). We use startAfter with a document snapshot.
-
-    let paginatedQuery = query(baseQuery, firestoreLimit(limit));
-
-    if (offset > 0) {
-        const skipQuery = query(baseQuery, firestoreLimit(offset));
-        const skipSnapshot = await getDocs(skipQuery);
-        const lastVisible = skipSnapshot.docs[skipSnapshot.docs.length - 1];
-        if (lastVisible) {
-            paginatedQuery = query(baseQuery, startAfter(lastVisible), firestoreLimit(limit));
-        }
-    }
-
-    const querySnapshot = await getDocs(paginatedQuery);
-    const uploads = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            name: data.name || 'Untitled',
-            url: data.url || '',
-            uploadedBy: data.uploadedBy || 'Unknown',
-            type: data.type || 'application/octet-stream',
-            size: data.size || 0,
-            tags: data.tags || ['general'],
-            meta: data.meta || [],
-            uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
-            uploadedAt: data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString(),
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-        } as FileUpload;
+    // Map options.searchTerm to options.search (sqlite expects search)
+    const result = getUploads({
+        limit: options?.limit,
+        page: options?.page,
+        tags: options?.tags,
+        search: options?.searchTerm
     });
 
-    // Get total count for pagination
-    let totalCount = 0;
-    try {
-        const countSnapshot = await getCountFromServer(baseQuery);
-        totalCount = countSnapshot.data().count;
-    } catch (err) {
-        console.error('Error getting total count:', err);
-    }
-
-    const totalPages = Math.ceil(totalCount / limit);
-    const hasMore = page < totalPages;
-
-    return { uploads, hasMore, totalCount, totalPages };
+    return {
+        uploads: result.uploads.map(u => ({
+            ...u,
+            // mapping back DB fields to FileUpload if needed. DB fields match FileUpload mostly.
+            // DB has uploadedAt as string. FileUpload expects string.
+            // DB has uploadedOn as string.
+            // DB has tags/meta as arrays (parsed in getUploads).
+        } as FileUpload)),
+        hasMore: result.hasMore,
+        totalCount: result.totalCount,
+        totalPages: result.totalPages
+    };
 }
 
 
 export async function getFileUploadsCount(): Promise<number> {
-    if (!firestore) return 0;
-    const snapshot = await getDocs(collection(firestore, 'uploads'));
-    return snapshot.size;
+    const result = getUploads({ limit: 1 }); // We just want the method to run, but wait, getUploads returns totalCount
+    // This is inefficient if we only want count. But getUploads computes count.
+    // We can add a specialized getCount to sqlite if performance matters, but for now this works.
+    return result.totalCount;
 }
+
 export async function getFileUpload(id: string): Promise<FileUpload | null> {
-    if (!firestore) return null;
-    try {
-        const docRef = doc(firestore, 'uploads', id);
-        const docSnap = await getDoc(docRef);
-
-        if (!docSnap.exists()) return null;
-
-        const data = docSnap.data();
-        return {
-            id: docSnap.id,
-            name: data.name || 'Untitled',
-            url: data.url || '',
-            uploadedBy: data.uploadedBy || 'Unknown',
-            type: data.type || 'application/octet-stream',
-            size: data.size || 0,
-            tags: data.tags || ['general'],
-            meta: data.meta || [],
-            uploadedOn: data.uploadedOn || (data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString()),
-            uploadedAt: data.uploadedAt instanceof Timestamp ? data.uploadedAt.toDate().toISOString() : new Date().toISOString(),
-            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
-        } as FileUpload;
-    } catch (error) {
-        console.error('Error fetching file upload:', error);
-        return null;
-    }
+    const upload = getUploadById(id);
+    if (!upload) return null;
+    return upload as unknown as FileUpload; // Types are compatible after parsing JSON in sqlite.ts
 }
 
 export async function checkFileUploadByUrl(url: string): Promise<boolean> {
-    if (!firestore) return false;
-    try {
-        const q = query(collection(firestore, 'uploads'), where('url', '==', url), firestoreLimit(1));
-        const snapshot = await getDocs(q);
-        return !snapshot.empty;
-    } catch (error) {
-        console.error('Error checking file existence:', error);
-        return false;
-    }
+    const upload = getUploadByUrl(url);
+    return !!upload;
 }

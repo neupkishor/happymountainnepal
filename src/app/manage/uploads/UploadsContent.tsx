@@ -1,12 +1,13 @@
 
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getFileUploads, getFileUploadsCount, deleteFileUpload } from '@/lib/db';
 import { UploadDialog } from '@/components/upload/UploadDialog';
 import { formatDistanceToNow } from 'date-fns';
-import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon, Trash2, Plus, Copy, MoreHorizontal, Link as LinkIcon, Upload } from 'lucide-react';
+import { PictureInPicture, ChevronLeft, ChevronRight, ExternalLink, FileIcon, Trash2, Plus, Copy, MoreHorizontal, Link as LinkIcon, Upload, Search } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -25,6 +27,11 @@ export function UploadsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    const initialSearch = searchParams.get('search') || '';
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
+    // We keep local state for input to avoid UI lag, but actual search triggers via effect on URL or debounce
+    const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [fileItems, setFileItems] = useState<FileUpload[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(false);
@@ -32,7 +39,6 @@ export function UploadsContent() {
     const [totalPages, setTotalPages] = useState(0);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
-    const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const { toast } = useToast();
 
     const handleDelete = async (fileId: string) => {
@@ -46,7 +52,7 @@ export function UploadsContent() {
                 title: 'File Deleted',
                 description: 'The file has been successfully removed.',
             });
-            fetchData(currentPage); // Refetch current page
+            fetchData(currentPage, searchTerm);
         } catch (error) {
             console.error('Failed to delete file:', error);
             toast({
@@ -57,12 +63,13 @@ export function UploadsContent() {
         }
     };
 
-    const fetchData = async (page: number) => {
+    const fetchData = async (page: number, search: string) => {
         setIsLoading(true);
         try {
             const result = await getFileUploads({
                 limit: ITEMS_PER_PAGE,
-                page: page
+                page: page,
+                searchTerm: search
             });
             setFileItems(result.uploads);
             setHasMore(result.hasMore);
@@ -75,21 +82,50 @@ export function UploadsContent() {
         }
     };
 
+    // Refetch when page or search param in URL changes
     useEffect(() => {
-        fetchData(currentPage);
-    }, [currentPage]);
+        const urlSearch = searchParams.get('search') || '';
+        fetchData(currentPage, urlSearch);
+        // We also sync local state if it differs (e.g. back button navigation)
+        if (urlSearch !== searchTerm) {
+            setSearchTerm(urlSearch);
+        }
+    }, [currentPage, searchParams]);
+
+    // Update URL when user types (debounced)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const currentUrlSearch = searchParams.get('search') || '';
+            if (searchTerm !== currentUrlSearch) {
+                const params = new URLSearchParams(searchParams.toString());
+                if (searchTerm) {
+                    params.set('search', searchTerm);
+                } else {
+                    params.delete('search');
+                }
+                params.set('page', '1'); // Reset to page 1 on new search
+                router.push(`/manage/uploads?${params.toString()}`);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm, router, searchParams]);
 
 
     const goToPage = (page: number) => {
         if (page >= 1 && page <= totalPages) {
-            router.push(`/manage/uploads?page=${page}`);
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('page', page.toString());
+            router.push(`/manage/uploads?${params.toString()}`);
         }
     };
 
     const handleUploadComplete = () => {
-        fetchData(1);
+        fetchData(1, searchTerm);
         if (currentPage !== 1) {
-            router.push('/manage/uploads?page=1');
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('page', '1');
+            router.push(`/manage/uploads?${params.toString()}`);
         }
     };
 
@@ -136,18 +172,33 @@ export function UploadsContent() {
                         </div>
                     ))}
                 </div>
-            ) : fileItems.length > 0 || currentPage === 1 ? (
+            ) : (
                 <div className="space-y-4 mb-8">
                     {/* Action Cards (Only on Page 1) */}
                     {currentPage === 1 && (
                         <Card className="mb-6 overflow-hidden border-blue-200/50">
+                            {/* Search Section */}
+                            <div className="p-6">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search files by name..."
+                                        className="pl-10 py-6 text-base bg-muted/30 border-muted-foreground/20 focus-visible:ring-primary/20"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <Separator />
+
                             {/* Upload New File */}
                             <div
-                                className="hover:bg-muted/50 transition-colors cursor-pointer"
+                                className="hover:bg-muted/50 transition-colors cursor-pointer group"
                                 onClick={() => setIsUploadDialogOpen(true)}
                             >
                                 <div className="p-6 flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                                         <Upload className="h-6 w-6 text-primary" />
                                     </div>
                                     <div className="flex-1">
@@ -165,9 +216,9 @@ export function UploadsContent() {
                             <Separator />
 
                             {/* Add from URL (Bulk) */}
-                            <Link href="/manage/uploads/linked" className="block hover:bg-muted/50 transition-colors">
+                            <Link href="/manage/uploads/linked" className="block hover:bg-muted/50 transition-colors group">
                                 <div className="p-6 flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                                         <LinkIcon className="h-6 w-6 text-primary" />
                                     </div>
                                     <div className="flex-1">
@@ -185,7 +236,7 @@ export function UploadsContent() {
                     )}
 
                     {/* File List */}
-                    {fileItems.length > 0 && (
+                    {fileItems.length > 0 ? (
                         <Card className="overflow-hidden">
                             <div className="flex flex-col">
                                 {fileItems.map((item, index) => (
@@ -239,16 +290,15 @@ export function UploadsContent() {
                                 ))}
                             </div>
                         </Card>
+                    ) : (
+                        <div className="text-center py-16 text-muted-foreground border rounded-lg">
+                            <PictureInPicture className="mx-auto h-12 w-12" />
+                            <h3 className="mt-4 text-lg font-semibold">No Files Found</h3>
+                            <p>{searchTerm ? `No files match "${searchTerm}"` : "Uploaded files will appear here as they are added."}</p>
+                        </div>
                     )}
                 </div>
-            ) : (
-                <div className="text-center py-16 text-muted-foreground border rounded-lg">
-                    <PictureInPicture className="mx-auto h-12 w-12" />
-                    <h3 className="mt-4 text-lg font-semibold">No Files Uploaded</h3>
-                    <p>Uploaded files will appear here as they are added.</p>
-                </div>
-            )
-            }
+            )}
 
             {
                 totalCount > ITEMS_PER_PAGE && (
@@ -282,5 +332,6 @@ export function UploadsContent() {
         </div >
     );
 }
+
 
 

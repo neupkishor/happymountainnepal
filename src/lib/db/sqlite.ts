@@ -73,8 +73,31 @@ export function initDb() {
       metaInformation TEXT,
       status TEXT, -- 'draft' | 'published'
       searchKeywords TEXT, -- JSON array
+      searchKeywords TEXT, -- JSON array
       createdAt TEXT -- ISO string
     );
+
+    CREATE TABLE IF NOT EXISTS uploads (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      url TEXT NOT NULL,
+      uploadedBy TEXT,
+      type TEXT,
+      size INTEGER,
+      tags TEXT, -- JSON array
+      meta TEXT, -- JSON array
+      uploadedOn TEXT,
+      uploadedAt TEXT,
+      createdAt TEXT
+    );
+
+
+
+    DELETE FROM uploads WHERE rowid NOT IN (
+      SELECT MIN(rowid) FROM uploads GROUP BY url
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_uploads_url ON uploads(url);
   `);
 
   // Migration for adding parentId to existing table if needed
@@ -343,3 +366,149 @@ export function savePost(post: Omit<PostDB, 'tags' | 'searchKeywords'> & { tags:
 export function deletePost(id: string) {
   db.prepare('DELETE FROM posts WHERE id = ?').run(id);
 }
+
+// --- Upload Helpers ---
+
+export interface UploadDB {
+  id: string;
+  name: string;
+  url: string;
+  uploadedBy: string;
+  type: string;
+  size: number;
+  tags: string; // JSON string
+  meta: string; // JSON string
+  uploadedOn: string;
+  uploadedAt: string;
+  createdAt: string;
+}
+
+export function saveUpload(upload: Omit<UploadDB, 'tags' | 'meta'> & { tags: string[], meta: any[] }) {
+  // Check collision on URL
+  const existingUrl = db.prepare('SELECT id FROM uploads WHERE url = ?').get(upload.url) as { id: string } | undefined;
+
+  if (existingUrl) {
+    if (existingUrl.id !== upload.id) {
+      // URL exists on DIFFERENT ID.
+      // If we are trying to insert new (upload.id not in DB), then we should deduplicate and return existing ID.
+      const selfExists = db.prepare('SELECT id FROM uploads WHERE id = ?').get(upload.id);
+      if (selfExists) {
+        // This is an UPDATE to an existing record, changing its URL to a duplicate one.
+        throw new Error('Cannot update upload: URL already exists.');
+      } else {
+        // This is an INSERT of a new record with a duplicate URL.
+        // Return the EXISTING ID and skip insert.
+        return existingUrl.id;
+      }
+    }
+  }
+
+  const existing = db.prepare('SELECT id FROM uploads WHERE id = ?').get(upload.id);
+
+  const serializedUpload = {
+    ...upload,
+    tags: JSON.stringify(upload.tags),
+    meta: JSON.stringify(upload.meta)
+  };
+
+  if (existing) {
+    db.prepare(`
+      UPDATE uploads 
+      SET name = @name, url = @url, uploadedBy = @uploadedBy, type = @type, 
+          size = @size, tags = @tags, meta = @meta, uploadedOn = @uploadedOn, 
+          uploadedAt = @uploadedAt, createdAt = @createdAt
+      WHERE id = @id
+    `).run(serializedUpload);
+  } else {
+    db.prepare(`
+      INSERT INTO uploads (id, name, url, uploadedBy, type, size, tags, meta, uploadedOn, uploadedAt, createdAt)
+      VALUES (@id, @name, @url, @uploadedBy, @type, @size, @tags, @meta, @uploadedOn, @uploadedAt, @createdAt)
+    `).run(serializedUpload);
+  }
+  return upload.id;
+}
+
+export function getUploads(options?: {
+  limit?: number;
+  page?: number;
+  tags?: string[];
+  search?: string;
+}) {
+  const limit = options?.limit || 10;
+  const page = options?.page || 1;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT * FROM uploads';
+  const conditions: string[] = [];
+  const params: any[] = [];
+
+  if (options?.search) {
+    conditions.push('name LIKE ?');
+    params.push(`%${options.search}%`);
+  }
+
+  if (options?.tags && options.tags.length > 0) {
+    const tagConditions = options.tags.map(() => 'tags LIKE ?');
+    conditions.push(`(${tagConditions.join(' OR ')})`);
+    options.tags.forEach(tag => params.push(`%${tag}%`));
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY uploadedAt DESC LIMIT ? OFFSET ?';
+  params.push(limit, offset);
+
+  const rows = db.prepare(query).all(...params) as UploadDB[];
+
+  // Get total count
+  let countQuery = 'SELECT COUNT(*) as count FROM uploads';
+  const countParams = params.slice(0, params.length - 2);
+
+  if (conditions.length > 0) {
+    countQuery += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  const totalCount = (db.prepare(countQuery).get(...countParams) as { count: number }).count;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    uploads: rows.map(row => ({
+      ...row,
+      tags: JSON.parse(row.tags || '[]'),
+      meta: JSON.parse(row.meta || '[]'),
+      size: row.size || 0
+    })),
+    totalCount,
+    totalPages,
+    hasMore: page < totalPages
+  };
+}
+
+export function getUploadById(id: string) {
+  const row = db.prepare('SELECT * FROM uploads WHERE id = ?').get(id) as UploadDB | undefined;
+  if (!row) return null;
+  return {
+    ...row,
+    tags: JSON.parse(row.tags || '[]'),
+    meta: JSON.parse(row.meta || '[]'),
+    size: row.size || 0
+  };
+}
+
+export function deleteUpload(id: string) {
+  db.prepare('DELETE FROM uploads WHERE id = ?').run(id);
+}
+
+export function getUploadByUrl(url: string) {
+  const row = db.prepare('SELECT * FROM uploads WHERE url = ?').get(url) as UploadDB | undefined;
+  if (!row) return null;
+  return {
+    ...row,
+    tags: JSON.parse(row.tags || '[]'),
+    meta: JSON.parse(row.meta || '[]'),
+    size: row.size || 0
+  };
+}
+

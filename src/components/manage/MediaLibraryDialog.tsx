@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,18 +9,17 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2, ExternalLink } from 'lucide-react';
+import { Loader2, Search, Image as ImageIcon, CheckCircle2, FileText, Trash2, ExternalLink, X, Filter, LayoutTemplate, User } from 'lucide-react';
 import { getFileUploads, deleteFileUpload } from '@/lib/db';
 import type { FileUpload, ImageWithCaption } from '@/lib/types';
 import { SmartImage } from '@/components/ui/smart-image';
 import { cn } from '@/lib/utils';
-import { FileUploadInput } from './FileUploadInput';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { getFullUrl } from '@/lib/url-utils';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 interface MediaLibraryDialogProps {
   isOpen: boolean;
@@ -32,9 +30,25 @@ interface MediaLibraryDialogProps {
   defaultCategory?: string;
 }
 
-const DEFAULT_SELECTED_URLS: string[] = [];
 
-export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = DEFAULT_SELECTED_URLS, defaultTags = ['general'], defaultCategory }: MediaLibraryDialogProps) {
+const DEFAULT_SELECTED_URLS: string[] = [];
+const DEFAULT_TAGS: string[] = ['general'];
+
+// Helper to get icon and label for specific tags
+const getTagConfig = (tag: string) => {
+  if (tag === 'category.cover' || tag === 'cover') {
+    return { icon: <LayoutTemplate className="h-3 w-3" />, label: 'Cover Image' };
+  }
+  if (tag === 'author.photo' || tag === 'profile') {
+    return { icon: <User className="h-3 w-3" />, label: 'Profile Photo' };
+  }
+  if (tag === 'logo') {
+    return { icon: <ImageIcon className="h-3 w-3" />, label: 'Logo' };
+  }
+  return { icon: <Filter className="h-3 w-3" />, label: tag };
+};
+
+export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedUrls = DEFAULT_SELECTED_URLS, defaultTags = DEFAULT_TAGS, defaultCategory }: MediaLibraryDialogProps) {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -42,18 +56,18 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
   const [hasMore, setHasMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentSelection, setCurrentSelection] = useState<string[]>(initialSelectedUrls);
-  const [isUploading, setIsUploading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>(['all']);
 
+  const observerTarget = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { profile } = useSiteProfile();
 
-  const fetchUploads = async (tags: string[] = ['all'], currentPage = 1, search = '') => {
+  const fetchUploads = useCallback(async (tags: string[] = ['all'], currentPage = 1, search = '', isNewSearch = false) => {
     if (currentPage === 1) setIsLoading(true);
     else setIsFetchingMore(true);
 
     try {
-      const limit = 10;
+      const limit = 20; // Increased limit for better grid fill
       const { uploads: fetchedUploads, hasMore: moreAvailable } = await getFileUploads({
         tags: tags.includes('all') ? undefined : tags,
         limit,
@@ -62,7 +76,8 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
       });
 
       setUploads(prev => {
-        if (currentPage === 1) return fetchedUploads;
+        if (currentPage === 1 || isNewSearch) return fetchedUploads;
+
         // Merge and ensure uniqueness by ID
         const combined = [...prev, ...fetchedUploads];
         const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
@@ -82,36 +97,55 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
       setIsLoading(false);
       setIsFetchingMore(false);
     }
-  };
+  }, [toast]);
 
+  // Initial load
   useEffect(() => {
     if (isOpen) {
       setCurrentSelection(initialSelectedUrls);
-      const tagsToUse = defaultTags || ['all'];
+      const tagsToUse = defaultTags && defaultTags.length > 0 ? defaultTags : ['all'];
       setSelectedTags(tagsToUse);
       // Reset search and page on open
       setSearchTerm('');
       setPage(1);
-      fetchUploads(tagsToUse, 1, '');
+      fetchUploads(tagsToUse, 1, '', true);
     }
-  }, [isOpen]);
+  }, [isOpen, initialSelectedUrls, defaultTags, fetchUploads]);
 
   // Debounced search effect
   useEffect(() => {
     if (!isOpen) return;
     const timer = setTimeout(() => {
-      fetchUploads(selectedTags, 1, searchTerm);
+      // Only refetch if searchTerm changed or we are initializing
+      fetchUploads(selectedTags, 1, searchTerm, true);
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchTerm, selectedTags]);
+  }, [searchTerm, selectedTags, isOpen, fetchUploads]);
 
-  const filteredUploads = uploads.sort((a, b) => {
-    const aIsSelected = currentSelection.includes(getFullUrl(a, profile?.basePath));
-    const bIsSelected = currentSelection.includes(getFullUrl(b, profile?.basePath));
-    if (aIsSelected && !bIsSelected) return -1;
-    if (!aIsSelected && bIsSelected) return 1;
-    return 0;
-  });
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !isLoading) {
+          fetchUploads(selectedTags, page + 1, searchTerm);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, isFetchingMore, isLoading, page, selectedTags, searchTerm, fetchUploads]);
+
+
+  const filteredUploads = uploads; // Sorting logic removed to preserve infinite scroll order logic, usually user wants latest first which DB provides
 
   const handleDelete = async (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
@@ -146,13 +180,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
     });
   };
 
-  const handleFileUploadSuccess = (url: string) => {
-    toast({ title: 'Upload Successful', description: 'File added to library.' });
-    fetchUploads(selectedTags);
-    setCurrentSelection(prev => [...prev, url]);
-  };
-
-  const handleInsertSelected = () => {
+  const handleInsertSelected = async () => {
     // Convert selected URLs to ImageWithCaption objects
     const selectedImages: ImageWithCaption[] = currentSelection.map(url => {
       const file = uploads.find(u => getFullUrl(u, profile?.basePath) === url);
@@ -161,9 +189,30 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
         caption: file?.name || ''
       };
     });
+
+    // Call onSelect and give it time to process before closing
     onSelect(selectedImages);
+
+    // Small delay to ensure the image insertion completes before dialog closes
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     onClose();
   };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const newTags = selectedTags.filter(t => t !== tagToRemove);
+    if (newTags.length === 0) {
+      setSelectedTags(['all']);
+    } else {
+      setSelectedTags(newTags);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSelectedTags(['all']);
+  };
+
+  const activeFilters = selectedTags.filter(t => t !== 'all');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -187,8 +236,8 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
           </div>
 
           <div className="flex-grow flex flex-col gap-4 overflow-hidden">
-            <div className="flex gap-2">
-              <div className="relative flex-grow">
+            <div className="space-y-4">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search files..."
@@ -197,16 +246,44 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
+              {/* Active Filters */}
+              {activeFilters.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground mr-1">Filtered by:</span>
+                  {activeFilters.map(tag => {
+                    const { icon, label } = getTagConfig(tag);
+                    return (
+                      <Badge key={tag} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1 h-7">
+                        {icon}
+                        <span>{label}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 ml-1 hover:bg-muted-foreground/20 rounded-full"
+                          onClick={() => handleRemoveTag(tag)}
+                        >
+                          <X className="h-3 w-3" />
+                          <span className="sr-only">Remove {label} filter</span>
+                        </Button>
+                      </Badge>
+                    );
+                  })}
+                  <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-primary ml-2" onClick={handleClearFilters}>
+                    Clear all
+                  </Button>
+                </div>
+              )}
             </div>
 
             <ScrollArea className="flex-grow -mr-4 pr-4">
-              {isLoading && uploads.length === 0 ? (
+              {isLoading && page === 1 ? (
                 <div className="flex h-64 items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pb-4">
                     {filteredUploads.map((file) => {
                       const fullUrl = getFullUrl(file, profile?.basePath);
                       const isSelected = currentSelection.includes(fullUrl);
@@ -251,12 +328,25 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
                       )
                     })}
                   </div>
+
+                  {/* Sentinel for Infinite Scroll */}
                   {hasMore && (
-                    <div className="mt-4 flex justify-center pb-4">
-                      <Button variant="outline" onClick={() => fetchUploads(selectedTags, page + 1, searchTerm)} disabled={isFetchingMore}>
-                        {isFetchingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        {isFetchingMore ? 'Loading...' : 'Show More'}
-                      </Button>
+                    <div ref={observerTarget} className="flex justify-center p-4">
+                      {isFetchingMore ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      ) : (
+                        <div className="h-4" /> // Invisible spacer to trigger intersection
+                      )}
+                    </div>
+                  )}
+
+                  {!hasMore && uploads.length > 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-4">All files loaded</p>
+                  )}
+
+                  {!isLoading && uploads.length === 0 && (
+                    <div className="text-center py-10 text-muted-foreground">
+                      No media found.
                     </div>
                   )}
                 </>
@@ -265,7 +355,7 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
           </div>
 
           <div className="flex justify-end mt-auto pt-4 border-t">
-            <Button onClick={handleInsertSelected} disabled={currentSelection.length === 0 || isUploading}>
+            <Button onClick={handleInsertSelected} disabled={currentSelection.length === 0}>
               Insert Selected ({currentSelection.length})
             </Button>
           </div>

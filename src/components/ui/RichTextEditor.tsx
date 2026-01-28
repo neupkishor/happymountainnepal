@@ -73,8 +73,10 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   const [mounted, setMounted] = useState(false);
   const [editorValue, setEditorValue] = useState(value);
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
+
   const quillRef = useRef<Quill | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const lastSelectionRange = useRef<any>(null);
 
   const [selectedImage, setSelectedImage] = useState<{ node: HTMLElement; blot: any; rect: DOMRect } | null>(null);
 
@@ -111,20 +113,90 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   };
 
   const imageHandler = () => {
+    if (quillRef.current) {
+      const range = quillRef.current.getSelection();
+      if (range) {
+        lastSelectionRange.current = range;
+      }
+    }
     setSelectedImage(null);
     setIsMediaLibraryOpen(true);
   };
 
   const handleImageSelect = (urls: ImageWithCaption[]) => {
-    if (urls.length === 0 || !quillRef.current) return;
+    console.log('handleImageSelect called with:', urls);
+    console.log('Saved selection range:', lastSelectionRange.current);
+
+    if (urls.length === 0) {
+      console.log('Early return - no urls provided');
+      setIsMediaLibraryOpen(false);
+      return;
+    }
+
+    if (!quillRef.current) {
+      console.error('Quill ref is not available');
+      setIsMediaLibraryOpen(false);
+      return;
+    }
 
     const quill = quillRef.current;
-    const range = quill.getSelection(true) || { index: 0, length: 0 };
-    const imageUrl = urls[0];
+    console.log('Quill instance available:', !!quill);
 
-    quill.insertEmbed(range.index, 'customImage', { url: imageUrl.url, alt: imageUrl.caption || '' }, 'user');
-    quill.setSelection(range.index + 1, 0);
-    setIsMediaLibraryOpen(false);
+    try {
+      // Determine insertion index from saved range
+      let index = 0;
+
+      if (lastSelectionRange.current && typeof lastSelectionRange.current.index === 'number') {
+        index = lastSelectionRange.current.index;
+        console.log('Using saved selection index:', index);
+      } else {
+        // Try to get current selection as fallback
+        const currentSelection = quill.getSelection();
+        if (currentSelection && typeof currentSelection.index === 'number') {
+          index = currentSelection.index;
+          console.log('Using current selection index:', index);
+        } else {
+          // Last resort: insert at the end
+          index = quill.getLength() - 1; // -1 to account for the trailing newline
+          console.log('No selection found, using end of document:', index);
+        }
+      }
+
+      console.log('Final insertion index:', index, 'Document length:', quill.getLength());
+
+      const imageUrl = urls[0];
+      console.log('Inserting image:', imageUrl);
+
+      // Insert image at the determined position
+      quill.insertEmbed(index, 'customImage', { url: imageUrl.url, alt: imageUrl.caption || '' }, 'user');
+      console.log('Image inserted successfully at index:', index);
+
+      // Update the editor value to trigger onChange
+      const newContent = quill.root.innerHTML;
+      setEditorValue(newContent);
+      onChange(newContent);
+
+      // Move cursor after image to prevent typing inside the figure
+      setTimeout(() => {
+        try {
+          quill.focus();
+          quill.setSelection(index + 1, 0);
+          console.log('Cursor moved to:', index + 1);
+        } catch (e) {
+          console.error('Failed to set cursor position:', e);
+        }
+      }, 50);
+
+      // Clear the saved range after use
+      lastSelectionRange.current = null;
+    } catch (error) {
+      console.error('Failed to insert image:', error);
+    }
+
+    // Close the media library after a small delay to ensure insertion completes
+    setTimeout(() => {
+      setIsMediaLibraryOpen(false);
+    }, 100);
   };
 
   const handleReplaceImage = () => {
@@ -134,10 +206,22 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   const handleReplaceSelectedImage = (urls: ImageWithCaption[]) => {
     if (urls.length === 0 || !selectedImage || !quillRef.current) return;
     const newImage = urls[0];
-    quillRef.current.deleteText(selectedImage.blot.offset(quillRef.current.scroll), 1, 'user');
-    quillRef.current.insertEmbed(selectedImage.blot.offset(quillRef.current.scroll), 'customImage', { url: newImage.url, alt: newImage.caption || '' }, 'user');
+    const quill = quillRef.current;
+
+    quill.deleteText(selectedImage.blot.offset(quill.scroll), 1, 'user');
+    quill.insertEmbed(selectedImage.blot.offset(quill.scroll), 'customImage', { url: newImage.url, alt: newImage.caption || '' }, 'user');
+
+    // Update the editor value to trigger onChange
+    const newContent = quill.root.innerHTML;
+    setEditorValue(newContent);
+    onChange(newContent);
+
     setSelectedImage(null);
-    setIsMediaLibraryOpen(false);
+
+    // Close the media library after a small delay
+    setTimeout(() => {
+      setIsMediaLibraryOpen(false);
+    }, 100);
   };
 
   const handleUpdateImageAlt = (newAlt: string) => {
@@ -173,11 +257,23 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
 
   const getQuillRef = (el: any) => {
     if (typeof window !== 'undefined' && el && !quillRef.current) {
+      console.log('getQuillRef called, initializing Quill...');
       quillRef.current = el.getEditor();
       if (quillRef.current) {
+        console.log('Quill editor obtained:', quillRef.current);
+
+        // Add selection change listener to track cursor position
+        quillRef.current.on('selection-change', (range: any) => {
+          if (range) {
+            lastSelectionRange.current = range;
+            console.log('Selection changed, saved range:', range);
+          }
+        });
+
         // Correctly get the Quill static from the instance
         const Quill = quillRef.current.constructor as any;
         const BlockEmbed = Quill.import('blots/block/embed');
+        console.log('BlockEmbed imported:', BlockEmbed);
 
         class ImageBlot extends BlockEmbed {
           static blotName = 'customImage';
@@ -185,12 +281,16 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
           static className = 'ql-custom-image-container';
 
           static create(value: { url: string; alt: string }) {
+            console.log('ImageBlot.create called with:', value);
             const node = super.create();
             node.setAttribute('contenteditable', 'false');
             const img = document.createElement('img');
             img.setAttribute('src', value.url);
             img.setAttribute('alt', value.alt || '');
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
             node.appendChild(img);
+            console.log('ImageBlot node created:', node);
             return node;
           }
 
@@ -213,7 +313,13 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
             }
           }
         }
-        Quill.register(ImageBlot);
+
+        try {
+          Quill.register(ImageBlot, true);
+          console.log('ImageBlot registered successfully');
+        } catch (error) {
+          console.error('Failed to register ImageBlot:', error);
+        }
       }
     }
   };
