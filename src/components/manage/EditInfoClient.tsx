@@ -31,7 +31,7 @@ export function EditInfoClient({ tour }: { tour: Tour }) {
         form.reset({
             additionalInfoSections: tour.additionalInfoSections || [],
         });
-    }, [tour, form]);
+    }, [tour.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <FormProvider {...form}>

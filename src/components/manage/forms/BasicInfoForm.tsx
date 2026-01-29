@@ -55,7 +55,8 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
     if (!isSlugManuallyEdited && name) {
       form.setValue('slug', slugify(name), { shouldValidate: true });
     }
-  }, [name, isSlugManuallyEdited, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, isSlugManuallyEdited]);
 
   useEffect(() => {
     const checkAvailability = async () => {
@@ -82,8 +83,8 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
       }
     };
     checkAvailability();
-    // @ts-ignore
-  }, [debouncedSlug, tour.id, form, form.formState.errors.slug?.message]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSlug, tour.id]);
 
   return (
     <Card>
@@ -102,40 +103,42 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="slug"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>URL Slug</FormLabel>
-                <div className="relative">
-                  <FormControl>
-                    <Input
-                      placeholder="e.g., everest-base-camp-trek"
-                      {...field}
-                      disabled={isSlugChecking}
-                      onChange={(e) => {
-                        field.onChange(slugify(e.target.value));
-                        setIsSlugManuallyEdited(true);
-                        setIsSlugAvailable(null);
-                      }}
-                    />
-                  </FormControl>
-                  {isSlugChecking && (
-                    <MoreHorizontal className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-pulse" />
-                  )}
-                  {!isSlugChecking && isSlugAvailable !== null && (
-                    isSlugAvailable ? (
-                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
-                    ) : (
-                      <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
-                    )
-                  )}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!tour.slug && (
+            <FormField
+              control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL Slug</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., everest-base-camp-trek"
+                        {...field}
+                        disabled={isSlugChecking}
+                        onChange={(e) => {
+                          field.onChange(slugify(e.target.value));
+                          setIsSlugManuallyEdited(true);
+                          setIsSlugAvailable(null);
+                        }}
+                      />
+                    </FormControl>
+                    {isSlugChecking && (
+                      <MoreHorizontal className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-pulse" />
+                    )}
+                    {!isSlugChecking && isSlugAvailable !== null && (
+                      isSlugAvailable ? (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
+                      ) : (
+                        <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500" />
+                      )
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={form.control}
             name="shortDescription"

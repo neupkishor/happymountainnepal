@@ -19,7 +19,7 @@ export function EditGearsClient({ tour, globalGears }: { tour: Tour; globalGears
         form.reset({
             gears: tour.gears || [],
         });
-    }, [tour, form]);
+    }, [tour.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <FormProvider {...form}>

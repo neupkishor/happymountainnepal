@@ -32,7 +32,7 @@ export function EditItineraryClient({ tour }: { tour: Tour }) {
         form.reset({
             itinerary: tour.itinerary || [],
         });
-    }, [tour, form]);
+    }, [tour.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <FormProvider {...form}>

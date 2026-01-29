@@ -98,6 +98,43 @@ export function initDb() {
     );
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_uploads_url ON uploads(url);
+
+    CREATE TABLE IF NOT EXISTS packages (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      description TEXT,
+      shortDescription TEXT,
+      region TEXT, -- JSON array of strings
+      type TEXT, -- 'Trekking', 'Tour', 'Climbing', 'Jungle Safari'
+      difficulty TEXT, -- 'Easy', 'Moderate', 'Strenuous', 'Challenging'
+      duration INTEGER,
+      price REAL,
+      mainImage TEXT, -- JSON object {url, caption, posted_by, story}
+      images TEXT, -- JSON array of image objects
+      itinerary TEXT, -- JSON array of itinerary objects
+      inclusions TEXT, -- JSON array of strings
+      exclusions TEXT, -- JSON array of strings
+      departureDates TEXT, -- JSON array of date objects
+      anyDateAvailable INTEGER DEFAULT 0,
+      map TEXT,
+      reviews TEXT, -- JSON array of review objects
+      status TEXT DEFAULT 'draft', -- 'draft' | 'published' | 'unpublished' | 'hidden'
+      faq TEXT, -- JSON array of faq objects
+      additionalInfoSections TEXT, -- JSON array
+      bookingType TEXT DEFAULT 'internal',
+      externalBookingUrl TEXT,
+      gears TEXT, -- JSON array
+      guides TEXT, -- JSON array
+      searchKeywords TEXT, -- JSON array
+      createdAt TEXT,
+      updatedAt TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_packages_slug ON packages(slug);
+    CREATE INDEX IF NOT EXISTS idx_packages_status ON packages(status);
+    CREATE INDEX IF NOT EXISTS idx_packages_type ON packages(type);
+    CREATE INDEX IF NOT EXISTS idx_packages_difficulty ON packages(difficulty);
   `);
 
   // Migration for adding parentId to existing table if needed
@@ -512,3 +549,224 @@ export function getUploadByUrl(url: string) {
   };
 }
 
+// --- Package Helpers ---
+
+export interface PackageDB {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription: string;
+  region: string; // JSON string
+  type: string;
+  difficulty: string;
+  duration: number;
+  price: number;
+  mainImage: string; // JSON string
+  images: string; // JSON string
+  itinerary: string; // JSON string
+  inclusions: string; // JSON string
+  exclusions: string; // JSON string
+  departureDates: string; // JSON string
+  anyDateAvailable: number;
+  map: string;
+  reviews: string; // JSON string
+  status: string;
+  faq: string; // JSON string
+  additionalInfoSections: string; // JSON string
+  bookingType: string;
+  externalBookingUrl: string;
+  gears: string; // JSON string
+  guides: string; // JSON string
+  searchKeywords: string; // JSON string
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function savePackage(pkg: any) {
+  const existing = db.prepare('SELECT id FROM packages WHERE id = ?').get(pkg.id);
+  const now = new Date().toISOString();
+
+  const serializedPackage = {
+    id: pkg.id,
+    name: pkg.name,
+    slug: pkg.slug,
+    description: pkg.description || '',
+    shortDescription: pkg.shortDescription || '',
+    region: JSON.stringify(pkg.region || []),
+    type: pkg.type || 'Trekking',
+    difficulty: pkg.difficulty || 'Moderate',
+    duration: pkg.duration || 0,
+    price: pkg.price || 0,
+    mainImage: JSON.stringify(pkg.mainImage || { url: '' }),
+    images: JSON.stringify(pkg.images || []),
+    itinerary: JSON.stringify(pkg.itinerary || []),
+    inclusions: JSON.stringify(pkg.inclusions || []),
+    exclusions: JSON.stringify(pkg.exclusions || []),
+    departureDates: JSON.stringify(pkg.departureDates || []),
+    anyDateAvailable: pkg.anyDateAvailable ? 1 : 0,
+    map: pkg.map || '',
+    reviews: JSON.stringify(pkg.reviews || []),
+    status: pkg.status || 'draft',
+    faq: JSON.stringify(pkg.faq || []),
+    additionalInfoSections: JSON.stringify(pkg.additionalInfoSections || []),
+    bookingType: pkg.bookingType || 'internal',
+    externalBookingUrl: pkg.externalBookingUrl || '',
+    gears: JSON.stringify(pkg.gears || []),
+    guides: JSON.stringify(pkg.guides || []),
+    searchKeywords: JSON.stringify(pkg.searchKeywords || []),
+    createdAt: pkg.createdAt || now,
+    updatedAt: now
+  };
+
+  if (existing) {
+    db.prepare(`
+      UPDATE packages 
+      SET name = @name, slug = @slug, description = @description, shortDescription = @shortDescription,
+          region = @region, type = @type, difficulty = @difficulty, duration = @duration, price = @price,
+          mainImage = @mainImage, images = @images, itinerary = @itinerary, inclusions = @inclusions,
+          exclusions = @exclusions, departureDates = @departureDates, anyDateAvailable = @anyDateAvailable,
+          map = @map, reviews = @reviews, status = @status, faq = @faq,
+          additionalInfoSections = @additionalInfoSections, bookingType = @bookingType,
+          externalBookingUrl = @externalBookingUrl, gears = @gears, guides = @guides,
+          searchKeywords = @searchKeywords, updatedAt = @updatedAt
+      WHERE id = @id
+    `).run(serializedPackage);
+  } else {
+    db.prepare(`
+      INSERT INTO packages (id, name, slug, description, shortDescription, region, type, difficulty, duration, price,
+                           mainImage, images, itinerary, inclusions, exclusions, departureDates, anyDateAvailable,
+                           map, reviews, status, faq, additionalInfoSections, bookingType, externalBookingUrl,
+                           gears, guides, searchKeywords, createdAt, updatedAt)
+      VALUES (@id, @name, @slug, @description, @shortDescription, @region, @type, @difficulty, @duration, @price,
+              @mainImage, @images, @itinerary, @inclusions, @exclusions, @departureDates, @anyDateAvailable,
+              @map, @reviews, @status, @faq, @additionalInfoSections, @bookingType, @externalBookingUrl,
+              @gears, @guides, @searchKeywords, @createdAt, @updatedAt)
+    `).run(serializedPackage);
+  }
+  return pkg.id;
+}
+
+function deserializePackage(row: PackageDB) {
+  return {
+    ...row,
+    region: JSON.parse(row.region || '[]'),
+    mainImage: JSON.parse(row.mainImage || '{"url":""}'),
+    images: JSON.parse(row.images || '[]'),
+    itinerary: JSON.parse(row.itinerary || '[]'),
+    inclusions: JSON.parse(row.inclusions || '[]'),
+    exclusions: JSON.parse(row.exclusions || '[]'),
+    departureDates: JSON.parse(row.departureDates || '[]'),
+    anyDateAvailable: Boolean(row.anyDateAvailable),
+    reviews: JSON.parse(row.reviews || '[]'),
+    faq: JSON.parse(row.faq || '[]'),
+    additionalInfoSections: JSON.parse(row.additionalInfoSections || '[]'),
+    gears: JSON.parse(row.gears || '[]'),
+    guides: JSON.parse(row.guides || '[]'),
+    searchKeywords: JSON.parse(row.searchKeywords || '[]'),
+  };
+}
+
+export function getPackageById(id: string) {
+  const row = db.prepare('SELECT * FROM packages WHERE id = ?').get(id) as PackageDB | undefined;
+  if (!row) return null;
+  return deserializePackage(row);
+}
+
+export function getPackageBySlug(slug: string) {
+  const row = db.prepare('SELECT * FROM packages WHERE slug = ?').get(slug) as PackageDB | undefined;
+  if (!row) return null;
+  return deserializePackage(row);
+}
+
+export function getPackages(options?: {
+  limit?: number;
+  page?: number;
+  status?: string;
+  search?: string;
+  type?: string;
+  difficulty?: string;
+  region?: string;
+}) {
+  const limit = options?.limit || 10;
+  const page = options?.page || 1;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT * FROM packages';
+  const conditions: string[] = [];
+  const params: any[] = [];
+
+  if (options?.status) {
+    conditions.push('status = ?');
+    params.push(options.status);
+  }
+
+  if (options?.type) {
+    conditions.push('type = ?');
+    params.push(options.type);
+  }
+
+  if (options?.difficulty) {
+    conditions.push('difficulty = ?');
+    params.push(options.difficulty);
+  }
+
+  if (options?.region) {
+    conditions.push('region LIKE ?');
+    params.push(`%${options.region}%`);
+  }
+
+  if (options?.search) {
+    conditions.push('(name LIKE ? OR description LIKE ? OR searchKeywords LIKE ?)');
+    const term = `%${options.search}%`;
+    params.push(term, term, term);
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY name ASC LIMIT ? OFFSET ?';
+  params.push(limit, offset);
+
+  const rows = db.prepare(query).all(...params) as PackageDB[];
+
+  // Get total count
+  let countQuery = 'SELECT COUNT(*) as count FROM packages';
+  const countParams = params.slice(0, params.length - 2);
+
+  if (conditions.length > 0) {
+    countQuery += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  const totalCount = (db.prepare(countQuery).get(...countParams) as { count: number }).count;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    packages: rows.map(deserializePackage),
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      hasMore: page < totalPages
+    }
+  };
+}
+
+export function getAllPackagesForSelect() {
+  const rows = db.prepare('SELECT id, name, slug FROM packages ORDER BY name ASC').all() as { id: string; name: string; slug: string }[];
+  return rows;
+}
+
+export function deletePackage(id: string) {
+  db.prepare('DELETE FROM packages WHERE id = ?').run(id);
+}
+
+export function checkPackageSlugAvailability(slug: string, excludeId?: string): boolean {
+  if (excludeId) {
+    const row = db.prepare('SELECT id FROM packages WHERE slug = ? AND id != ?').get(slug, excludeId);
+    return !row;
+  }
+  const row = db.prepare('SELECT id FROM packages WHERE slug = ?').get(slug);
+  return !row;
+}

@@ -27,7 +27,7 @@ export function EditPublishClient({ tour }: { tour: Tour }) {
         form.reset({
             status: tour.status || 'draft',
         });
-    }, [tour, form]);
+    }, [tour.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <FormProvider {...form}>

@@ -51,7 +51,8 @@ export function EditBasicInfoClient({ tour }: { tour: Tour }) {
             description: tour.description || '',
             searchKeywords: tour.searchKeywords || [],
         });
-    }, [tour, form]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tour.id]); // Only re-run when tour ID changes, not the entire tour object
 
     return (
         <FormProvider {...form}>

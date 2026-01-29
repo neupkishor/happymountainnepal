@@ -19,7 +19,7 @@ export function EditReviewsClient({ tour, globalReviews }: { tour: Tour; globalR
         form.reset({
             reviews: tour.reviews || [],
         });
-    }, [tour, form]);
+    }, [tour.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <FormProvider {...form}>

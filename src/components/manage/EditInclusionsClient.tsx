@@ -33,7 +33,7 @@ export function EditInclusionsClient({ tour }: { tour: Tour }) {
             inclusions: tour.inclusions || [],
             exclusions: tour.exclusions || [],
         });
-    }, [tour, form]);
+    }, [tour.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <FormProvider {...form}>

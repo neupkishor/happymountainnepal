@@ -43,7 +43,7 @@ export function EditMediaClient({ tour }: { tour: Tour }) {
             map: tour.map || '',
             allImages: [tour.mainImage, ...(tour.images || [])].filter(Boolean),
         });
-    }, [tour, form]);
+    }, [tour.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <FormProvider {...form}>

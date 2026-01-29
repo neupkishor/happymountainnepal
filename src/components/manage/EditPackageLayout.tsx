@@ -64,6 +64,11 @@ export function EditPackageLayout({ children, tour, currentStep }: EditPackageLa
         <h1 className="text-3xl font-bold !font-headline">
           Editing: <span className="text-primary">{tour.name || 'New Package'}</span>
         </h1>
+        {tour.slug && (
+          <p className="text-sm text-muted-foreground mt-1 font-mono">
+            /{tour.slug}
+          </p>
+        )}
         <p className="text-muted-foreground mt-2 capitalize">{currentStep.replace('-', ' ')}</p>
       </div>
 

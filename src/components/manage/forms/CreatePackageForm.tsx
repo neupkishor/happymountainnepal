@@ -91,7 +91,8 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
       form.reset(resetValues);
       setSelectedImports(initialSelections);
     }
-  }, [importedData, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importedData]);
 
   const handleToggleImport = (section: string, isSelected: boolean) => {
     setSelectedImports(prev => ({ ...prev, [section]: isSelected }));
@@ -119,7 +120,8 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
     if (!isSlugManuallyEdited && name && !importedData) {
       form.setValue('slug', slugify(name), { shouldValidate: true });
     }
-  }, [name, isSlugManuallyEdited, form, importedData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, isSlugManuallyEdited, importedData]);
 
   useEffect(() => {
     const checkAvailability = async () => {
@@ -138,7 +140,8 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
       }
     };
     checkAvailability();
-  }, [debouncedSlug, form, form.formState.errors.slug?.message]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSlug]);
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
