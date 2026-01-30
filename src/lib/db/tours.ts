@@ -262,6 +262,7 @@ export async function getPackagesPaginated(options: {
     page: number;
     limit: number;
     search?: string;
+    status?: string;
 }): {
     packages: Promise<Tour[]>;
     pagination: { currentPage: number; totalPages: number; totalCount: number; };
@@ -270,7 +271,8 @@ export async function getPackagesPaginated(options: {
         const result = getPackages({
             page: options.page,
             limit: options.limit,
-            search: options.search
+            search: options.search,
+            status: options.status
         });
 
         return {
