@@ -28,9 +28,9 @@ import { Timestamp } from 'firebase/firestore';
 import { usePathname } from 'next/navigation';
 
 const departureDateSchema = z.object({
-    date: z.date({ required_error: "A date is required."}),
-    price: z.coerce.number().positive("Price must be positive."),
-    guaranteed: z.boolean(),
+  date: z.date({ required_error: "A date is required." }),
+  price: z.coerce.number().positive("Price must be positive."),
+  guaranteed: z.boolean(),
 });
 
 const formSchema = z.object({
@@ -50,14 +50,33 @@ export function PricingForm({ tour }: PricingFormProps) {
   const { toast } = useToast();
   const pathname = usePathname();
 
+  // Helper function to safely convert dates
+  const convertToValidDate = (dateValue: string | Timestamp): Date | null => {
+    try {
+      const date = dateValue instanceof Timestamp ? dateValue.toDate() : new Date(dateValue);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      return date;
+    } catch {
+      return null;
+    }
+  };
+
+  // Convert departure dates and filter out invalid ones
+  const validDepartureDates = (tour.departureDates || [])
+    .map(d => {
+      const validDate = convertToValidDate(d.date);
+      return validDate ? { ...d, date: validDate } : null;
+    })
+    .filter((d): d is { date: Date; price: number; guaranteed: boolean } => d !== null);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       price: tour.price || 0,
-      departureDates: tour.departureDates?.map(d => ({
-          ...d,
-          date: d.date instanceof Timestamp ? d.date.toDate() : new Date(d.date)
-      })) || [],
+      departureDates: validDepartureDates,
       anyDateAvailable: tour.anyDateAvailable || false,
     },
   });
@@ -73,11 +92,11 @@ export function PricingForm({ tour }: PricingFormProps) {
     startTransition(async () => {
       try {
         const convertedValues = {
-            ...values,
-            departureDates: values.departureDates.map(d => ({
-                ...d,
-                date: Timestamp.fromDate(d.date)
-            }))
+          ...values,
+          departureDates: values.departureDates.map(d => ({
+            ...d,
+            date: Timestamp.fromDate(d.date)
+          }))
         };
         await updateTour(tour.id, convertedValues);
         toast({ title: 'Success', description: 'Pricing updated.' });
@@ -112,27 +131,27 @@ export function PricingForm({ tour }: PricingFormProps) {
                 )}
               />
               <FormField
-                  control={form.control}
-                  name="anyDateAvailable"
-                  render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                          <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={isPending}
-                          />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                          <FormLabel>
-                          Any Date Available
-                          </FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                              Check this if the tour can be booked on any date, regardless of specific departure dates below.
-                          </p>
-                      </div>
-                      </FormItem>
-                  )}
+                control={form.control}
+                name="anyDateAvailable"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Any Date Available
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Check this if the tour can be booked on any date, regardless of specific departure dates below.
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
               />
 
               <div className={cn("space-y-4", anyDateAvailable && "opacity-50 pointer-events-none")}>
@@ -140,14 +159,14 @@ export function PricingForm({ tour }: PricingFormProps) {
                 {fields.map((field, index) => (
                   <div key={field.id} className="p-4 border rounded-md space-y-4">
                     <div className="flex justify-end">
-                       <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove(index)}
-                          disabled={isPending || anyDateAvailable}
-                          >
-                          <Trash2 className="h-4 w-4" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(index)}
+                        disabled={isPending || anyDateAvailable}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -168,7 +187,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                                     )}
                                     disabled={isPending || anyDateAvailable}
                                   >
-                                    {field.value ? (
+                                    {field.value && !isNaN(new Date(field.value).getTime()) ? (
                                       format(field.value, "PPP")
                                     ) : (
                                       <span>Pick a date</span>
@@ -182,7 +201,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                                   mode="single"
                                   selected={field.value}
                                   onSelect={field.onChange}
-                                  disabled={(date) => date < new Date("1900-01-01") || isPending || anyDateAvailable}
+                                  disabled={(date) => date < new Date("1900-01-01")}
                                   initialFocus
                                 />
                               </PopoverContent>
@@ -191,7 +210,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                           </FormItem>
                         )}
                       />
-                       <FormField
+                      <FormField
                         control={form.control}
                         name={`departureDates.${index}.price`}
                         render={({ field }) => (
@@ -205,32 +224,32 @@ export function PricingForm({ tour }: PricingFormProps) {
                         )}
                       />
                     </div>
-                     <FormField
-                          control={form.control}
-                          name={`departureDates.${index}.guaranteed`}
-                          render={({ field }) => (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                              <FormControl>
-                                  <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  disabled={isPending || anyDateAvailable}
-                                  />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                  <FormLabel>
-                                  Guaranteed Departure
-                                  </FormLabel>
-                              </div>
-                              </FormItem>
-                          )}
-                          />
+                    <FormField
+                      control={form.control}
+                      name={`departureDates.${index}.guaranteed`}
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isPending || anyDateAvailable}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Guaranteed Departure
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 ))}
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => append({ date: new Date(), price: tour.price, guaranteed: false })}
                   disabled={isPending || anyDateAvailable}
                 >
@@ -238,7 +257,7 @@ export function PricingForm({ tour }: PricingFormProps) {
                   Add Departure Date
                 </Button>
               </div>
-              
+
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Pricing
