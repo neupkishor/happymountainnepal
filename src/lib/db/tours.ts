@@ -186,26 +186,41 @@ export async function checkSlugAvailability(slug: string, excludeTourId?: string
 
 export async function validateTourForPublishing(tourId: string): Promise<string[] | true> {
     try {
-        const tour = getTourById(tourId);
+        const tour = await getTourById(tourId);
         if (!tour) return ["Tour not found."];
 
-        const missing: Promise<string[]> = [];
+        const missing: string[] = [];
+
+        // Basic Information
         if (!tour.name || tour.name.length < 5) missing.push("Name (at least 5 characters)");
         if (!tour.slug || tour.slug.length < 3) missing.push("URL Slug (at least 3 characters)");
         if (!tour.description || tour.description.length < 20) missing.push("Description (at least 20 characters)");
+        if (!tour.shortDescription || tour.shortDescription.length < 50 || tour.shortDescription.length > 200) {
+            missing.push("Short Description / Meta Description (50-200 characters for SEO)");
+        }
         if (!tour.region || tour.region.length === 0) missing.push("Region (at least one region)");
         if (!tour.type) missing.push("Activity Type");
         if (!tour.difficulty) missing.push("Difficulty Level");
         if (!tour.duration || tour.duration < 1) missing.push("Duration (at least 1 day)");
+
+        // Pricing & Booking
         if (!tour.price || tour.price <= 0) missing.push("Base Price (must be positive)");
         if (!tour.bookingType) missing.push("Booking Type");
         if (tour.bookingType === 'external' && (!tour.externalBookingUrl || tour.externalBookingUrl.length === 0)) {
             missing.push("External Booking URL (required for external booking type)");
         }
+        if (!tour.anyDateAvailable && (!tour.departureDates || tour.departureDates.length === 0 || tour.departureDates.some(item => !item.date || item.price <= 0))) {
+            missing.push("Departure Dates (at least one complete date with price, or 'Any Date Available' must be checked)");
+        }
+
+        // Media
         if (!tour.mainImage || !tour.mainImage.url) missing.push("Main Image");
+        if (!tour.images || tour.images.length === 0) missing.push("Gallery Images (at least one image)");
         if (!tour.map || tour.map.length === 0) missing.push("Map URL");
+
+        // Content
         if (!tour.itinerary || tour.itinerary.length === 0 || tour.itinerary.some(item => !item.day || !item.title || !item.description)) {
-            missing.push("Itinerary (at least one complete day)");
+            missing.push("Itinerary (at least one complete day with title and description)");
         }
         if (!tour.inclusions || tour.inclusions.length === 0 || tour.inclusions.some(item => item.length === 0)) {
             missing.push("Inclusions (at least one item)");
@@ -213,9 +228,7 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
         if (!tour.exclusions || tour.exclusions.length === 0 || tour.exclusions.some(item => item.length === 0)) {
             missing.push("Exclusions (at least one item)");
         }
-        if (!tour.anyDateAvailable && (!tour.departureDates || tour.departureDates.length === 0 || tour.departureDates.some(item => !item.date || item.price <= 0))) {
-            missing.push("Departure Dates (at least one complete date with price, or 'Any Date Available' must be checked)");
-        }
+
         return missing.length > 0 ? missing : true;
     } catch (error: any) {
         await logError(error, 'validateTourForPublishing');
