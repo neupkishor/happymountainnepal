@@ -63,6 +63,7 @@ export function BlogContent() {
                     page: String(currentPage),
                     search: debouncedSearchTerm,
                     tags: activeTags.join(','),
+                    status: 'published',
                 });
 
                 const response = await fetch(`/api/blog?${queryParams.toString()}`);

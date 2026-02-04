@@ -19,11 +19,14 @@ export default function BlogPostClient({ post, tempUserId }: BlogPostClientProps
   const isoDatePublished = post.date instanceof Timestamp ? post.date.toDate().toISOString() : new Date(post.date).toISOString();
   const isoDateModified = isoDatePublished; // Assuming no separate modified date for now
 
+  const hasImage = Boolean(post.image && post.image.trim() !== '');
+  const imageSrc = hasImage ? post.image : 'https://cdn.neupgroup.com/p3happymountainnepal/logo.png';
+
   const jsonLdSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": post.title,
-    "image": post.image,
+    "image": imageSrc,
     "datePublished": isoDatePublished,
     "dateModified": isoDateModified,
     "author": {
@@ -56,12 +59,12 @@ export default function BlogPostClient({ post, tempUserId }: BlogPostClientProps
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
         />
-        <header className="relative h-[40vh] md:h-[50vh] w-full">
+        <header className={`relative h-[40vh] md:h-[50vh] w-full ${!hasImage ? 'bg-white' : ''}`}>
           <Image
-            src={post.image}
+            src={imageSrc}
             alt={post.title}
             fill
-            className="object-cover"
+            className={hasImage ? "object-cover" : "object-contain p-12"}
             priority
             data-ai-hint="travel landscape"
           />

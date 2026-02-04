@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
         const searchParams = request.nextUrl.searchParams;
         const limit = parseInt(searchParams.get('limit') || '10');
         const page = parseInt(searchParams.get('page') || '1');
-        const status = searchParams.get('status') || undefined;
+        const rawStatus = searchParams.get('status');
+        const status = rawStatus === 'all' ? undefined : (rawStatus || 'published');
         const search = searchParams.get('search') || undefined;
         const items = searchParams.get('tags');
         const tags = items ? items.split(',').map(tag => tag.trim()) : undefined;

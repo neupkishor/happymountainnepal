@@ -15,20 +15,24 @@ interface BlogCardProps {
 
 export function BlogCard({ post }: BlogCardProps) {
   const displayDate = post.date instanceof Timestamp ? post.date.toDate().toLocaleDateString() : post.date;
+  const hasImage = Boolean(post.image && post.image.trim() !== '');
+  const imageSrc = hasImage ? post.image : 'https://cdn.neupgroup.com/p3happymountainnepal/logo.png';
 
   return (
     <Card className="overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl">
       {/* Clickable Image */}
       <CardHeader className="p-0">
         <Link href={`/blog/${post.slug}`} className="block">
-          <Image
-            src={post.image}
-            alt={post.title}
-            width={600}
-            height={400}
-            className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
-            data-ai-hint="travel blog"
-          />
+          <div className={`w-full h-48 relative ${!hasImage ? 'bg-white p-8' : ''}`}>
+            <Image
+              src={imageSrc}
+              alt={post.title}
+              width={600}
+              height={400}
+              className={`w-full h-full ${hasImage ? 'object-cover' : 'object-contain'} transition-transform duration-300 hover:scale-105`}
+              data-ai-hint="travel blog"
+            />
+          </div>
         </Link>
       </CardHeader>
 

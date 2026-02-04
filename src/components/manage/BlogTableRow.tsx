@@ -28,6 +28,9 @@ export function BlogManagementCard({ post }: BlogTableRowProps) {
       ? new Date(post.date).toLocaleDateString()
       : "N/A";
 
+  const hasImage = Boolean(post.image && post.image.trim() !== '');
+  const imageSrc = hasImage ? post.image : 'https://cdn.neupgroup.com/p3happymountainnepal/logo.png';
+
   const getStatusVariant = (status: BlogPost['status']) => {
     switch (status) {
       case 'published': return 'default';
@@ -41,8 +44,8 @@ export function BlogManagementCard({ post }: BlogTableRowProps) {
       <Link href={`/manage/blog/${post.id}/edit`} className="absolute inset-0 z-10">
         <span className="sr-only">Edit {post.title}</span>
       </Link>
-      <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0 border">
-        <Image src={post.image} alt={post.title} fill className="object-cover" />
+      <div className={`relative h-20 w-20 rounded-md overflow-hidden flex-shrink-0 border ${!hasImage ? 'bg-white p-2' : 'bg-muted'}`}>
+        <Image src={imageSrc} alt={post.title} fill className={hasImage ? "object-cover" : "object-contain"} />
       </div>
       <div className="flex-1 min-w-0 pointer-events-none">
         <p className="font-medium text-base group-hover:text-primary transition-colors truncate">{post.title}</p>
