@@ -1,16 +1,15 @@
-
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
 // Ensure data directory exists
-const dataDir = path.join(process.cwd(), 'data');
+const dataDir = path.join(process.cwd(), 'base', 'localized.db');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
 // Database file path
-const dbPath = path.join(dataDir, 'happymountain.db');
+const dbPath = path.join(dataDir, 'data.sqlite');
 
 // Singleton pattern to prevent multiple connections during development hot-reloading
 const globalForDb = global as unknown as { db: Database.Database };
