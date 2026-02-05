@@ -3,7 +3,7 @@ import type { NextRequest, NextFetchEvent } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { getManagerData } from '@/lib/base-edge';
 import { readBaseJson } from '@/lib/reader';
-import redirects from '@/../base/redirects.json';
+import redirects from '@/../base/core/redirects.json';
 // import appInfo from '@/../base/appinfo.json';
 
 const COOKIE_NAME = 'temp_account';

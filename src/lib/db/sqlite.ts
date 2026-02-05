@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Ensure data directory exists
-const dataDir = path.join(process.cwd(), 'base', 'localized.db');
+const dataDir = path.join(process.cwd(), 'base', 'source', 'localized.db');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -71,7 +71,6 @@ export function initDb() {
       tags TEXT, -- JSON array
       metaInformation TEXT,
       status TEXT, -- 'draft' | 'published'
-      searchKeywords TEXT, -- JSON array
       searchKeywords TEXT, -- JSON array
       createdAt TEXT -- ISO string
     );
