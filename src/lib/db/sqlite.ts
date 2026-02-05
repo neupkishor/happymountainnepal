@@ -128,13 +128,28 @@ export function initDb() {
       guides TEXT, -- JSON array
       searchKeywords TEXT, -- JSON array
       createdAt TEXT,
-      updatedAt TEXT
+      updatedAt TEXT,
+      isPopular INTEGER DEFAULT 0,
+      isFeatured INTEGER DEFAULT 0
     );
 
     CREATE INDEX IF NOT EXISTS idx_packages_slug ON packages(slug);
     CREATE INDEX IF NOT EXISTS idx_packages_status ON packages(status);
     CREATE INDEX IF NOT EXISTS idx_packages_type ON packages(type);
     CREATE INDEX IF NOT EXISTS idx_packages_difficulty ON packages(difficulty);
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id TEXT PRIMARY KEY,
+      rating INTEGER NOT NULL,
+      author TEXT NOT NULL,
+      comment TEXT NOT NULL,
+      date TEXT NOT NULL, -- ISO string
+      status TEXT DEFAULT 'pending', -- 'pending' | 'approved' | 'rejected'
+      source TEXT DEFAULT 'website', -- 'website' | 'tripadvisor' | 'google'
+      packageId TEXT, -- Optional, link to a specific package
+      createdAt TEXT,
+      FOREIGN KEY (packageId) REFERENCES packages(id) ON DELETE SET NULL
+    );
   `);
 
   // Migration for adding parentId to existing table if needed
@@ -147,6 +162,22 @@ export function initDb() {
     }
   } catch (error) {
     console.error("Migration error (parentId):", error);
+  }
+
+  // Migration for adding isPopular and isFeatured to packages table if needed
+  try {
+    const tableInfo = db.prepare("PRAGMA table_info(packages)").all() as any[];
+    const hasIsPopular = tableInfo.some(col => col.name === 'isPopular');
+    const hasIsFeatured = tableInfo.some(col => col.name === 'isFeatured');
+    
+    if (!hasIsPopular) {
+      db.prepare("ALTER TABLE packages ADD COLUMN isPopular INTEGER DEFAULT 0").run();
+    }
+    if (!hasIsFeatured) {
+      db.prepare("ALTER TABLE packages ADD COLUMN isFeatured INTEGER DEFAULT 0").run();
+    }
+  } catch (error) {
+    console.error("Migration error (packages columns):", error);
   }
 }
 
@@ -581,6 +612,8 @@ export interface PackageDB {
   searchKeywords: string; // JSON string
   createdAt: string;
   updatedAt: string;
+  isPopular: number;
+  isFeatured: number;
 }
 
 export function savePackage(pkg: any) {
@@ -616,7 +649,9 @@ export function savePackage(pkg: any) {
     guides: JSON.stringify(pkg.guides || []),
     searchKeywords: JSON.stringify(pkg.searchKeywords || []),
     createdAt: pkg.createdAt || now,
-    updatedAt: now
+    updatedAt: now,
+    isPopular: pkg.isPopular ? 1 : 0,
+    isFeatured: pkg.isFeatured ? 1 : 0
   };
 
   if (existing) {
@@ -629,7 +664,8 @@ export function savePackage(pkg: any) {
           map = @map, reviews = @reviews, status = @status, faq = @faq,
           additionalInfoSections = @additionalInfoSections, bookingType = @bookingType,
           externalBookingUrl = @externalBookingUrl, gears = @gears, guides = @guides,
-          searchKeywords = @searchKeywords, updatedAt = @updatedAt
+          searchKeywords = @searchKeywords, updatedAt = @updatedAt,
+          isPopular = @isPopular, isFeatured = @isFeatured
       WHERE id = @id
     `).run(serializedPackage);
   } else {
@@ -637,11 +673,11 @@ export function savePackage(pkg: any) {
       INSERT INTO packages (id, name, slug, description, shortDescription, region, type, difficulty, duration, price,
                            mainImage, images, itinerary, inclusions, exclusions, departureDates, anyDateAvailable,
                            map, reviews, status, faq, additionalInfoSections, bookingType, externalBookingUrl,
-                           gears, guides, searchKeywords, createdAt, updatedAt)
+                           gears, guides, searchKeywords, createdAt, updatedAt, isPopular, isFeatured)
       VALUES (@id, @name, @slug, @description, @shortDescription, @region, @type, @difficulty, @duration, @price,
               @mainImage, @images, @itinerary, @inclusions, @exclusions, @departureDates, @anyDateAvailable,
               @map, @reviews, @status, @faq, @additionalInfoSections, @bookingType, @externalBookingUrl,
-              @gears, @guides, @searchKeywords, @createdAt, @updatedAt)
+              @gears, @guides, @searchKeywords, @createdAt, @updatedAt, @isPopular, @isFeatured)
     `).run(serializedPackage);
   }
   return pkg.id;
@@ -664,6 +700,8 @@ function deserializePackage(row: PackageDB) {
     gears: JSON.parse(row.gears || '[]'),
     guides: JSON.parse(row.guides || '[]'),
     searchKeywords: JSON.parse(row.searchKeywords || '[]'),
+    isPopular: Boolean(row.isPopular),
+    isFeatured: Boolean(row.isFeatured)
   };
 }
 
@@ -753,6 +791,26 @@ export function getPackages(options?: {
   };
 }
 
+export function getFeaturedToursDB(limit: number = 3) {
+  const rows = db.prepare(`
+    SELECT * FROM packages 
+    WHERE status = 'published' AND isFeatured = 1 
+    ORDER BY createdAt DESC 
+    LIMIT ?
+  `).all(limit) as PackageDB[];
+  return rows.map(deserializePackage);
+}
+
+export function getPopularToursDB(limit: number = 3) {
+  const rows = db.prepare(`
+    SELECT * FROM packages 
+    WHERE status = 'published' AND isPopular = 1 
+    ORDER BY price DESC 
+    LIMIT ?
+  `).all(limit) as PackageDB[];
+  return rows.map(deserializePackage);
+}
+
 export function getAllPackagesForSelect() {
   const rows = db.prepare('SELECT id, name, slug FROM packages ORDER BY name ASC').all() as { id: string; name: string; slug: string }[];
   return rows;
@@ -769,4 +827,83 @@ export function checkPackageSlugAvailability(slug: string, excludeId?: string): 
   }
   const row = db.prepare('SELECT id FROM packages WHERE slug = ?').get(slug);
   return !row;
+}
+
+// --- Review Helpers ---
+
+export interface ReviewDB {
+  id: string;
+  rating: number;
+  author: string;
+  comment: string;
+  date: string;
+  status: string;
+  source: string;
+  packageId?: string | null;
+  createdAt: string;
+}
+
+export function getReviewsDB(options?: {
+  limit?: number;
+  status?: string;
+  rating?: number;
+}) {
+  const limit = options?.limit || 10;
+  let query = 'SELECT * FROM reviews';
+  const conditions: string[] = [];
+  const params: any[] = [];
+
+  if (options?.status) {
+    conditions.push('status = ?');
+    params.push(options.status);
+  }
+
+  if (options?.rating) {
+    conditions.push('rating = ?');
+    params.push(options.rating);
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY date DESC LIMIT ?';
+  params.push(limit);
+
+  const rows = db.prepare(query).all(...params) as ReviewDB[];
+  return rows.map(row => ({
+    ...row,
+    packageId: row.packageId || null
+  }));
+}
+
+export function saveReview(review: Omit<ReviewDB, 'createdAt'> & { createdAt?: string }) {
+  const existing = db.prepare('SELECT id FROM reviews WHERE id = ?').get(review.id);
+  const now = new Date().toISOString();
+
+  if (existing) {
+    db.prepare(`
+      UPDATE reviews 
+      SET rating = @rating, author = @author, comment = @comment, date = @date, 
+          status = @status, source = @source, packageId = @packageId
+      WHERE id = @id
+    `).run({
+      ...review,
+      packageId: review.packageId || null
+    });
+  } else {
+    db.prepare(`
+      INSERT INTO reviews (id, rating, author, comment, date, status, source, packageId, createdAt)
+      VALUES (@id, @rating, @author, @comment, @date, @status, @source, @packageId, @createdAt)
+    `).run({
+      ...review,
+      packageId: review.packageId || null,
+      createdAt: review.createdAt || now
+    });
+  }
+  return review.id;
+}
+
+export function deleteReview(id: string) {
+  db.prepare('DELETE FROM reviews WHERE id = ?').run(id);
 }

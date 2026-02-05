@@ -11,81 +11,12 @@ import { OurPartners } from "@/components/OurPartners";
 import { ContactSection } from "@/components/ContactSection";
 import { Chatbot } from "@/components/Chatbot";
 import { headers } from "next/headers";
-import { getLocations, getPosts } from "@/lib/db/sqlite";
+import { getLocations, getPosts, getFeaturedToursDB, getPopularToursDB, getReviewsDB } from "@/lib/db/sqlite";
 import { getAdminFirestore } from "@/lib/db/firestore-admin";
 import type { Tour } from "@/lib/types";
 
 import { getSiteProfileAction } from '@/app/actions/profile';
 import { getPartnersAction } from '@/app/actions/partners';
-// Helper to fetch tours from Firestore Admin (Server-side)
-async function getFeaturedTours() {
-  try {
-    const db = getAdminFirestore();
-    const snapshot = await db.collection('packages')
-      .where('status', '==', 'published')
-      .limit(3)
-      .get();
-    
-    return snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-      // Ensure dates are serialized if necessary, though simple JSON usually works for props
-      // Firestore timestamps need conversion
-      createdAt: doc.data().createdAt?.toDate?.().toISOString() || null,
-      updatedAt: doc.data().updatedAt?.toDate?.().toISOString() || null,
-    })) as unknown as Tour[];
-  } catch (error) {
-    console.error("Failed to fetch featured tours on server:", error);
-    return [];
-  }
-}
-
-// Helper to fetch popular packages
-async function getPopularPackages() {
-  try {
-    const db = getAdminFirestore();
-    const snapshot = await db.collection('packages')
-      .where('status', '==', 'published')
-      .orderBy('price', 'desc')
-      .limit(3)
-      .get();
-    
-    return snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.().toISOString() || null,
-      updatedAt: doc.data().updatedAt?.toDate?.().toISOString() || null,
-    })) as unknown as Tour[];
-  } catch (error) {
-    console.error("Failed to fetch popular packages on server:", error);
-    return [];
-  }
-}
-
-// Helper to fetch reviews
-async function getReviews() {
-   // Since Testimonials.tsx used a client-side helper `getFiveStarReviews` which likely used Firestore,
-   // we need to replicate that logic server-side.
-   // Let's assume it fetches from a 'reviews' collection where rating == 5.
-   try {
-    const db = getAdminFirestore();
-    const snapshot = await db.collection('reviews')
-      .where('rating', '==', 5)
-      .where('status', '==', 'approved') // Assuming there's a status
-      .limit(10) // Limit for carousel
-      .get();
-    
-    return snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-      date: doc.data().date?.toDate?.().toISOString() || new Date().toISOString(),
-      createdAt: doc.data().createdAt?.toDate?.().toISOString() || null,
-    }));
-  } catch (error) {
-    console.error("Failed to fetch reviews on server:", error);
-    return [];
-  }
-}
 
 export default async function Home() {
   const headersList = await headers();
@@ -94,15 +25,18 @@ export default async function Home() {
   // Fetch data on server
   const featuredLocations = getLocations({ featured: true });
   const recentPostsData = getPosts({ limit: 3, status: 'published' });
-  const featuredTours = await getFeaturedTours();
+  const featuredTours = getFeaturedToursDB(3) as unknown as Tour[]; 
   
   // Parallel fetch for remaining data
-  const [profile, partners, popularPackages, reviews] = await Promise.all([
+  const [profile, partners] = await Promise.all([
     getSiteProfileAction(),
-    getPartnersAction(),
-    getPopularPackages(),
-    getReviews()
+    getPartnersAction()
   ]);
+
+  const popularPackages = getPopularToursDB(3) as unknown as Tour[]; 
+  
+  // Fetch reviews from SQLite (5-star, approved)
+  const reviews = getReviewsDB({ limit: 10, rating: 5, status: 'approved' });
 
   return (
     <>

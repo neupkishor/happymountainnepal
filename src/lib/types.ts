@@ -37,6 +37,8 @@ export interface Tour {
   searchKeywords?: string[]; // New field for searching
   gears?: GearItem[]; // New field for gear list
   guides?: GuideItem[]; // New field for blogs/guides
+  isPopular?: boolean; // New field for popular packages
+  isFeatured?: boolean; // New field for featured packages
 }
 
 // Existing Review interface (for embedded reviews)
