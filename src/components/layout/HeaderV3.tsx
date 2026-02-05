@@ -231,13 +231,13 @@ const hasLevel3 = (children: NavLink[] | undefined): boolean => {
   return children.some(child => hasChildren(child));
 }
 
-export function HeaderV3({ initialIsManager = false }: { initialIsManager?: boolean }) {
+export function HeaderV3({ initialIsManager = false, initialProfile, initialLinks }: { initialIsManager?: boolean, initialProfile?: any, initialLinks?: any[] }) {
   const [isMenuOpen, setMenuOpen] = React.useState(false);
   const [activeSubMenu, setActiveSubMenu] = React.useState<NavLink | null>(null);
   const [activeLevel2Item, setActiveLevel2Item] = React.useState<string | null>(null);
   const { user, isUserLoading } = useUser();
-  const { profile } = useSiteProfile();
-  const { links: apiLinks, loading: linksLoading } = useHeaderLinks();
+  const { profile } = useSiteProfile(initialProfile);
+  const { links: apiLinks, loading: linksLoading } = useHeaderLinks(initialLinks);
   const whatsappLink = `https://wa.me/${profile?.phone?.replace(/\D/g, '')}`;
 
   const { editUrl } = useAdminControl();

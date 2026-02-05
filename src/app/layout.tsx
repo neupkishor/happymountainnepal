@@ -28,6 +28,9 @@ export const metadata: Metadata = {
 };
 
 
+import { getSiteProfileAction } from '@/app/actions/profile';
+import { readBaseFile } from '@/lib/base';
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -35,6 +38,15 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const isManager = cookieStore.has('manager_username');
+
+  // Fetch server data for Header/Footer
+  const profile = await getSiteProfileAction();
+  let navigationData = null;
+  try {
+    navigationData = await readBaseFile('navigation-components.json');
+  } catch (e) {
+    console.error("Failed to load navigation data in layout", e);
+  }
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -44,7 +56,7 @@ export default async function RootLayout({
     "logo": "https://cdn.neupgroup.com/p3happymountainnepal/logo.png",
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+977-984-3725521",
+      "telephone": profile?.phone || "+977-984-3725521",
       "contactType": "customer service"
     }
   };
@@ -68,10 +80,14 @@ export default async function RootLayout({
             <AdminControlProvider>
               <div className="flex flex-col min-h-screen">
                 <div className="relative z-50">
-                  <Header initialIsManager={isManager} />
+                  <Header 
+                    initialIsManager={isManager} 
+                    initialProfile={profile} 
+                    initialLinks={(navigationData as any)?.header?.links} 
+                  />
                 </div>
                 <main className="flex-grow pt-16">{children}</main>
-                <ConditionalFooter />
+                <ConditionalFooter initialProfile={profile} />
               </div>
             </AdminControlProvider>
             {/* Chatbot removed from here, will be added to specific pages */}

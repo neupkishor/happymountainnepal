@@ -9,28 +9,9 @@ import { Search, MapPin, Loader2 } from 'lucide-react';
 import type { Location } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function LocationsClient() {
-    const [locations, setLocations] = useState<Location[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export function LocationsClient({ initialLocations }: { initialLocations: Location[] }) {
+    const [locations] = useState<Location[]>(initialLocations);
     const [searchTerm, setSearchTerm] = useState('');
-
-    useEffect(() => {
-        const fetchLocations = async () => {
-            try {
-                const response = await fetch('/api/locations');
-                if (response.ok) {
-                    const data = await response.json();
-                    setLocations(data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch locations:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchLocations();
-    }, []);
 
     const filteredLocations = locations.filter(loc => 
         loc.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -49,13 +30,7 @@ export function LocationsClient() {
                 />
             </div>
 
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(6)].map((_, i) => (
-                        <Skeleton key={i} className="h-64 w-full rounded-xl" />
-                    ))}
-                </div>
-            ) : filteredLocations.length > 0 ? (
+            {filteredLocations.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredLocations.map((location) => (
                         <Link key={location.id} href={`/location/${location.slug}`} className="group">

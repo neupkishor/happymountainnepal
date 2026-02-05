@@ -19,16 +19,17 @@ import { ReviewCarouselItem } from './ReviewCarouselItem'; // New component for 
 import Autoplay from "embla-carousel-autoplay"
 import { Card, CardContent } from './ui/card'; // Added import
 
-export function Testimonials() {
+export function Testimonials({ initialReviews = [], initialProfile }: { initialReviews?: ManagedReview[], initialProfile?: any }) {
   const firestore = useFirestore();
-  const [reviews, setReviews] = useState<ManagedReview[]>([]);
-  const { profile, isLoading: isProfileLoading } = useSiteProfile();
-  const [isReviewsLoading, setIsReviewsLoading] = useState(true);
+  const [reviews, setReviews] = useState<ManagedReview[]>(initialReviews);
+  const { profile, isLoading: isProfileLoading } = useSiteProfile(initialProfile);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(initialReviews.length === 0);
 
   const totalReviewCount = profile?.reviewCount;
   const isLoading = isProfileLoading || isReviewsLoading;
 
   useEffect(() => {
+    if (initialReviews.length > 0) return;
     if (!firestore) return;
     const fetchReviews = async () => {
       setIsReviewsLoading(true);
@@ -42,7 +43,7 @@ export function Testimonials() {
       }
     };
     fetchReviews();
-  }, [firestore]);
+  }, [firestore, initialReviews.length]);
   
   return (
     <section className="py-16 lg:py-24">

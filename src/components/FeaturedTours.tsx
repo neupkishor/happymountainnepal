@@ -1,5 +1,5 @@
-
 'use client';
+
 import { TourCard } from './TourCard';
 import Link from 'next/link';
 import { Button } from './ui/button';
@@ -11,12 +11,13 @@ import type { Tour } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-export function FeaturedTours() {
+export function FeaturedTours({ initialTours = [] }: { initialTours?: Tour[] }) {
   const firestore = useFirestore();
-  const [featuredTours, setFeaturedTours] = useState<Tour[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [featuredTours, setFeaturedTours] = useState<Tour[]>(initialTours);
+  const [isLoading, setIsLoading] = useState(initialTours.length === 0);
 
   useEffect(() => {
+    if (initialTours.length > 0) return;
     if (!firestore) return;
     const fetchTours = async () => {
       setIsLoading(true);
@@ -36,7 +37,7 @@ export function FeaturedTours() {
       }
     };
     fetchTours();
-  }, [firestore]);
+  }, [firestore, initialTours.length]);
 
 
   return (

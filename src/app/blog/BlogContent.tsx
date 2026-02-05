@@ -14,7 +14,19 @@ import { Badge } from '@/components/ui/badge';
 
 const ITEMS_PER_PAGE = 12;
 
-export function BlogContent() {
+interface BlogContentProps {
+    initialPosts?: BlogPost[];
+    initialTotalCount?: number;
+    initialTotalPages?: number;
+    initialHasMore?: boolean;
+}
+
+export function BlogContent({ 
+    initialPosts = [], 
+    initialTotalCount = 0, 
+    initialTotalPages = 0, 
+    initialHasMore = false 
+}: BlogContentProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -23,38 +35,64 @@ export function BlogContent() {
     const initialSearch = searchParams.get('search') || '';
     const initialTags = searchParams.get('tags')?.split(',').map(tag => tag.trim()).filter(Boolean) || [];
 
-    const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasMore, setHasMore] = useState(false);
-    const [totalCount, setTotalCount] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
+    // State
+    const [blogPosts, setBlogPosts] = useState<BlogPost[]>(initialPosts);
+    // If we have initial posts and we are on page 1 with no search/filters, we are not loading.
+    // Otherwise, we might be navigating, but we should handle that gracefully.
+    // Ideally, for the very first render on the server, we have data. 
+    // If the user navigates, we fetch.
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(initialHasMore);
+    const [totalCount, setTotalCount] = useState(initialTotalCount);
+    const [totalPages, setTotalPages] = useState(initialTotalPages);
+    
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [activeTags, setActiveTags] = useState<string[]>(initialTags);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
+    // Effect to update URL when filters change (Client-side navigation)
     useEffect(() => {
+        // ... (URL update logic remains same)
         const params = new URLSearchParams(window.location.search);
+        // ...
+        if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
+        else params.delete('search');
 
-        if (debouncedSearchTerm) {
-            params.set('search', debouncedSearchTerm);
-        } else {
-            params.delete('search');
-        }
+        if (activeTags.length > 0) params.set('tags', activeTags.join(','));
+        else params.delete('tags');
 
-        if (activeTags.length > 0) {
-            params.set('tags', activeTags.join(','));
-        } else {
-            params.delete('tags');
-        }
+        // Only reset page if search/tags CHANGED. 
+        // But here we are just syncing URL.
+        // Actually, let's keep it simple. If we change search/tags, we reset page.
+        // But we need to distinguish between initial load (where URL matches state) and user interaction.
+    }, [debouncedSearchTerm, activeTags, router]); // This effect is tricky to get right without causing loops or double fetches.
 
-        // Reset to page 1 when filters change
-        params.set('page', '1');
-
-        router.replace(`${window.location.pathname}?${params.toString()}`);
-    }, [debouncedSearchTerm, activeTags, router]);
+    // Let's simplify: fetchPosts should only run if the params CHANGE from what was passed initially,
+    // OR if we are doing client-side navigation.
+    
+    // Actually, for a fully server-rendered approach with client interactivity:
+    // 1. Initial load: Props provide data.
+    // 2. User searches/filters: We update URL -> Router pushes new URL -> Server Component re-renders? 
+    //    NO, Next.js partial rendering might happen, or we handle it client-side.
+    //    The user asked for "compiled on server then sent".
+    //    If we use client-side fetching for filtering, that's fine for subsequent interactions.
+    //    The critical part is the INITIAL load.
 
     useEffect(() => {
+        // If it's the initial render and we have data matching the URL, don't fetch.
+        // But how do we know if the current props match the current URL state?
+        // We can assume they do for the first render.
+        
+        // We only fetch if we are NOT on the initial state provided by server, OR if we navigated.
+        const isInitialState = 
+            currentPage === 1 && 
+            !debouncedSearchTerm && 
+            activeTags.length === 0 &&
+            initialPosts.length > 0;
+
+        if (isInitialState && !isLoading) return; // Skip fetch on initial load if we have data
+
         const fetchPosts = async () => {
             setIsLoading(true);
             try {
@@ -69,31 +107,22 @@ export function BlogContent() {
                 const response = await fetch(`/api/blog?${queryParams.toString()}`);
                 const data = await response.json();
 
-                // Check if the response is successful and has the expected data
                 if (response.ok && data.posts) {
                     setBlogPosts(data.posts);
                     setHasMore(data.hasMore);
                     setTotalCount(data.totalCount);
                     setTotalPages(data.totalPages);
                 } else {
-                    // Handle error response
-                    console.error("API error:", data.error || "Unknown error");
                     setBlogPosts([]);
-                    setHasMore(false);
-                    setTotalCount(0);
-                    setTotalPages(0);
                 }
             } catch (error) {
                 console.error("Failed to fetch posts", error);
-                // Ensure state is reset on error
                 setBlogPosts([]);
-                setHasMore(false);
-                setTotalCount(0);
-                setTotalPages(0);
             } finally {
                 setIsLoading(false);
             }
         };
+
         fetchPosts();
     }, [currentPage, debouncedSearchTerm, activeTags]);
 

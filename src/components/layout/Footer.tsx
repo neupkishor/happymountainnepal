@@ -4,9 +4,10 @@ import { Link } from '@/components/ui/link';
 import { Mail, Phone, MapPin, Twitter, Instagram, Facebook } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import Image from 'next/image';
+import type { SiteProfile } from '@/lib/types';
 
-export function Footer() {
-  const { profile } = useSiteProfile();
+export function Footer({ initialProfile }: { initialProfile?: SiteProfile | null }) {
+  const { profile } = useSiteProfile(initialProfile || undefined);
 
   const tagline = profile?.footerTagline || 'Your gateway to Himalayan adventures.';
   const address = profile?.address || 'Thamel, Kathmandu, Nepal';

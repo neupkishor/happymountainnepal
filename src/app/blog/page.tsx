@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BlogContent } from './BlogContent';
+import { getPosts } from '@/lib/db/sqlite';
 
 function BlogLoadingFallback() {
   return (
@@ -21,7 +22,25 @@ function BlogLoadingFallback() {
   );
 }
 
-export default function BlogPage() {
+export default async function BlogPage({ searchParams }: { searchParams: { page?: string, search?: string, tags?: string } }) {
+  // Fetch initial data on the server
+  const currentPage = parseInt(searchParams.page || '1', 10);
+  const search = searchParams.search;
+  const tags = searchParams.tags ? searchParams.tags.split(',') : undefined;
+
+  const { posts, totalCount, totalPages, hasMore } = getPosts({
+    limit: 12,
+    page: currentPage,
+    status: 'published',
+    search,
+    tags
+  });
+
+  // Map createdAt to date if needed by BlogPost type, though getPosts usually handles it.
+  // The getPosts helper in sqlite.ts maps `date: row.createdAt`.
+  // However, we need to ensure the data is serializable (no Date objects, only strings/numbers).
+  // getPosts returns plain objects, so it should be fine.
+
   return (
     <div className="container mx-auto py-12">
       <div className="text-center mb-12">
@@ -32,7 +51,12 @@ export default function BlogPage() {
       </div>
 
       <Suspense fallback={<BlogLoadingFallback />}>
-        <BlogContent />
+        <BlogContent 
+          initialPosts={posts as any[]} 
+          initialTotalCount={totalCount}
+          initialTotalPages={totalPages}
+          initialHasMore={hasMore}
+        />
       </Suspense>
     </div>
   );

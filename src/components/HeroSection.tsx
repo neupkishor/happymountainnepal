@@ -12,14 +12,14 @@ import { Skeleton } from './ui/skeleton';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function HeroSection() {
+export function HeroSection({ initialProfile }: { initialProfile?: any }) {
   const router = useRouter();
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const { profile, isLoading } = useSiteProfile();
+  const { profile, isLoading } = useSiteProfile(initialProfile);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // Use an array for images

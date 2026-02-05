@@ -11,11 +11,13 @@ import type { BlogPost } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
-export function RecentBlogs() {
-  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function RecentBlogs({ initialPosts = [] }: { initialPosts?: BlogPost[] }) {
+  const [recentPosts, setRecentPosts] = useState<BlogPost[]>(initialPosts);
+  const [isLoading, setIsLoading] = useState(initialPosts.length === 0);
 
   useEffect(() => {
+    if (initialPosts.length > 0) return;
+
     const fetchPosts = async () => {
       setIsLoading(true);
       try {
@@ -30,7 +32,7 @@ export function RecentBlogs() {
       }
     };
     fetchPosts();
-  }, []);
+  }, [initialPosts.length]);
 
   return (
     <section className="py-16 lg:py-24">

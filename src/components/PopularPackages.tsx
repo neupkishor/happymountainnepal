@@ -12,12 +12,13 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 
-export function PopularPackages() {
+export function PopularPackages({ initialTours = [] }: { initialTours?: Tour[] }) {
   const firestore = useFirestore();
-  const [popularTours, setPopularTours] = useState<Tour[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [popularTours, setPopularTours] = useState<Tour[]>(initialTours);
+  const [isLoading, setIsLoading] = useState(initialTours.length === 0);
 
   useEffect(() => {
+    if (initialTours.length > 0) return;
     if (!firestore) return;
     const fetchTours = async () => {
       setIsLoading(true);
@@ -38,7 +39,7 @@ export function PopularPackages() {
       }
     };
     fetchTours();
-  }, [firestore]);
+  }, [firestore, initialTours.length]);
 
 
   return (

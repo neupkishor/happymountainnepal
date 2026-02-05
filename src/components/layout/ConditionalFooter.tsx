@@ -2,8 +2,9 @@
 
 import { usePathname } from 'next/navigation';
 import { Footer } from './Footer';
+import type { SiteProfile } from '@/lib/types';
 
-export function ConditionalFooter() {
+export function ConditionalFooter({ initialProfile }: { initialProfile?: SiteProfile | null }) {
     const pathname = usePathname();
 
     // Hide footer on /manage pages
@@ -11,5 +12,5 @@ export function ConditionalFooter() {
         return null;
     }
 
-    return <Footer />;
+    return <Footer initialProfile={initialProfile} />;
 }

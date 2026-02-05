@@ -9,10 +9,9 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { Card, CardContent } from './ui/card';
 
-export function OurPartners() {
-
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function OurPartners({ initialPartners = [] }: { initialPartners?: Partner[] }) {
+  const [partners, setPartners] = useState<Partner[]>(initialPartners);
+  const [isLoading, setIsLoading] = useState(initialPartners.length === 0);
 
   // Autoplay controller
   const autoplay = useRef(
@@ -33,6 +32,7 @@ export function OurPartners() {
   );
 
   useEffect(() => {
+    if (initialPartners.length > 0) return;
     const fetchPartners = async () => {
       setIsLoading(true);
       try {
@@ -46,7 +46,7 @@ export function OurPartners() {
     };
 
     fetchPartners();
-  }, []);
+  }, [initialPartners.length]);
 
   return (
     <section className="py-16 lg:py-24 bg-secondary/50">

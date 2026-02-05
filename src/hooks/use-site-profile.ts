@@ -8,13 +8,15 @@ import { useToast } from './use-toast';
 
 const SESSION_STORAGE_KEY = 'site-profile';
 
-export function useSiteProfile() {
-  const [profile, setProfile] = useState<SiteProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function useSiteProfile(initialProfile?: SiteProfile) {
+  const [profile, setProfile] = useState<SiteProfile | null>(initialProfile || null);
+  const [isLoading, setIsLoading] = useState(!initialProfile);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    if (initialProfile) return; // Skip if we have initial data
+
     async function fetchProfile() {
       // 1. Try to get data from sessionStorage
       try {
@@ -55,7 +57,7 @@ export function useSiteProfile() {
     }
 
     fetchProfile();
-  }, [toast]);
+  }, [toast, initialProfile]);
 
   return { profile, isLoading, error };
 }

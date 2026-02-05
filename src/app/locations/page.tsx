@@ -1,4 +1,5 @@
 import { LocationsClient } from './LocationsClient';
+import { getLocations } from '@/lib/db/sqlite';
 
 export const metadata = {
     title: 'All Destinations | Happy Mountain Nepal',
@@ -6,6 +7,8 @@ export const metadata = {
 };
 
 export default function LocationsPage() {
+    const locations = getLocations();
+
     return (
         <div className="min-h-screen bg-background">
             {/* Hero Section */}
@@ -25,7 +28,7 @@ export default function LocationsPage() {
             </div>
 
             <div className="container mx-auto px-4 py-16">
-                <LocationsClient />
+                <LocationsClient initialLocations={locations} />
             </div>
         </div>
     );

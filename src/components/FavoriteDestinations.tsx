@@ -9,11 +9,13 @@ import { Button } from './ui/button';
 import { Skeleton } from './ui/skeleton';
 import { Location } from '@/lib/types';
 
-export function FavoriteDestinations() {
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
+export function FavoriteDestinations({ initialLocations = [] }: { initialLocations?: Location[] }) {
+  const [locations, setLocations] = useState<Location[]>(initialLocations);
+  const [loading, setLoading] = useState(initialLocations.length === 0);
 
   useEffect(() => {
+    if (initialLocations.length > 0) return;
+
     async function fetchDestinations() {
       try {
         setLoading(true);
@@ -29,7 +31,7 @@ export function FavoriteDestinations() {
     }
 
     fetchDestinations();
-  }, []);
+  }, [initialLocations.length]);
 
   if (loading) {
     return (
