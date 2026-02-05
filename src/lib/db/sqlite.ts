@@ -903,6 +903,7 @@ export function saveReview(review: Omit<ReviewDB, 'createdAt'> & { createdAt?: s
   return review.id;
 }
 
+
 export function deleteReview(id: string) {
   db.prepare('DELETE FROM reviews WHERE id = ?').run(id);
 }

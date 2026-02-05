@@ -1,12 +1,23 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest, NextFetchEvent } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { matchRedirectEdge } from '@/lib/redirects-edge';
 import { getManagerData } from '@/lib/base-edge';
+import { readBaseJson } from '@/lib/reader';
+import redirects from '@/../base/redirects.json';
+// import appInfo from '@/../base/appinfo.json';
 
 const COOKIE_NAME = 'temp_account';
 const PUBLIC_FILE = /\.(.*)$/;
+
+interface RedirectRule {
+  id?: string;
+  siteId?: string;
+  from: string;
+  to: string;
+  type: string;
+  created_by?: string;
+  created_on?: string;
+}
 
 // Bot detection
 function isBot(userAgent: string): boolean {
@@ -114,9 +125,11 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // 3. Redirects
-  const matchResult = await matchRedirectEdge(pathname);
-  if (matchResult?.matched) {
-    const statusCode = matchResult.permanent ? 308 : 307;
+  // Use the imported redirects from build time
+  const matchedRedirect = (redirects as RedirectRule[]).find(r => r.from === pathname);
+
+  if (matchedRedirect) {
+    const statusCode = matchedRedirect.type === 'permanent' ? 308 : 307;
     if (shouldLog) {
       event.waitUntil(
         fetch(`${origin}/api/log`, {
@@ -132,37 +145,16 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
             userAgent,
             ipAddress: ip,
             isBot: isBotRequest,
-            metadata: { destination: matchResult.destination, permanent: matchResult.permanent },
+            metadata: { destination: matchedRedirect.to, permanent: matchedRedirect.type === 'permanent' },
           }),
         }).catch(err => console.error('Failed to log redirect:', err))
       );
     }
-    return NextResponse.redirect(new URL(matchResult.destination, request.url), statusCode);
+    return NextResponse.redirect(new URL(matchedRedirect.to, request.url), statusCode);
   }
 
   // 4. Legal documents paywall
-  // MOVED TO PAGE LEVEL: The check is now done in /legal/documents/[id] and other pages
-  // so that we can fetch the 'requireEmailProtection' setting from Firestore.
-  // Middleware cannot easily fetch that dynamic setting.
-
-  /*
-  // Skip the check if there's a verification token (user just authenticated)
-  const hasVerificationToken = request.nextUrl.searchParams.has('verified');
-
-  if (pathname.startsWith('/legal/documents') && !pathname.startsWith('/legal/documents/gate') && !request.cookies.has('user_email') && !hasVerificationToken) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/legal/documents/gate';
-    url.searchParams.set('returnTo', pathname);
-    return NextResponse.redirect(url);
-  }
-
-  if (pathname.startsWith('/legal/documents') && (request.cookies.has('user_email') || hasVerificationToken)) {
-
-    // If they have the verification token, we'll let the request through
-    // but we won't redirect - just continue processing
-    // The verification token will be in the URL but that's okay
-  }
-  */
+  // MOVED TO PAGE LEVEL
 
   // 5. Manager authentication
   if (pathname.startsWith('/manage') && pathname !== '/manage/login') {
