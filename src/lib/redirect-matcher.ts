@@ -1,6 +1,7 @@
 
 // src/lib/redirect-matcher.ts - This file is for Node.js runtime only.
 import { match } from 'path-to-regexp';
+import redirects from '@/../base/core/redirects.json';
 
 // Note: RedirectRule now uses 'from' and 'to' to match the API response
 export interface RedirectRule {
@@ -17,38 +18,8 @@ export interface MatchResult {
     matched: boolean;
 }
 
-let cachedRedirects: RedirectRule[] | null = null;
-let lastFetchTimestamp = 0;
-const CACHE_DURATION = 60 * 1000; // 60 seconds
-
-const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects.json';
-
 async function fetchRedirects(): Promise<RedirectRule[]> {
-    if (cachedRedirects && (Date.now() - lastFetchTimestamp < CACHE_DURATION)) {
-        return cachedRedirects;
-    }
-
-    try {
-        const response = await fetch(API_URL, {
-            // No API key needed for public endpoint
-            headers: { 'Content-Type': 'application/json' },
-            next: { revalidate: 60 } // Revalidate every 60 seconds
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch redirects: ${response.statusText}`);
-        }
-        
-        const data = await response.json(); // API returns a direct array
-
-        cachedRedirects = (data || []) as RedirectRule[]; // Handle direct array
-        lastFetchTimestamp = Date.now();
-        return cachedRedirects || [];
-    } catch (error) {
-        console.error('Error fetching redirects from external API:', error);
-        // Return stale cache if fetch fails
-        return cachedRedirects || [];
-    }
+    return redirects as RedirectRule[];
 }
 
 

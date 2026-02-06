@@ -1,9 +1,6 @@
 
 import { match } from 'path-to-regexp';
-
-// This file is now a proxy for an API call, but since Edge middleware can't reliably fetch,
-// this approach needs to be re-evaluated. For now, it will return an empty array.
-// A better approach would involve a KV store or a dedicated edge redirect service.
+import redirects from '@/../base/core/redirects.json';
 
 interface RedirectRule {
     id: string;
@@ -19,35 +16,9 @@ export interface MatchResult {
     matched: boolean;
 }
 
-let cachedRedirects: RedirectRule[] = [];
-let lastFetchTimestamp = 0;
-const CACHE_DURATION = 60 * 1000; // 60 seconds
-
-const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects.json';
-
 // This function will be called by the middleware.
 async function getRedirectsFromApi(): Promise<RedirectRule[]> {
-    if (cachedRedirects.length > 0 && (Date.now() - lastFetchTimestamp < CACHE_DURATION)) {
-        return cachedRedirects;
-    }
-
-    try {
-        const response = await fetch(API_URL, {
-            headers: { 'Content-Type': 'application/json' },
-            next: { revalidate: 60 }
-        });
-        if (!response.ok) {
-            throw new Error(`Failed to fetch redirects: ${response.statusText}`);
-        }
-        const data = await response.json(); // API returns a direct array
-        cachedRedirects = (data || []) as RedirectRule[];
-        lastFetchTimestamp = Date.now();
-        return cachedRedirects;
-    } catch (error) {
-        console.error("Error fetching redirects in Edge:", error);
-        // Return stale data if available, otherwise empty
-        return cachedRedirects || [];
-    }
+    return redirects as RedirectRule[];
 }
 
 function convertPatternToPathRegexp(pattern: string): string {

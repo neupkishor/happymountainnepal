@@ -3,13 +3,13 @@ import path from 'path';
 import fs from 'fs';
 
 // Ensure data directory exists
-const dataDir = path.join(process.cwd(), 'base', 'source', 'localized.db');
+const dataDir = path.join(process.cwd(), 'base', 'sources');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
 // Database file path
-const dbPath = path.join(dataDir, 'data.sqlite');
+const dbPath = path.join(dataDir, 'local.sqlite');
 
 // Singleton pattern to prevent multiple connections during development hot-reloading
 const globalForDb = global as unknown as { db: Database.Database };

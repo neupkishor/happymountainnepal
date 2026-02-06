@@ -1,73 +1,14 @@
 
 'use server';
-
 import { NextResponse } from 'next/server';
+import redirects from '@/../base/core/redirects.json';
 
-const API_URL = 'https://neupgroup.com/site/bridge/api/v1/redirects.json';
-const API_URL_MUTATE = 'https://neupgroup.com/site/bridge/api/v1/redirects'; // For POST/DELETE
-const API_KEY = process.env.NEUP_API_KEY;
-
-// GET - Fetch all redirects from the external API
+// GET - Fetch all redirects from local file
 export async function GET() {
-    try {
-        const response = await fetch(API_URL, {
-            headers: { 'Content-Type': 'application/json' }, // Ensure we accept JSON
-            next: { revalidate: 60 } // Cache for 60 seconds
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch redirects: ${response.statusText}`);
-        }
-
-        const data = await response.json(); // API returns a direct array
-        
-        // The data is already in the format [{...}, {...}], so just return it.
-        // We need to wrap it in an object to match what the client-side table expects.
-        return NextResponse.json({ redirects: data });
-
-    } catch (error: any) {
-        console.error('Error fetching redirects from external API:', error);
-        return NextResponse.json({ error: 'Failed to fetch redirects' }, { status: 500 });
-    }
+    return NextResponse.json({ redirects });
 }
 
-// POST - Add or delete a redirect via the external API
+// POST - Add or delete a redirect (Not implemented for local file yet, needs FS write)
 export async function POST(request: Request) {
-    if (!API_KEY) {
-        return NextResponse.json({ error: 'API key is not configured for write operations' }, { status: 500 });
-    }
-    
-    try {
-        const body = await request.json();
-        const { action, data, id } = body;
-
-        if (action === 'add') {
-            const response = await fetch(API_URL_MUTATE, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': API_KEY,
-                },
-                body: JSON.stringify(data),
-            });
-            if (!response.ok) throw new Error('Failed to add redirect');
-            const result = await response.json();
-            return NextResponse.json({ success: true, id: result.id });
-
-        } else if (action === 'delete') {
-            if (!id) return NextResponse.json({ success: false, error: 'ID is required for deletion' }, { status: 400 });
-            
-            const response = await fetch(`${API_URL_MUTATE}?id=${id}`, {
-                method: 'DELETE',
-                headers: { 'x-api-key': API_KEY },
-            });
-            if (!response.ok) throw new Error('Failed to delete redirect');
-            return NextResponse.json({ success: true });
-        }
-
-        return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
-    } catch (error: any) {
-        console.error('Error updating redirects via external API:', error);
-        return NextResponse.json({ success: false, error: 'Failed to update redirects' }, { status: 500 });
-    }
+    return NextResponse.json({ error: 'Modification not supported for local file system yet.' }, { status: 501 });
 }
