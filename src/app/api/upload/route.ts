@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         if (compress && isImage) {
             try {
                 // Compress image using sharp
-                finalBuffer = await sharp(buffer as any)
+                let finalBuffer = await sharp(buffer as any)
                     .resize(1920, 1920, {
                         fit: 'inside',
                         withoutEnlargement: true

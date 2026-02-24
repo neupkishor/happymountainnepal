@@ -15,6 +15,7 @@ import { PenSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 import type { Tour } from '@/lib/types';
+import { DownloadDocxButton } from '@/components/manage/DownloadDocxButton';
 
 type PackageDetailPageProps = {
   params: Promise<{
@@ -66,6 +67,7 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
             <span className="text-sm text-muted-foreground font-mono">{tour.id}</span>
           </div>
         </div>
+        <DownloadDocxButton tour={tour} />
       </div>
 
       <div>
