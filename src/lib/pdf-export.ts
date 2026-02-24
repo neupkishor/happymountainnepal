@@ -259,6 +259,25 @@ export async function exportTourToPdf(tour: Tour) {
     });
   }
 
+  // Map of the trek
+  if (tour.map) {
+    checkPageBreak(30);
+    y += 10;
+    doc.setFontSize(18);
+    doc.setFont('times', 'bold');
+    doc.setTextColor(0, 102, 204);
+    doc.text("Map of the trek", margin, y);
+    y += 10;
+    doc.setFontSize(12);
+    doc.setFont('times', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text("You can view the interactive map for this trek here:", margin, y);
+    y += 10; // Increased spacing for the break
+    doc.setTextColor(0, 102, 204);
+    doc.text(tour.map, margin, y);
+    y += 15;
+  }
+
   // CTA
   checkPageBreak(40);
   y += 20;

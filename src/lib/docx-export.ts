@@ -208,6 +208,29 @@ export async function exportTourToDocx(tour: Tour) {
     );
   }
 
+  // Map
+  if (tour.map) {
+    children.push(
+      new Paragraph({
+        text: "Map of the trek",
+        heading: HeadingLevel.HEADING_2,
+      }),
+      new Paragraph({
+        text: "You can view the interactive map for this trek here: ",
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: tour.map,
+            color: "0066CC",
+            underline: {},
+          }),
+        ],
+      }),
+      new Paragraph({ text: "", spacing: { after: 200 } })
+    );
+  }
+
   // CTA
   children.push(
     new Paragraph({ text: "", spacing: { after: 400 } }),

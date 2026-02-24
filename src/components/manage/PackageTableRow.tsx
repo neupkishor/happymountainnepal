@@ -40,8 +40,8 @@ export function PackageManagementCard({ tour }: PackageTableRowProps) {
 
   return (
     <div className="flex items-center gap-4 p-4 hover:bg-accent/5 transition-colors border-b last:border-0 relative group">
-      <Link href={`/manage/packages/${tour.id}/basics`} className="absolute inset-0 z-10">
-        <span className="sr-only">Edit {tour.name}</span>
+      <Link href={`/manage/packages/${tour.id}`} className="absolute inset-0 z-10">
+        <span className="sr-only">View {tour.name}</span>
       </Link>
       <div className="relative h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0 border">
         <Image src={tour.mainImage?.url || 'https://placehold.co/600x400'} alt={tour.name} fill className="object-cover" />
@@ -69,6 +69,9 @@ export function PackageManagementCard({ tour }: PackageTableRowProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link href={`/tours/${tour.slug}`} target="_blank">View Public Page</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/manage/packages/${tour.id}`}>View Details</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href={`/manage/packages/${tour.id}/basics`}>Edit</Link>
