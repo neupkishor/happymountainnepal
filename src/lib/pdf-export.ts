@@ -1,36 +1,54 @@
 import jsPDF from 'jspdf';
 import type { Tour } from './types';
 
-// Helper to convert image URL to base64
+// Helper to convert image URL to base64 using Image element for better CDN/CORS support
 async function getBase64ImageFromUrl(imageUrl: string): Promise<string | null> {
   if (!imageUrl) return null;
   
-  try {
-    // Try to fetch with CORS
-    const response = await fetch(imageUrl, {
-      method: 'GET',
-      credentials: 'omit',
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('FileReader failed'));
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    // Gracefully handle CORS or load failures
-    console.warn('Skipping image due to load failure:', imageUrl);
-    return null;
-  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.setAttribute('crossOrigin', 'anonymous');
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        // Use JPEG for smaller PDF size and better compatibility
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataURL);
+      } catch (e) {
+        console.warn('Canvas conversion failed for image:', imageUrl, e);
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      console.warn('Skipping image due to load failure:', imageUrl);
+      resolve(null);
+    };
+    img.src = imageUrl;
+  });
 }
 
 export async function exportTourToPdf(tour: Tour) {
+  // Pre-load all images first to ensure they are available before we start document generation
+  const mainImageBase64 = tour.mainImage?.url ? await getBase64ImageFromUrl(tour.mainImage.url) : null;
+  
+  const galleryImagesBase64: string[] = [];
+  if (tour.images && tour.images.length > 0) {
+    const results = await Promise.all(
+      tour.images.slice(0, 6).map(img => getBase64ImageFromUrl(img.url))
+    );
+    results.forEach(res => {
+      if (res) galleryImagesBase64.push(res);
+    });
+  }
+
   const doc = new jsPDF();
   const margin = 20;
   let y = margin;
@@ -67,17 +85,15 @@ export async function exportTourToPdf(tour: Tour) {
   };
 
   // Main Image
-  if (tour.mainImage?.url) {
-    const base64 = await getBase64ImageFromUrl(tour.mainImage.url);
-    if (base64) {
-      try {
-        const imgWidth = 170;
-        const imgHeight = 100;
-        doc.addImage(base64, 'JPEG', margin, y, imgWidth, imgHeight);
-        y += imgHeight + 10;
-      } catch (e) {
-        console.warn('Error adding main image to PDF', e);
-      }
+  if (mainImageBase64) {
+    const imgWidth = 170;
+    const imgHeight = 100;
+    checkPageBreak(imgHeight + 10);
+    try {
+      doc.addImage(mainImageBase64, 'JPEG', margin, y, imgWidth, imgHeight);
+      y += imgHeight + 10;
+    } catch (e) {
+      console.warn('Error adding main image to PDF', e);
     }
   }
 
@@ -123,45 +139,35 @@ export async function exportTourToPdf(tour: Tour) {
   }
 
   // Gallery (More Images)
-  if (tour.images && tour.images.length > 0) {
-    const galleryImages: string[] = [];
-    for (const img of tour.images.slice(0, 6)) {
-      const base64 = await getBase64ImageFromUrl(img.url);
-      if (base64) {
-        galleryImages.push(base64);
-      }
-    }
+  if (galleryImagesBase64.length > 0) {
+    checkPageBreak(50);
+    y += 5;
+    doc.setFontSize(18);
+    doc.setFont('times', 'bold');
+    doc.setTextColor(0, 102, 204);
+    doc.text("Gallery", margin, y);
+    y += 10;
 
-    if (galleryImages.length > 0) {
-      checkPageBreak(50);
-      y += 5;
-      doc.setFontSize(18);
-      doc.setFont('times', 'bold');
-      doc.setTextColor(0, 102, 204);
-      doc.text("Gallery", margin, y);
-      y += 10;
+    const imgWidth = 80;
+    const imgHeight = 50;
+    const spacing = 10;
+    let currentX = margin;
 
-      const imgWidth = 80;
-      const imgHeight = 50;
-      const spacing = 10;
-      let currentX = margin;
-
-      for (const base64 of galleryImages) {
-        checkPageBreak(imgHeight + 10);
-        try {
-          doc.addImage(base64, 'JPEG', currentX, y, imgWidth, imgHeight);
-          if (currentX === margin) {
-            currentX += imgWidth + spacing;
-          } else {
-            currentX = margin;
-            y += imgHeight + spacing;
-          }
-        } catch (e) {
-          console.warn('Error adding gallery image to PDF', e);
+    for (const base64 of galleryImagesBase64) {
+      checkPageBreak(imgHeight + 10);
+      try {
+        doc.addImage(base64, 'JPEG', currentX, y, imgWidth, imgHeight);
+        if (currentX === margin) {
+          currentX += imgWidth + spacing;
+        } else {
+          currentX = margin;
+          y += imgHeight + spacing;
         }
+      } catch (e) {
+        console.warn('Error adding gallery image to PDF', e);
       }
-      if (currentX !== margin) y += imgHeight + spacing;
     }
+    if (currentX !== margin) y += imgHeight + spacing;
   }
 
   // Inclusions/Exclusions

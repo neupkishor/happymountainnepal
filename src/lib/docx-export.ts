@@ -2,25 +2,64 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Tabl
 import { saveAs } from 'file-saver';
 import type { Tour } from './types';
 
-// Helper to fetch image as ArrayBuffer for docx
+// Helper to fetch image as ArrayBuffer for docx using Image element for better CDN/CORS support
 async function fetchImageAsBuffer(url: string): Promise<ArrayBuffer | null> {
   if (!url) return null;
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      credentials: 'omit',
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.arrayBuffer();
-  } catch (e) {
-    console.warn('Skipping image for docx due to load failure:', url);
-    return null;
-  }
+  
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.setAttribute('crossOrigin', 'anonymous');
+    img.onload = async () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert canvas to blob then to arrayBuffer
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const buffer = await blob.arrayBuffer();
+            resolve(buffer);
+          } else {
+            resolve(null);
+          }
+        }, 'image/jpeg', 0.8);
+      } catch (e) {
+        console.warn('Canvas conversion failed for docx image:', url, e);
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      console.warn('Skipping image for docx due to load failure:', url);
+      resolve(null);
+    };
+    img.src = url;
+  });
 }
 
 export async function exportTourToDocx(tour: Tour) {
+  // Pre-load all images first
+  const mainImageBuffer = tour.mainImage?.url ? await fetchImageAsBuffer(tour.mainImage.url) : null;
+  
+  const galleryImageBuffers: { buffer: ArrayBuffer; caption: string }[] = [];
+  if (tour.images && tour.images.length > 0) {
+    const results = await Promise.all(
+      tour.images.slice(0, 10).map(async (img) => {
+        const buffer = await fetchImageAsBuffer(img.url);
+        return buffer ? { buffer, caption: img.caption || "" } : null;
+      })
+    );
+    results.forEach(res => {
+      if (res) galleryImageBuffers.push(res);
+    });
+  }
+
   const children: any[] = [
     new Paragraph({
       text: tour.name,
@@ -39,25 +78,22 @@ export async function exportTourToDocx(tour: Tour) {
   ];
 
   // Main Image
-  if (tour.mainImage?.url) {
-    const buffer = await fetchImageAsBuffer(tour.mainImage.url);
-    if (buffer) {
-      children.push(
-        new Paragraph({
-          children: [
-            new ImageRun({
-              data: buffer,
-              transformation: {
-                width: 600,
-                height: 400,
-              },
-            } as any),
-          ],
-          alignment: AlignmentType.CENTER,
-        }),
-        new Paragraph({ text: "", spacing: { after: 200 } })
-      );
-    }
+  if (mainImageBuffer) {
+    children.push(
+      new Paragraph({
+        children: [
+          new ImageRun({
+            data: mainImageBuffer,
+            transformation: {
+              width: 600,
+              height: 400,
+            },
+          } as any),
+        ],
+        alignment: AlignmentType.CENTER,
+      }),
+      new Paragraph({ text: "", spacing: { after: 200 } })
+    );
   }
 
   // Description
@@ -96,38 +132,31 @@ export async function exportTourToDocx(tour: Tour) {
   );
 
   // Gallery
-  if (tour.images && tour.images.length > 0) {
-    const galleryChildren: any[] = [];
-    
-    for (const img of tour.images.slice(0, 10)) {
-      const buffer = await fetchImageAsBuffer(img.url);
-      if (buffer) {
-        galleryChildren.push(
-          new Paragraph({
-            children: [
-              new ImageRun({
-                data: buffer,
-                transformation: {
-                  width: 500,
-                  height: 333,
-                },
-              } as any),
-            ],
-            alignment: AlignmentType.CENTER,
-          }),
-          new Paragraph({ text: img.caption || "", alignment: AlignmentType.CENTER }),
-          new Paragraph({ text: "", spacing: { after: 100 } })
-        );
-      }
-    }
+  if (galleryImageBuffers.length > 0) {
+    children.push(
+      new Paragraph({ text: "Gallery", heading: HeadingLevel.HEADING_2 }),
+      new Paragraph({ text: "", spacing: { after: 200 } })
+    );
 
-    if (galleryChildren.length > 0) {
+    for (const res of galleryImageBuffers) {
       children.push(
         new Paragraph({
-          text: "Gallery",
-          heading: HeadingLevel.HEADING_2,
+          children: [
+            new ImageRun({
+              data: res.buffer,
+              transformation: {
+                width: 500,
+                height: 350,
+              },
+            } as any),
+          ],
+          alignment: AlignmentType.CENTER,
         }),
-        ...galleryChildren
+        new Paragraph({
+          text: res.caption,
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 200 },
+        })
       );
     }
   }
