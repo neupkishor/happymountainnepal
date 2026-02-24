@@ -138,14 +138,14 @@ export async function exportTourToDocx(tour: Tour) {
       text: "Inclusions",
       heading: HeadingLevel.HEADING_2,
     }),
-    ...tour.inclusions.map((item) => new Paragraph({ text: `• ${item}`, bullet: { level: 0 } })),
+    ...tour.inclusions.map((item) => new Paragraph({ text: item, bullet: { level: 0 } })),
     new Paragraph({ text: "", spacing: { after: 200 } }),
 
     new Paragraph({
       text: "Exclusions",
       heading: HeadingLevel.HEADING_2,
     }),
-    ...tour.exclusions.map((item) => new Paragraph({ text: `• ${item}`, bullet: { level: 0 } })),
+    ...tour.exclusions.map((item) => new Paragraph({ text: item, bullet: { level: 0 } })),
     new Paragraph({ text: "", spacing: { after: 200 } })
   );
 
@@ -157,7 +157,7 @@ export async function exportTourToDocx(tour: Tour) {
         heading: HeadingLevel.HEADING_2,
       }),
       ...tour.gears.map((gear) => new Paragraph({ 
-        text: `• ${gear.name}${gear.provided ? ' (Provided)' : ' (Bring your own)'}${gear.description ? `: ${gear.description}` : ''}`, 
+        text: `${gear.name}${gear.provided ? ' (Provided)' : ' (Bring your own)'}${gear.description ? `: ${gear.description}` : ''}`, 
         bullet: { level: 0 } 
       })),
       new Paragraph({ text: "", spacing: { after: 200 } })

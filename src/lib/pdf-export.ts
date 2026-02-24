@@ -124,22 +124,29 @@ export async function exportTourToPdf(tour: Tour) {
 
   // Gallery (More Images)
   if (tour.images && tour.images.length > 0) {
-    checkPageBreak(50);
-    y += 5;
-    doc.setFontSize(18);
-    doc.setFont('times', 'bold');
-    doc.setTextColor(0, 102, 204);
-    doc.text("Gallery", margin, y);
-    y += 10;
-
-    const imgWidth = 80;
-    const imgHeight = 50;
-    const spacing = 10;
-    let currentX = margin;
-
-    for (const img of tour.images.slice(0, 6)) { // Limit to top 6 images
+    const galleryImages: string[] = [];
+    for (const img of tour.images.slice(0, 6)) {
       const base64 = await getBase64ImageFromUrl(img.url);
       if (base64) {
+        galleryImages.push(base64);
+      }
+    }
+
+    if (galleryImages.length > 0) {
+      checkPageBreak(50);
+      y += 5;
+      doc.setFontSize(18);
+      doc.setFont('times', 'bold');
+      doc.setTextColor(0, 102, 204);
+      doc.text("Gallery", margin, y);
+      y += 10;
+
+      const imgWidth = 80;
+      const imgHeight = 50;
+      const spacing = 10;
+      let currentX = margin;
+
+      for (const base64 of galleryImages) {
         checkPageBreak(imgHeight + 10);
         try {
           doc.addImage(base64, 'JPEG', currentX, y, imgWidth, imgHeight);
@@ -153,8 +160,8 @@ export async function exportTourToPdf(tour: Tour) {
           console.warn('Error adding gallery image to PDF', e);
         }
       }
+      if (currentX !== margin) y += imgHeight + spacing;
     }
-    if (currentX !== margin) y += imgHeight + spacing;
   }
 
   // Inclusions/Exclusions
@@ -272,10 +279,12 @@ export async function exportTourToPdf(tour: Tour) {
     doc.setFont('times', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text("You can view the interactive map for this trek here:", margin, y);
-    y += 10; // Increased spacing for the break
+    y += 10;
     doc.setTextColor(0, 102, 204);
-    doc.text(tour.map, margin, y);
-    y += 15;
+    const mapLines = doc.splitTextToSize(tour.map, 170); // Wrap the link if it's too long
+    checkPageBreak(mapLines.length * 5);
+    doc.text(mapLines, margin, y);
+    y += mapLines.length * 5 + 10;
   }
 
   // CTA
