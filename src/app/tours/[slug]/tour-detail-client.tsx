@@ -13,6 +13,9 @@ import { GearsSection } from '@/components/tour-details/GearsSection';
 import { GuidesSection } from '@/components/tour-details/GuidesSection';
 import Image from 'next/image';
 import { TourNav } from '@/components/tour-details/TourNav';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { exportTourToPdf } from '@/lib/pdf-export';
 import type { Tour, ManagedReview } from '@/lib/types';
 import { useEffect, useMemo } from 'react';
 import { Chatbot } from '@/components/Chatbot';
@@ -144,7 +147,18 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
 
             <div className="lg:col-span-2 space-y-12">
               <header>
-                <h1 className="text-4xl md:text-5xl font-bold !font-headline text-primary">{tour.name}</h1>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <h1 className="text-4xl md:text-5xl font-bold !font-headline text-primary">{tour.name}</h1>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-fit gap-2 border-primary text-primary hover:bg-primary hover:text-white transition-all"
+                    onClick={() => exportTourToPdf(tour)}
+                  >
+                    <FileDown className="h-4 w-4" />
+                    Download PDF
+                  </Button>
+                </div>
                 <div
                   className="mt-4 text-lg text-muted-foreground [&_p]:mb-4 last:[&_p]:mb-0"
                   dangerouslySetInnerHTML={{ __html: tour.description }}

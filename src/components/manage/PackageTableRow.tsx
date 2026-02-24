@@ -4,7 +4,8 @@
 import Link from 'next/link';
 import type { Tour } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, FileText, FileDown } from 'lucide-react';
+import { exportTourToDocx } from '@/lib/docx-export';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +72,10 @@ export function PackageManagementCard({ tour }: PackageTableRowProps) {
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href={`/manage/packages/${tour.id}/basics`}>Edit</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportTourToDocx(tour)}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Export to Word (.docx)
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DeletePackageDialog tour={tour}>
