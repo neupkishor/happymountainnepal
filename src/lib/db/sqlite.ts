@@ -148,6 +148,12 @@ export function initDb() {
       createdAt TEXT,
       FOREIGN KEY (packageId) REFERENCES packages(id) ON DELETE SET NULL
     );
+
+    CREATE TABLE IF NOT EXISTS legal (
+      id TEXT PRIMARY KEY,
+      content TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
   `);
 
   // Migration for adding parentId to existing table if needed
@@ -905,4 +911,22 @@ export function saveReview(review: Omit<ReviewDB, 'createdAt'> & { createdAt?: s
 
 export function deleteReview(id: string) {
   db.prepare('DELETE FROM reviews WHERE id = ?').run(id);
+}
+
+// --- Legal Helpers ---
+
+export function getLegalContent(id: string) {
+  const row = db.prepare('SELECT content, updatedAt FROM legal WHERE id = ?').get(id) as { content: string; updatedAt: string } | undefined;
+  return row || null;
+}
+
+export function saveLegalContent(id: string, content: string) {
+  const updatedAt = new Date().toISOString();
+  const existing = db.prepare('SELECT id FROM legal WHERE id = ?').get(id);
+
+  if (existing) {
+    db.prepare('UPDATE legal SET content = ?, updatedAt = ? WHERE id = ?').run(content, updatedAt, id);
+  } else {
+    db.prepare('INSERT INTO legal (id, content, updatedAt) VALUES (?, ?, ?)').run(id, content, updatedAt);
+  }
 }

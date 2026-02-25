@@ -11,8 +11,8 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { logError } from '@/lib/db';
 import { usePathname } from 'next/navigation';
+import { fetchLegalContent, updateLegalContentAction } from '../actions';
 
 const formSchema = z.object({
   content: z.string().min(50, 'Privacy policy content must be at least 50 characters.'),
@@ -54,25 +54,30 @@ export default function PrivacyPolicyManager() {
   });
 
   useEffect(() => {
-    // In a real app, you would fetch this content from a database.
-    // For this demo, we'll simulate a fetch.
-    setIsLoading(true);
-    setTimeout(() => {
-      form.setValue('content', localStorage.getItem('privacyPolicyContent') || DUMMY_POLICY);
-      setIsLoading(false);
-    }, 500);
+    async function loadContent() {
+      setIsLoading(true);
+      try {
+        const data = await fetchLegalContent('privacy');
+        if (data) {
+          form.setValue('content', data.content);
+        } else {
+          form.setValue('content', DUMMY_POLICY);
+        }
+      } catch (error) {
+        console.error('Failed to fetch privacy policy:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadContent();
   }, [form]);
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        // In a real app, you'd save this to your database.
-        // For this demo, we'll save to localStorage.
-        localStorage.setItem('privacyPolicyContent', values.content);
-        
+        await updateLegalContentAction('privacy', values.content);
         toast({ title: 'Success', description: 'Privacy Policy updated.' });
       } catch (error: any) {
-        logError({ message: 'Failed to update privacy policy', stack: error.stack, pathname, context: values });
         toast({
           variant: 'destructive',
           title: 'Error',

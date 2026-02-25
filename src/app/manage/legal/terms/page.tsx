@@ -11,8 +11,8 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { logError } from '@/lib/db';
 import { usePathname } from 'next/navigation';
+import { fetchLegalContent, updateLegalContentAction } from '../actions';
 
 const formSchema = z.object({
   content: z.string().min(50, 'Terms of Service content must be at least 50 characters.'),
@@ -48,25 +48,30 @@ export default function TermsOfServiceManager() {
   });
 
   useEffect(() => {
-    // In a real app, you would fetch this content from a database.
-    // For this demo, we'll simulate a fetch.
-    setIsLoading(true);
-    setTimeout(() => {
-      form.setValue('content', localStorage.getItem('termsOfServiceContent') || DUMMY_TERMS);
-      setIsLoading(false);
-    }, 500);
+    async function loadContent() {
+      setIsLoading(true);
+      try {
+        const data = await fetchLegalContent('terms');
+        if (data) {
+          form.setValue('content', data.content);
+        } else {
+          form.setValue('content', DUMMY_TERMS);
+        }
+      } catch (error) {
+        console.error('Failed to fetch terms:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadContent();
   }, [form]);
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
-        // In a real app, you'd save this to your database.
-        // For this demo, we'll save to localStorage.
-        localStorage.setItem('termsOfServiceContent', values.content);
-        
+        await updateLegalContentAction('terms', values.content);
         toast({ title: 'Success', description: 'Terms of Service updated.' });
       } catch (error: any) {
-        logError({ message: 'Failed to update terms of service', stack: error.stack, pathname, context: values });
         toast({
           variant: 'destructive',
           title: 'Error',

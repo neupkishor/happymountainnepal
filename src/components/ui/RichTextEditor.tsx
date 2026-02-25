@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -9,7 +8,7 @@ import type { Quill } from 'react-quill-new';
 import type { UploadCategory, ImageWithCaption } from '@/lib/types';
 import { Input } from './input';
 import { Button } from './button';
-import { ImageIcon, Link, Trash2 } from 'lucide-react';
+import { ImageIcon, Link, Trash2, Eraser } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Label } from './label';
 
@@ -84,6 +83,15 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      const sanitizeButton = document.querySelector('.ql-sanitize');
+      if (sanitizeButton) {
+        sanitizeButton.setAttribute('title', 'Sanitize (remove classes, IDs, and styles from selection or entire content)');
+      }
+    }
+  }, [mounted]);
 
   useEffect(() => {
     // Only update if the incoming value is different AND we have a mounted quill instance
@@ -283,16 +291,77 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
     setSelectedImage(null);
   }
 
+  const handleSanitize = () => {
+    if (!quillRef.current) return;
+    const quill = quillRef.current;
+    const range = quill.getSelection();
+
+    const sanitizeHtml = (html: string) => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const allElements = doc.body.querySelectorAll('*');
+      allElements.forEach(el => {
+        el.removeAttribute('class');
+        el.removeAttribute('id');
+        el.removeAttribute('style');
+        // Also remove any data attributes
+        Array.from(el.attributes).forEach(attr => {
+          if (attr.name.startsWith('data-')) {
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
+      return doc.body.innerHTML;
+    };
+
+    if (range && range.length > 0) {
+      const index = range.index;
+      const length = range.length;
+
+      // Get the HTML of the selection
+      let html = "";
+      if (typeof (quill as any).getSemanticHTML === 'function') {
+        html = (quill as any).getSemanticHTML(index, length);
+      } else {
+        const delta = quill.getContents(index, length);
+        const tempContainer = document.createElement('div');
+        const tempQuill = new (quill.constructor as any)(tempContainer);
+        tempQuill.setContents(delta);
+        html = tempQuill.root.innerHTML;
+      }
+
+      const sanitizedHtml = sanitizeHtml(html);
+
+      // Replace selection with sanitized HTML
+      quill.deleteText(index, length, 'user');
+      quill.clipboard.dangerouslyPasteHTML(index, sanitizedHtml, 'user');
+    } else {
+      // Sanitize entire content if nothing is selected
+      const html = quill.root.innerHTML;
+      const sanitizedHtml = sanitizeHtml(html);
+      
+      // Replace entire content
+      quill.setContents([] as any); // Clear content
+      quill.clipboard.dangerouslyPasteHTML(0, sanitizedHtml, 'user');
+    }
+
+    // Update state
+    const newContent = quill.root.innerHTML;
+    setEditorValue(newContent);
+    onChange(newContent);
+  };
+
   const modules = useMemo(() => ({
     toolbar: {
       container: [
         [{ 'header': [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'link'],
         [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-        ['image'],
+        ['image', 'sanitize'],
       ],
       handlers: {
         'image': imageHandler,
+        'sanitize': handleSanitize,
       },
     },
     clipboard: {
@@ -306,6 +375,13 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
       quillRef.current = el.getEditor();
       if (quillRef.current) {
         console.log('Quill editor obtained:', quillRef.current);
+
+        // Register sanitize icon
+        const Quill = quillRef.current.constructor as any;
+        const icons = Quill.import('ui/icons');
+        if (icons) {
+          icons['sanitize'] = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.9-9.9c1-1 2.5-1 3.4 0l4.4 4.4c1 1 1 2.5 0 3.4L13 21Z"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>';
+        }
 
         // Add selection change listener to track cursor position
         quillRef.current.on('selection-change', (range: any, oldRange: any, source: string) => {
@@ -324,7 +400,6 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
         });
 
         // Correctly get the Quill static from the instance
-        const Quill = quillRef.current.constructor as any;
         const BlockEmbed = Quill.import('blots/block/embed');
         console.log('BlockEmbed imported:', BlockEmbed);
 
