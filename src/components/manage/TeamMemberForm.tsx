@@ -87,11 +87,15 @@ export function TeamMemberForm({ member, groups = [] }: TeamMemberFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
+        const formattedValues = {
+          ...values,
+          groupId: values.groupId || undefined,
+        };
         if (member) {
-          await updateTeamMember(member.id, values);
+          await updateTeamMember(member.id, formattedValues as any);
           toast({ title: 'Success', description: 'Team member updated.' });
         } else {
-          await addTeamMember(values);
+          await addTeamMember(formattedValues as any);
           toast({ title: 'Success', description: 'Team member created.' });
         }
         router.push('/manage/team');

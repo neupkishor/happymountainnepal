@@ -22,11 +22,15 @@ function BlogLoadingFallback() {
   );
 }
 
-export default async function BlogPage({ searchParams }: { searchParams: { page?: string, search?: string, tags?: string } }) {
+export default async function BlogPage({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ page?: string, search?: string, tags?: string }> 
+}) {
+  const { page, search, tags: tagsRaw } = await searchParams;
   // Fetch initial data on the server
-  const currentPage = parseInt(searchParams.page || '1', 10);
-  const search = searchParams.search;
-  const tags = searchParams.tags ? searchParams.tags.split(',') : undefined;
+  const currentPage = parseInt(page || '1', 10);
+  const tags = tagsRaw ? tagsRaw.split(',') : undefined;
 
   const { posts, totalCount, totalPages, hasMore } = getPosts({
     limit: 12,

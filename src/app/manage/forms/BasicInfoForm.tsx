@@ -29,12 +29,12 @@ import { useDebounce } from '@/hooks/use-debounce';
 const formSchema = z.object({
   name: z.string().min(5, { message: "Name must be at least 5 characters." }),
   slug: z.string().min(3, { message: "Slug must be at least 3 characters." }).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, alphanumeric, and use hyphens for spaces."),
-  region: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)).refine(val => val.length > 0, { message: "At least one region is required." }),
+  region: z.string().min(1, { message: "At least one region is required." }),
   type: z.enum(['Trekking', 'Tour', 'Climbing', 'Jungle Safari']),
   difficulty: z.enum(['Easy', 'Moderate', 'Strenuous', 'Challenging']),
   duration: z.coerce.number().int().min(1, { message: "Duration must be at least 1 day." }),
   description: z.string().min(20, { message: "Description must be at least 20 characters." }),
-  status: z.enum(['draft', 'published', 'unpublished']),
+  status: z.enum(['draft', 'published', 'unpublished', 'hidden']),
   searchKeywords: z.array(z.string()).optional(),
 });
 
@@ -108,7 +108,7 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
     const keywords = new Set<string>();
     values.name.toLowerCase().split(' ').forEach(word => keywords.add(word));
     values.description.toLowerCase().split(' ').forEach(word => keywords.add(word.replace(/[^a-z0-9]/gi, '')));
-    (values.region as unknown as string).split(',').forEach(r => keywords.add(r.trim().toLowerCase()));
+    values.region.split(',').forEach(r => keywords.add(r.trim().toLowerCase()));
     keywords.add(values.type.toLowerCase());
     keywords.add(values.difficulty.toLowerCase());
     return Array.from(keywords).filter(Boolean);
@@ -139,7 +139,12 @@ export function BasicInfoForm({ tour }: BasicInfoFormProps) {
         }
         
         const keywords = generateKeywords(values);
-        const dataToUpdate = { ...values, searchKeywords: keywords };
+        const regionArray = values.region.split(',').map(s => s.trim()).filter(Boolean);
+        const dataToUpdate = { 
+          ...values, 
+          region: regionArray,
+          searchKeywords: keywords 
+        };
 
         await updateTour(tour.id, dataToUpdate);
         toast({ title: 'Success', description: 'Basic info updated.' });

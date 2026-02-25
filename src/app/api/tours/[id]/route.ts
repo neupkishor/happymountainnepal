@@ -3,10 +3,11 @@ import { getTourById } from '@/lib/db/tours';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const tour = await getTourById(params.id);
+        const { id } = await params;
+        const tour = await getTourById(id);
 
         if (!tour) {
             return NextResponse.json(

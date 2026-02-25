@@ -23,7 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, User, Bot, Clock, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getPaginatedUsers, DisplayUser } from '@/lib/db';
+import { getPaginatedUsers } from '@/lib/db';
+import type { DisplayUser } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useRouter, useSearchParams } from 'next/navigation';
 

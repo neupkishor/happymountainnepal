@@ -44,7 +44,7 @@ const formSchema = z.object({
   reviewedOn: z.date({ required_error: "Review date is required." }),
   reviewFor: z.string().optional().nullable(), // packageId
   reviewBody: z.string().min(10, "Review body must be at least 10 characters."),
-  reviewMedia: z.array(z.string().url("Must be a valid URL.")).optional(),
+  reviewMedia: z.array(z.object({ url: z.string().url("Must be a valid URL.") })).optional(),
   stars: z.number().min(1).max(5, "Stars must be between 1 and 5."),
   userId: z.string().optional(), // Only for onSite
   originalReviewUrl: z.string().url("Must be a valid URL.").optional(), // Only for offSite
@@ -97,7 +97,7 @@ export function ReviewForm({ review }: ReviewFormProps) {
       reviewedOn: review?.reviewedOn ? new Date(review.reviewedOn as any) : new Date(),
       reviewFor: review?.reviewFor || null,
       reviewBody: review?.reviewBody || '',
-      reviewMedia: review?.reviewMedia || [],
+      reviewMedia: review?.reviewMedia?.map(url => ({ url })) || [],
       stars: review?.stars || 5,
       userId: (review as OnSiteReview)?.userId || '',
       originalReviewUrl: (review as OffSiteReview)?.originalReviewUrl || '',
@@ -134,11 +134,16 @@ export function ReviewForm({ review }: ReviewFormProps) {
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {
       try {
+        const formattedValues = {
+          ...values,
+          reviewMedia: values.reviewMedia?.map(m => m.url).filter(Boolean) || [],
+        };
+
         if (review) {
-          await updateReview(review.id, values);
+          await updateReview(review.id, formattedValues as any);
           toast({ title: 'Success', description: 'Review updated.' });
         } else {
-          await addReview(values);
+          await addReview(formattedValues as any);
           toast({ title: 'Success', description: 'Review created.' });
         }
         router.push('/manage/reviews');
@@ -377,7 +382,7 @@ export function ReviewForm({ review }: ReviewFormProps) {
                 {mediaFields.map((field, index) => (
                    <div key={field.id} className="flex items-center gap-2 p-4 border rounded-lg">
                      <div className="w-full">
-                        <MediaPicker name={`reviewMedia.${index}`} category="trip" />
+                        <MediaPicker name={`reviewMedia.${index}.url`} category="trip" />
                         <FormMessage>{form.formState.errors.reviewMedia?.[index]?.message}</FormMessage>
                      </div>
                      <Button type="button" variant="ghost" size="icon" onClick={() => removeMedia(index)} disabled={isPending}>
@@ -385,7 +390,7 @@ export function ReviewForm({ review }: ReviewFormProps) {
                      </Button>
                    </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => appendMedia('')} disabled={isPending}>
+                <Button type="button" variant="outline" size="sm" onClick={() => appendMedia({ url: '' })} disabled={isPending}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Media Image
                 </Button>

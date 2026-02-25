@@ -30,7 +30,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formSchema = z.object({
   name: z.string().min(5, { message: "Name must be at least 5 characters." }),
   slug: z.string().min(3, { message: "Slug must be at least 3 characters." }).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, alphanumeric, and use hyphens for spaces."),
-  region: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)).refine(val => val.length > 0, { message: "At least one region is required." }),
+  region: z.string().min(1, { message: "At least one region is required." }),
   type: z.enum(['Trekking', 'Tour', 'Climbing', 'Jungle Safari']),
   difficulty: z.enum(['Easy', 'Moderate', 'Strenuous', 'Challenging']),
   duration: z.coerce.number().int().min(1, { message: "Duration must be at least 1 day." }),
@@ -63,14 +63,14 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      slug: '',
-      region: [],
-      type: 'Trekking',
-      difficulty: 'Moderate',
-      duration: 1,
-      description: '',
-    } as any,
+        name: '',
+        slug: '',
+        region: '',
+        type: 'Trekking',
+        difficulty: 'Moderate',
+        duration: 1,
+        description: '',
+      } as any,
   });
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
       try {
         const finalData = {
           ...values,
-          region: Array.isArray(values.region) ? values.region : (values.region as unknown as string).split(',').map(s => s.trim()).filter(Boolean),
+          region: values.region.split(',').map(s => s.trim()).filter(Boolean),
           // Add other sections if they are selected for import
           ...(selectedImports.itinerary && importedData?.itinerary && { itinerary: importedData.itinerary }),
           ...(selectedImports.inclusions && importedData?.inclusions && { inclusions: importedData.inclusions }),
@@ -339,7 +339,7 @@ export function CreatePackageForm({ importedData }: CreatePackageFormProps) {
               />
             </div>
 
-            <Button type="submit" disabled={isPending || isSlugChecking || (debouncedSlug && !isSlugAvailable)}>
+            <Button type="submit" disabled={isPending || isSlugChecking || !!(debouncedSlug && isSlugAvailable === false)}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Package & Continue Editing
             </Button>

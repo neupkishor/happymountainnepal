@@ -148,7 +148,11 @@ export default function CustomizePage() {
   const handleFinalSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-        await saveInquiry(values.conversation);
+        await saveInquiry({
+            type: 'customization',
+            conversation: values.conversation,
+            page: pathname
+        });
         toast({
             title: "Inquiry Sent!",
             description: "Thank you for your message. We'll get back to you with a custom plan shortly.",

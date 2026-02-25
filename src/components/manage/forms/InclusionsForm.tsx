@@ -21,13 +21,13 @@ import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 
 interface InclusionsFormValues {
-  inclusions: string[];
-  exclusions: string[];
+  inclusions: { value: string }[];
+  exclusions: { value: string }[];
 }
 
 const formSchema = z.object({
-  inclusions: z.array(z.string().min(1, "Inclusion cannot be empty.")),
-  exclusions: z.array(z.string().min(1, "Exclusion cannot be empty.")),
+  inclusions: z.array(z.object({ value: z.string().min(1, "Inclusion cannot be empty.") })),
+  exclusions: z.array(z.object({ value: z.string().min(1, "Exclusion cannot be empty.") })),
 });
 
 interface InclusionsFormProps {
@@ -42,17 +42,17 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
   const form = useForm<InclusionsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      inclusions: tour.inclusions || [],
-      exclusions: tour.exclusions || [],
+      inclusions: (tour.inclusions || []).map(i => ({ value: i })),
+      exclusions: (tour.exclusions || []).map(e => ({ value: e })),
     },
   });
 
-  const { fields: inclusionFields, append: appendInclusion, remove: removeInclusion } = useFieldArray<InclusionsFormValues>({
+  const { fields: inclusionFields, append: appendInclusion, remove: removeInclusion } = useFieldArray({
     control: form.control,
     name: "inclusions",
   });
 
-  const { fields: exclusionFields, append: appendExclusion, remove: removeExclusion } = useFieldArray<InclusionsFormValues>({
+  const { fields: exclusionFields, append: appendExclusion, remove: removeExclusion } = useFieldArray({
     control: form.control,
     name: "exclusions",
   });
@@ -60,7 +60,11 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
   const onSubmit = (values: InclusionsFormValues) => {
     startTransition(async () => {
       try {
-        await updateTour(tour.id, values);
+        const dataToSave = {
+          inclusions: values.inclusions.map(i => i.value),
+          exclusions: values.exclusions.map(e => e.value),
+        };
+        await updateTour(tour.id, dataToSave);
         toast({ title: 'Success', description: 'Inclusions and exclusions updated.' });
       } catch (error: any) {
         logError({ message: `Failed to update inclusions for tour ${tour.id}`, stack: error.stack, pathname, context: { tourId: tour.id, values: values } });
@@ -86,7 +90,7 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
                             <FormField
                             key={field.id}
                             control={form.control}
-                            name={`inclusions.${index}`}
+                            name={`inclusions.${index}.value`}
                             render={({ field }) => (
                                 <FormItem>
                                 <div className="flex items-center gap-2">
@@ -102,7 +106,7 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
                             )}
                             />
                         ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => appendInclusion('')}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendInclusion({ value: '' })}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Inclusion
                         </Button>
@@ -114,7 +118,7 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
                             <FormField
                             key={field.id}
                             control={form.control}
-                            name={`exclusions.${index}`}
+                            name={`exclusions.${index}.value`}
                             render={({ field }) => (
                                 <FormItem>
                                 <div className="flex items-center gap-2">
@@ -130,7 +134,7 @@ export function InclusionsForm({ tour }: InclusionsFormProps) {
                             )}
                             />
                         ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => appendExclusion('')}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendExclusion({ value: '' })}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Exclusion
                         </Button>

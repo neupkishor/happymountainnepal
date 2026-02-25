@@ -63,7 +63,7 @@ export function ProfileWhyUsForm() {
         whyUs: profile.whyUs || [],
       });
     }
-  }, [profile.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   const onSubmit = (values: FormValues) => {
     startTransition(async () => {

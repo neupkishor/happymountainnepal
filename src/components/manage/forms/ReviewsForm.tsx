@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { type Tour, type ManagedReview } from '@/lib/types';
+import { type Tour, type ManagedReview, type Review } from '@/lib/types';
 import { updateTour, logError } from '@/lib/db';
 import { useTransition, useState } from 'react';
 import { Loader2, PlusCircle, Trash2, Check, RefreshCw, Star, Backpack } from 'lucide-react';
@@ -25,14 +25,13 @@ import { usePathname } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 
 const reviewItemSchema = z.object({
     id: z.string(),
     rating: z.number().min(1).max(5),
     author: z.string().min(1, "Author is required"),
     comment: z.string().min(1, "Comment is required"),
-    date: z.string(), // Must be string (ISO preferred)
+    date: z.custom<Review['date']>(),
     globalId: z.string().optional(),
 });
 

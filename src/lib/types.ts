@@ -201,6 +201,14 @@ export type ManagedReview = OnSiteReview | OffSiteReview;
 
 export type ChatbotPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'middle-right' | 'middle-left';
 
+export interface DisplayUser {
+  id: string;
+  activityCount: number;
+  lastSeen: string;
+  identifier: string;
+  type: 'Permanent' | 'Temporary';
+}
+
 export interface SiteProfile {
   id: string;
   basePath?: string; // Base path for the site (e.g., 'https://happymountainnepal.com')

@@ -237,15 +237,15 @@ export default function RedirectsPage() {
               <TableBody>
                 {redirects.map(redirect => (
                   <TableRow key={redirect.id}>
-                    <TableCell className="font-mono text-sm">{redirect.source || redirect.from}</TableCell>
-                    <TableCell className="font-mono text-sm truncate max-w-xs">{redirect.destination || redirect.to}</TableCell>
+                    <TableCell className="font-mono text-sm">{redirect.source}</TableCell>
+                    <TableCell className="font-mono text-sm truncate max-w-xs">{redirect.destination}</TableCell>
                     <TableCell>
                       <Badge variant={redirect.permanent ? 'default' : 'secondary'}>
                         {redirect.permanent ? 'Permanent' : 'Temporary'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {redirect.created_on && formatDistanceToNow(new Date(redirect.created_on), { addSuffix: true })}
+                      {redirect.createdAt && formatDistanceToNow(new Date(redirect.createdAt as string), { addSuffix: true })}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => handleDelete(redirect.id)} disabled={isPending}>

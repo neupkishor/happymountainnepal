@@ -91,7 +91,7 @@ function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
                             <div className="pt-2 border-t mt-2">
                                 <h4 className="font-semibold mb-2">Custom Itinerary:</h4>
                                 <ul className="space-y-2">
-                                    {inquiry.data?.itinerary?.map((item, i) => (
+                                    {inquiry.data?.itinerary?.map((item: { day: number; title: string; description: string }, i: number) => (
                                         <li key={i} className="text-sm border-l-2 pl-3">
                                             <p className="font-bold">Day {item.day}: {item.title}</p>
                                             <p className="text-muted-foreground whitespace-pre-wrap">{item.description}</p>

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { getFeedbacks, Feedback } from '@/lib/db';
-import { getTeamMembers, TeamMember } from '@/lib/db/team';
+import { getTeamMembers } from '@/lib/db/team';
+import type { TeamMember } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';

@@ -52,8 +52,9 @@ async function getRelatedBlogs(locationName: string) {
 }
 
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-    const location = getLocationBySlug(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const location = getLocationBySlug(slug);
     if (!location) return { title: 'Not Found' };
     return {
         title: `${location.name} - Happy Mountain Nepal`,
@@ -61,8 +62,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     };
 }
 
-export default async function LocationPage({ params }: { params: { slug: string } }) {
-    const location = getLocationBySlug(params.slug);
+export default async function LocationPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const location = getLocationBySlug(slug);
 
     if (!location) {
         notFound();

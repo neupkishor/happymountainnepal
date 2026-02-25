@@ -4,13 +4,14 @@ import { getLocationById, getLocations } from '@/lib/db/sqlite';
 import { notFound } from 'next/navigation';
 
 interface EditLocationPageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 export default async function EditLocationPage({ params }: EditLocationPageProps) {
-    const location = getLocationById(params.id);
+    const { id } = await params;
+    const location = getLocationById(id);
     const existingLocations = await getLocations(); // Fetch all locations for parent selection
 
     if (!location) {

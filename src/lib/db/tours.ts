@@ -90,7 +90,7 @@ export async function createTour(): Promise<string | null> {
 
         return savePackage(newTourData);
     } catch (error: any) {
-        await logError(error, 'createTour');
+        await logError({ message: error.message, stack: error.stack, pathname: 'createTour' });
         return null;
     }
 }
@@ -130,7 +130,7 @@ export async function createTourWithBasicInfo(data: Partial<ImportedTourData>): 
 
         return savePackage(newTourData);
     } catch (error: any) {
-        await logError(error, 'createTourWithBasicInfo');
+        await logError({ message: error.message, stack: error.stack, pathname: 'createTourWithBasicInfo' });
         throw error;
     }
 }
@@ -161,7 +161,7 @@ export async function updateTour(id: string, data: Partial<Omit<Tour, 'id'>>) {
 
         savePackage(finalData);
     } catch (error: any) {
-        await logError(error, 'updateTour');
+        await logError({ message: error.message, stack: error.stack, pathname: 'updateTour' });
         throw error;
     }
 }
@@ -170,7 +170,7 @@ export async function deleteTour(id: string) {
     try {
         deletePackage(id);
     } catch (error: any) {
-        await logError(error, 'deleteTour');
+        await logError({ message: error.message, stack: error.stack, pathname: 'deleteTour' });
         throw error;
     }
 }
@@ -179,7 +179,7 @@ export async function checkSlugAvailability(slug: string, excludeTourId?: string
     try {
         return checkPackageSlugAvailability(slug, excludeTourId);
     } catch (error: any) {
-        await logError(error, 'checkSlugAvailability');
+        await logError({ message: error.message, stack: error.stack, pathname: 'checkSlugAvailability' });
         throw error;
     }
 }
@@ -231,7 +231,7 @@ export async function validateTourForPublishing(tourId: string): Promise<string[
 
         return missing.length > 0 ? missing : true;
     } catch (error: any) {
-        await logError(error, 'validateTourForPublishing');
+        await logError({ message: error.message, stack: error.stack, pathname: 'validateTourForPublishing' });
         throw error;
     }
 }
@@ -242,7 +242,7 @@ export async function getTourById(id: string): Promise<Tour | null> {
         if (!tour) return null;
         return normalizeTourData(tour);
     } catch (error: any) {
-        await logError(error, 'getTourById');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getTourById' });
         return null;
     }
 }
@@ -253,7 +253,7 @@ export async function getTourBySlug(slug: string): Promise<Tour | null> {
         if (!tour) return null;
         return normalizeTourData(tour);
     } catch (error: any) {
-        await logError(error, 'getTourBySlug');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getTourBySlug' });
         return null;
     }
 }
@@ -263,10 +263,10 @@ export async function getPackagesPaginated(options: {
     limit: number;
     search?: string;
     status?: string;
-}): {
-    packages: Promise<Tour[]>;
+}): Promise<{
+    packages: Tour[];
     pagination: { currentPage: number; totalPages: number; totalCount: number; };
-} {
+}> {
     try {
         const result = getPackages({
             page: options.page,
@@ -284,7 +284,7 @@ export async function getPackagesPaginated(options: {
             }
         };
     } catch (error: any) {
-        await logError(error, 'getPackagesPaginated');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getPackagesPaginated' });
         return {
             packages: [],
             pagination: { currentPage: options.page, totalPages: 0, totalCount: 0 }
@@ -292,11 +292,22 @@ export async function getPackagesPaginated(options: {
     }
 }
 
+export async function getTourNameById(id: string): Promise<string | null> {
+    try {
+        const tour = getPackageById(id);
+        if (!tour) return null;
+        return tour.name || null;
+    } catch (error: any) {
+        await logError({ message: error.message, stack: error.stack, pathname: 'getTourNameById' });
+        return null;
+    }
+}
+
 export async function getAllToursForSelect(): Promise<{ id: string; name: string; slug: string }[]> {
     try {
         return getAllPackagesForSelect();
     } catch (error: any) {
-        await logError(error, 'getAllToursForSelect');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getAllToursForSelect' });
         return [];
     }
 }
@@ -306,7 +317,7 @@ export async function getAllPublishedTours(): Promise<Tour[]> {
         const result = getPackages({ status: 'published', limit: 1000 });
         return result.packages.map(normalizeTourData);
     } catch (error: any) {
-        await logError(error, 'getAllPublishedTours');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getAllPublishedTours' });
         return [];
     }
 }
@@ -352,7 +363,7 @@ export async function getDestinations(): Promise<Destination[]> {
 
         return sortedRegions.slice(0, 5);
     } catch (error: any) {
-        await logError(error, 'getDestinations');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getDestinations' });
         return [];
     }
 }
@@ -390,7 +401,7 @@ export async function updateTourWithAiData(tourId: string, data: Partial<Importe
 
         await updateTour(tourId, updateData);
     } catch (error: any) {
-        await logError(error, 'updateTourWithAiData');
+        await logError({ message: error.message, stack: error.stack, pathname: 'updateTourWithAiData' });
         throw error;
     }
 }
@@ -406,16 +417,16 @@ export async function getAllTourRegions(): Promise<string[]> {
         });
         return Array.from(regionsSet).sort();
     } catch (error: any) {
-        await logError(error, 'getAllTourRegions');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getAllTourRegions' });
         return [];
     }
 }
 
-export async function getPaginatedTours({ limit, lastDocId }: { limit: number, lastDocId: string | null }): {
-    tours: Promise<Tour[]>;
+export async function getPaginatedTours({ limit, lastDocId }: { limit: number, lastDocId: string | null }): Promise<{
+    tours: Tour[];
     lastDocId: string | null;
     hasMore: boolean;
-} {
+}> {
     try {
         // Simple pagination without cursor for SQLite
         // We can implement cursor-based pagination later if needed
@@ -431,7 +442,7 @@ export async function getPaginatedTours({ limit, lastDocId }: { limit: number, l
             hasMore
         };
     } catch (error: any) {
-        await logError(error, 'getPaginatedTours');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getPaginatedTours' });
         return { tours: [], lastDocId: null, hasMore: false };
     }
 }
@@ -443,7 +454,7 @@ export async function getAllTourNamesMap(): Promise<Map<string, string>> {
         packages.forEach(pkg => tourMap.set(pkg.id, pkg.name));
         return tourMap;
     } catch (error: any) {
-        await logError(error, 'getAllTourNamesMap');
+        await logError({ message: error.message, stack: error.stack, pathname: 'getAllTourNamesMap' });
         return new Map();
     }
 }

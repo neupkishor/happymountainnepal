@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { getActivitiesByAccountId } from '@/lib/db';
 import type { Activity } from '@/lib/types'; // Corrected import for Activity
@@ -27,13 +27,13 @@ import { Activity as ActivityIcon, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type ActivityPageProps = {
-    params: {
+    params: Promise<{
         accountId: string;
-    }
+    }>
 }
 
 export default function AccountActivityPage({ params }: ActivityPageProps) {
-  const { accountId } = params;
+  const { accountId } = use(params);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -14,7 +14,7 @@ async function getDocById<T>(collectionName: string, id: string): Promise<T | nu
     return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as T : null;
 }
 
-export async function addReview(data: Omit<ManagedReview, 'id' | 'reviewedOn'>): Promise<string> {
+export async function addReview(data: Omit<ManagedReview, 'id'>): Promise<string> {
     if (!firestore) throw new Error("Database not available.");
     const docRef = await addDoc(collection(firestore, 'reviews'), {
         ...data,

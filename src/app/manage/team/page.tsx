@@ -242,9 +242,9 @@ export default function TeamManagementPage() {
     });
   
     // 5. Insert the dragged member into its new position
-    const updatedDraggedMember = {
+    const updatedDraggedMember: TeamMember = {
       ...draggedMember,
-      groupId: targetGroupId,
+      groupId: targetGroupId || undefined,
       orderIndex: targetMemberIndex,
     };
   

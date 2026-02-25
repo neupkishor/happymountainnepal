@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Label } from './label';
 
 // Dynamically import ReactQuill to ensure it's only loaded on the client side
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false }) as any;
 
 interface ImageToolbarProps {
   position: { top: number; left: number; width: number };
@@ -470,11 +470,12 @@ export function RichTextEditor({ value, onChange, placeholder, disabled }: RichT
 
   return (
     <div className="rich-text-editor-container relative mb-16" style={{ height: '500px' }} ref={editorRef} onClick={handleEditorClick}>
+      {/* @ts-ignore */}
       <ReactQuill
         ref={getQuillRef}
         theme="snow"
         value={editorValue}
-        onChange={(val) => {
+        onChange={(val: string) => {
           setEditorValue(val);
           onChange(val);
         }}

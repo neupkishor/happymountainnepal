@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getLegalDocumentById, updateLegalDocument, logFileUpload } from '@/lib/db';
 import type { LegalDocument } from '@/lib/types';
@@ -16,8 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft, Save, Upload as UploadIcon, FileText } from 'lucide-react';
 
 
-export default function EditLegalDocumentPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default function EditLegalDocumentPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -99,15 +99,13 @@ export default function EditLegalDocumentPage({ params }: { params: { id: string
                         fileUrl = result.url;
 
                         await logFileUpload({
-                            fileName: selectedFile.name,
-                            pathType: 'absolute',
-                            path: fileUrl,
+                            name: selectedFile.name,
                             url: fileUrl,
-                            uploadSource: 'NeupCDN',
-                            fileSize: selectedFile.size,
-                            fileType: selectedFile.type,
-                            category: 'document',
-                            userId: 'admin',
+                            uploadedBy: 'admin',
+                            type: selectedFile.type,
+                            size: selectedFile.size,
+                            tags: ['legal-documents', 'document'],
+                            meta: []
                         });
                     } else {
                         throw new Error(result.message || 'Unknown upload error');
