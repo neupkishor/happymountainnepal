@@ -13,10 +13,14 @@ import { cn } from '@/lib/utils';
 
 export function RecentBlogs({ initialPosts = [] }: { initialPosts?: BlogPost[] }) {
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>(initialPosts);
-  const [isLoading, setIsLoading] = useState(initialPosts.length === 0);
+  const [isLoading, setIsLoading] = useState(!initialPosts || initialPosts.length === 0);
 
   useEffect(() => {
-    if (initialPosts.length > 0) return;
+    if (initialPosts && initialPosts.length > 0) {
+      setRecentPosts(initialPosts);
+      setIsLoading(false);
+      return;
+    }
 
     const fetchPosts = async () => {
       setIsLoading(true);
@@ -32,7 +36,7 @@ export function RecentBlogs({ initialPosts = [] }: { initialPosts?: BlogPost[] }
       }
     };
     fetchPosts();
-  }, [initialPosts.length]);
+  }, [initialPosts]);
 
   return (
     <section className="py-16 lg:py-24">

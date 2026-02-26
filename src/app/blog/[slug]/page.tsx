@@ -25,12 +25,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
     };
   }
 
-  const serializablePost = {
-    ...post,
-    date: post.createdAt, // Map createdAt to date
-    tags: post.tags,
-    searchKeywords: post.searchKeywords
-  } as unknown as BlogPost;
+  const serializablePost = post;
 
   return {
     title: serializablePost.title,
@@ -74,13 +69,8 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     notFound();
   }
 
-  // Convert for client component
-  const serializablePost = {
-    ...post,
-    date: post.createdAt,
-    tags: post.tags,
-    searchKeywords: post.searchKeywords
-  } as unknown as BlogPost;
+  // Use the post directly as it's already a BlogPost from getPostBySlug
+  const serializablePost = post;
 
   const headersList = await headers();
   const tempUserId = headersList.get('x-temp-account-id') || 'NotAvailable';

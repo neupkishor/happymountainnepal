@@ -23,13 +23,18 @@ export function Testimonials({ initialReviews = [], initialProfile }: { initialR
   const firestore = useFirestore();
   const [reviews, setReviews] = useState<ManagedReview[]>(initialReviews);
   const { profile, isLoading: isProfileLoading } = useSiteProfile(initialProfile);
-  const [isReviewsLoading, setIsReviewsLoading] = useState(initialReviews.length === 0);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(!initialReviews || initialReviews.length === 0);
 
   const totalReviewCount = profile?.reviewCount;
   const isLoading = isProfileLoading || isReviewsLoading;
 
   useEffect(() => {
-    if (initialReviews.length > 0) return;
+    if (initialReviews && initialReviews.length > 0) {
+      setReviews(initialReviews);
+      setIsReviewsLoading(false);
+      return;
+    }
+
     if (!firestore) return;
     const fetchReviews = async () => {
       setIsReviewsLoading(true);
@@ -43,7 +48,7 @@ export function Testimonials({ initialReviews = [], initialProfile }: { initialR
       }
     };
     fetchReviews();
-  }, [firestore, initialReviews.length]);
+  }, [firestore, initialReviews]);
   
   return (
     <section className="py-16 lg:py-24">

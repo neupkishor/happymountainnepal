@@ -16,12 +16,8 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
     notFound();
   }
 
-  // Ensure compatibility with BlogPost type
-  const serializablePost = {
-    ...post,
-    date: post.createdAt,
-    // tags are already parsed arrays from getPostById
-  } as unknown as BlogPost;
+  // Use the post directly as it's already a BlogPost from getPostById
+  const serializablePost = post;
 
   return (
     <div className="max-w-4xl mx-auto">

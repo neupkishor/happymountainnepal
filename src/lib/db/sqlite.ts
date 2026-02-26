@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import type { Tour, ManagedReview, OnSiteReview, OffSiteReview, BlogPost } from '@/lib/types';
 
 // Ensure data directory exists
 const dataDir = path.join(process.cwd(), 'base', 'sources');
@@ -380,31 +381,36 @@ export function getPosts(options?: {
       date: row.createdAt, // Map for compatibility
       tags: JSON.parse(row.tags || '[]'),
       searchKeywords: JSON.parse(row.searchKeywords || '[]'),
-    })),
+      status: row.status as 'draft' | 'published'
+    }) as BlogPost),
     totalCount,
     totalPages,
     hasMore: page < totalPages
   };
 }
 
-export function getPostById(id: string) {
+export function getPostById(id: string): BlogPost | null {
   const row = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as PostDB | undefined;
   if (!row) return null;
   return {
     ...row,
+    date: row.createdAt,
     tags: JSON.parse(row.tags || '[]'),
     searchKeywords: JSON.parse(row.searchKeywords || '[]'),
-  };
+    status: row.status as 'draft' | 'published'
+  } as BlogPost;
 }
 
-export function getPostBySlug(slug: string) {
+export function getPostBySlug(slug: string): BlogPost | null {
   const row = db.prepare('SELECT * FROM posts WHERE slug = ?').get(slug) as PostDB | undefined;
   if (!row) return null;
   return {
     ...row,
+    date: row.createdAt,
     tags: JSON.parse(row.tags || '[]'),
     searchKeywords: JSON.parse(row.searchKeywords || '[]'),
-  };
+    status: row.status as 'draft' | 'published'
+  } as BlogPost;
 }
 
 export function savePost(post: Omit<PostDB, 'tags' | 'searchKeywords'> & { tags: string[], searchKeywords: string[] }) {
@@ -687,7 +693,7 @@ export function savePackage(pkg: any) {
   return pkg.id;
 }
 
-function deserializePackage(row: PackageDB) {
+function deserializePackage(row: PackageDB): Tour {
   return {
     ...row,
     region: JSON.parse(row.region || '[]'),
@@ -706,7 +712,7 @@ function deserializePackage(row: PackageDB) {
     searchKeywords: JSON.parse(row.searchKeywords || '[]'),
     isPopular: Boolean(row.isPopular),
     isFeatured: Boolean(row.isFeatured)
-  };
+  } as unknown as Tour;
 }
 
 export function getPackageById(id: string) {
@@ -796,22 +802,44 @@ export function getPackages(options?: {
 }
 
 export function getFeaturedToursDB(limit: number = 3) {
-  const rows = db.prepare(`
+  let rows = db.prepare(`
     SELECT * FROM packages 
     WHERE status = 'published' AND isFeatured = 1 
     ORDER BY createdAt DESC 
     LIMIT ?
   `).all(limit) as PackageDB[];
+  
+  // Fallback if no featured tours
+  if (rows.length === 0) {
+    rows = db.prepare(`
+      SELECT * FROM packages 
+      WHERE status = 'published' 
+      ORDER BY createdAt DESC 
+      LIMIT ?
+    `).all(limit) as PackageDB[];
+  }
+  
   return rows.map(deserializePackage);
 }
 
 export function getPopularToursDB(limit: number = 3) {
-  const rows = db.prepare(`
+  let rows = db.prepare(`
     SELECT * FROM packages 
     WHERE status = 'published' AND isPopular = 1 
     ORDER BY price DESC 
     LIMIT ?
   `).all(limit) as PackageDB[];
+  
+  // Fallback if no popular tours
+  if (rows.length === 0) {
+    rows = db.prepare(`
+      SELECT * FROM packages 
+      WHERE status = 'published' 
+      ORDER BY price DESC 
+      LIMIT ?
+    `).all(limit) as PackageDB[];
+  }
+  
   return rows.map(deserializePackage);
 }
 
@@ -851,7 +879,7 @@ export function getReviewsDB(options?: {
   limit?: number;
   status?: string;
   rating?: number;
-}) {
+}): ManagedReview[] {
   const limit = options?.limit || 10;
   let query = 'SELECT * FROM reviews';
   const conditions: string[] = [];
@@ -875,10 +903,32 @@ export function getReviewsDB(options?: {
   params.push(limit);
 
   const rows = db.prepare(query).all(...params) as ReviewDB[];
-  return rows.map(row => ({
-    ...row,
-    packageId: row.packageId || null
-  }));
+  return rows.map(row => {
+    const isOnSite = row.source === 'website' || !row.source;
+    if (isOnSite) {
+      return {
+        id: row.id,
+        type: 'onSite',
+        reviewedOn: row.date,
+        userName: row.author,
+        reviewFor: row.packageId || 'general',
+        reviewBody: row.comment,
+        stars: row.rating as 1 | 2 | 3 | 4 | 5,
+        userId: 'anonymous'
+      } as OnSiteReview;
+    } else {
+      return {
+        id: row.id,
+        type: 'offSite',
+        reviewedOn: row.date,
+        userName: row.author,
+        reviewFor: row.packageId || null,
+        reviewBody: row.comment,
+        stars: row.rating as 1 | 2 | 3 | 4 | 5,
+        originalReviewUrl: ''
+      } as OffSiteReview;
+    }
+  });
 }
 
 export function saveReview(review: Omit<ReviewDB, 'createdAt'> & { createdAt?: string }) {

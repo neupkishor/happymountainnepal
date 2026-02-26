@@ -40,11 +40,8 @@ async function getRelatedBlogs(locationName: string) {
             tags: [locationName]
         });
 
-        // Map to ensure date format compatibility if needed
-        return posts.map(p => ({
-            ...p,
-            date: p.createdAt // BlogPost expects date, PostDB provides createdAt (mapped in getPosts but let's be safe)
-        })) as BlogPost[];
+        // getPosts already returns BlogPost[] with date mapped correctly
+        return posts;
     } catch (error) {
         console.error("Error fetching blogs:", error);
         return [];

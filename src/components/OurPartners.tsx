@@ -11,7 +11,7 @@ import { Card, CardContent } from './ui/card';
 
 export function OurPartners({ initialPartners = [] }: { initialPartners?: Partner[] }) {
   const [partners, setPartners] = useState<Partner[]>(initialPartners);
-  const [isLoading, setIsLoading] = useState(initialPartners.length === 0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Autoplay controller
   const autoplay = useRef(
@@ -32,7 +32,12 @@ export function OurPartners({ initialPartners = [] }: { initialPartners?: Partne
   );
 
   useEffect(() => {
-    if (initialPartners.length > 0) return;
+    if (initialPartners && initialPartners.length > 0) {
+      setPartners(initialPartners);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchPartners = async () => {
       setIsLoading(true);
       try {
@@ -46,7 +51,7 @@ export function OurPartners({ initialPartners = [] }: { initialPartners?: Partne
     };
 
     fetchPartners();
-  }, [initialPartners.length]);
+  }, [initialPartners]);
 
   return (
     <section className="py-16 lg:py-24 bg-secondary/50">

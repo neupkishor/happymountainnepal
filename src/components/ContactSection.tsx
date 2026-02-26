@@ -6,9 +6,10 @@ import { Button } from './ui/button';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { Skeleton } from './ui/skeleton';
+import type { SiteProfile } from '@/lib/types';
 
-export function ContactSection() {
-  const { profile, isLoading } = useSiteProfile();
+export function ContactSection({ initialProfile }: { initialProfile?: SiteProfile | null }) {
+  const { profile, isLoading } = useSiteProfile(initialProfile);
 
   const address = profile?.address || 'Thamel, Kathmandu, Nepal';
   const phone = profile?.phone || '+977 984-3725521';

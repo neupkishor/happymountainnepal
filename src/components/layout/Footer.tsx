@@ -7,7 +7,7 @@ import Image from 'next/image';
 import type { SiteProfile } from '@/lib/types';
 
 export function Footer({ initialProfile }: { initialProfile?: SiteProfile | null }) {
-  const { profile } = useSiteProfile(initialProfile || undefined);
+  const { profile } = useSiteProfile(initialProfile);
 
   const tagline = profile?.footerTagline || 'Your gateway to Himalayan adventures.';
   const address = profile?.address || 'Thamel, Kathmandu, Nepal';

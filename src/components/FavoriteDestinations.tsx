@@ -11,10 +11,14 @@ import { Location } from '@/lib/types';
 
 export function FavoriteDestinations({ initialLocations = [] }: { initialLocations?: Location[] }) {
   const [locations, setLocations] = useState<Location[]>(initialLocations);
-  const [loading, setLoading] = useState(initialLocations.length === 0);
+  const [loading, setLoading] = useState(false); // Default to false if we have initialLocations or if it's SSR
 
   useEffect(() => {
-    if (initialLocations.length > 0) return;
+    if (initialLocations && initialLocations.length > 0) {
+      setLocations(initialLocations);
+      setLoading(false);
+      return;
+    }
 
     async function fetchDestinations() {
       try {
@@ -31,7 +35,7 @@ export function FavoriteDestinations({ initialLocations = [] }: { initialLocatio
     }
 
     fetchDestinations();
-  }, [initialLocations.length]);
+  }, [initialLocations]);
 
   if (loading) {
     return (

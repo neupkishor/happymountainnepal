@@ -15,10 +15,14 @@ import { cn } from '@/lib/utils';
 export function PopularPackages({ initialTours = [] }: { initialTours?: Tour[] }) {
   const firestore = useFirestore();
   const [popularTours, setPopularTours] = useState<Tour[]>(initialTours);
-  const [isLoading, setIsLoading] = useState(initialTours.length === 0);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (initialTours.length > 0) return;
+    if (initialTours && initialTours.length > 0) {
+      setPopularTours(initialTours);
+      setIsLoading(false);
+      return;
+    }
     if (!firestore) return;
     const fetchTours = async () => {
       setIsLoading(true);
@@ -39,7 +43,7 @@ export function PopularPackages({ initialTours = [] }: { initialTours?: Tour[] }
       }
     };
     fetchTours();
-  }, [firestore, initialTours.length]);
+  }, [firestore, initialTours]);
 
 
   return (

@@ -12,8 +12,6 @@ import { ContactSection } from "@/components/ContactSection";
 import { Chatbot } from "@/components/Chatbot";
 import { headers } from "next/headers";
 import { getLocations, getPosts, getFeaturedToursDB, getPopularToursDB, getReviewsDB } from "@/lib/db/sqlite";
-import { getAdminFirestore } from "@/lib/db/firestore-admin";
-import type { Tour } from "@/lib/types";
 
 import { getSiteProfileAction } from '@/app/actions/profile';
 import { getPartnersAction } from '@/app/actions/partners';
@@ -25,7 +23,7 @@ export default async function Home() {
   // Fetch data on server
   const featuredLocations = getLocations({ featured: true });
   const recentPostsData = getPosts({ limit: 3, status: 'published' });
-  const featuredTours = getFeaturedToursDB(3) as unknown as Tour[]; 
+  const featuredTours = getFeaturedToursDB(3); 
   
   // Parallel fetch for remaining data
   const [profile, partners] = await Promise.all([
@@ -33,7 +31,8 @@ export default async function Home() {
     getPartnersAction()
   ]);
 
-  const popularPackages = getPopularToursDB(3) as unknown as Tour[]; 
+  const popularPackages = getPopularToursDB(3); 
+  const recommendedTours = getPopularToursDB(4); 
   
   // Fetch reviews from SQLite (5-star, approved)
   const reviews = getReviewsDB({ limit: 10, rating: 5, status: 'approved' });
@@ -43,15 +42,15 @@ export default async function Home() {
       <div className="homepage-sections-wrapper flex flex-col">
         <HeroSection initialProfile={profile} />
         <FavoriteDestinations initialLocations={featuredLocations} />
-        <RecommendedTours />
+        <RecommendedTours initialTours={recommendedTours} />
         <FeaturedTours initialTours={featuredTours} />
         <PopularPackages initialTours={popularPackages} />
-        <WhyUs />
-        <Testimonials initialReviews={reviews as any[]} initialProfile={profile} />
-        <RecentBlogs initialPosts={recentPostsData.posts as any[]} />
+        <WhyUs initialProfile={profile} />
+        <Testimonials initialReviews={reviews} initialProfile={profile} />
+        <RecentBlogs initialPosts={recentPostsData.posts} />
         <OurPartners initialPartners={partners} />
         <CustomizeTrip />
-        <ContactSection />
+        <ContactSection initialProfile={profile} />
       </div>
       <Chatbot tempUserId={tempUserId} />
     </>

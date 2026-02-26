@@ -8,14 +8,14 @@ import { useToast } from './use-toast';
 
 const SESSION_STORAGE_KEY = 'site-profile';
 
-export function useSiteProfile(initialProfile?: SiteProfile) {
+export function useSiteProfile(initialProfile?: SiteProfile | null) {
   const [profile, setProfile] = useState<SiteProfile | null>(initialProfile || null);
-  const [isLoading, setIsLoading] = useState(!initialProfile);
+  const [isLoading, setIsLoading] = useState(initialProfile === undefined);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (initialProfile) return; // Skip if we have initial data
+    if (initialProfile !== undefined) return; // Skip if we have initial data (even if null)
 
     async function fetchProfile() {
       // 1. Try to get data from sessionStorage

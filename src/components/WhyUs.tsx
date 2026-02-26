@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { useSiteProfile } from "@/hooks/use-site-profile";
 import Image from "next/image";
+import type { SiteProfile } from "@/lib/types";
 
-export function WhyUs() {
-  const { profile, isLoading } = useSiteProfile();
+export function WhyUs({ initialProfile }: { initialProfile?: SiteProfile | null }) {
+  const { profile, isLoading } = useSiteProfile(initialProfile);
+
   const features = profile?.whyUs || [];
 
   return (
