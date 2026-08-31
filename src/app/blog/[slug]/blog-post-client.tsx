@@ -77,7 +77,7 @@ export default function BlogPostClient({ post, tempUserId }: BlogPostClientProps
             <div className="mt-4 flex items-center gap-4 text-white/90">
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={post.authorPhoto || `https://api.dicebear.com/7.x/initials/svg?seed=${post.author}`} />
+                  {post.authorPhoto ? <AvatarImage src={post.authorPhoto} /> : null}
                   <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <span>{post.author}</span>

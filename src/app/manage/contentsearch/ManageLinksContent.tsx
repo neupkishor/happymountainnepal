@@ -17,7 +17,7 @@ interface ManageLinksContentProps {
   imageReport: ImageReportEntry[];
 }
 
-type FilterValue = 'all' | LinkTargetType | 'missing' | 'images';
+type FilterValue = 'all' | LinkTargetType | 'missing' | 'images' | 'missing-images';
 const RESULTS_PER_PAGE = 50;
 
 const filterLabels: Record<FilterValue, string> = {
@@ -28,6 +28,7 @@ const filterLabels: Record<FilterValue, string> = {
   external: 'External Links',
   missing: 'Missing Only',
   images: 'Images',
+  'missing-images': 'Missing Images',
 };
 
 const statusStyles: Record<LinkStatus, string> = {
@@ -72,6 +73,7 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
 
   useEffect(() => {
     setPage(1);
+    setImagePage(1);
   }, [activeFilter, deferredQuery]);
 
   const filteredEntries = useMemo(() => {
@@ -103,8 +105,11 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
   );
   const linkPageCount = Math.max(1, Math.ceil(filteredEntries.length / RESULTS_PER_PAGE));
   const visibleEntries = filteredEntries.slice((page - 1) * RESULTS_PER_PAGE, page * RESULTS_PER_PAGE);
-  const imagePageCount = Math.max(1, Math.ceil(images.length / RESULTS_PER_PAGE));
-  const visibleImages = images.slice((imagePage - 1) * RESULTS_PER_PAGE, imagePage * RESULTS_PER_PAGE);
+  const filteredImages = activeFilter === 'missing-images'
+    ? images.filter((image) => image.statusCode !== null && image.statusCode >= 400)
+    : images;
+  const imagePageCount = Math.max(1, Math.ceil(filteredImages.length / RESULTS_PER_PAGE));
+  const visibleImages = filteredImages.slice((imagePage - 1) * RESULTS_PER_PAGE, imagePage * RESULTS_PER_PAGE);
 
   async function checkImage(image: any) {
     if (image.statusCode !== null) return;
@@ -222,7 +227,7 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
         </TabsList>
       </Tabs>
 
-      {activeFilter === 'images' ? (
+      {activeFilter === 'images' || activeFilter === 'missing-images' ? (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Images</CardTitle>
@@ -231,7 +236,7 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {images.length === 0 ? (
+            {filteredImages.length === 0 ? (
               <p className="py-8 text-center text-muted-foreground">No image URLs found.</p>
             ) : visibleImages.map((image) => (
               <div key={image.url} className={`flex flex-col gap-2 rounded-lg border bg-white p-4 sm:flex-row sm:items-center sm:justify-between ${checkingImageUrl === image.url ? 'border-primary/50 bg-primary/5' : ''}`}>
@@ -247,7 +252,7 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
                 </button>
               </div>
             ))}
-            {images.length > RESULTS_PER_PAGE && (
+            {filteredImages.length > RESULTS_PER_PAGE && (
               <Pagination page={imagePage} pageCount={imagePageCount} onPageChange={setImagePage} />
             )}
           </CardContent>

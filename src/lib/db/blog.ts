@@ -36,7 +36,7 @@ export async function createBlogPost(): Promise<string | null> {
             content: '<p>Start writing your amazing blog post here...</p>',
             excerpt: '',
             author: 'Admin',
-            authorPhoto: 'https://picsum.photos/seed/admin-avatar/400/400',
+            authorPhoto: '',
             createdAt: new Date().toISOString(),
             image: 'https://picsum.photos/seed/blog-placeholder/800/500',
             status: 'draft',

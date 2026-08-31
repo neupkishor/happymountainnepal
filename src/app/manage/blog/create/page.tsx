@@ -10,7 +10,7 @@ export default function CreateBlogPostPage() {
     content: '',
     excerpt: '',
     author: 'Admin',
-    authorPhoto: 'https://picsum.photos/seed/admin-avatar/400/400',
+    authorPhoto: '',
     date: new Date().toISOString(),
     image: '',
     status: 'draft',
