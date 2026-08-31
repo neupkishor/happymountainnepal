@@ -144,9 +144,9 @@ export default function ManageLayout({
                                                 </SidebarMenuButton>
                                             </SidebarMenuItem>
                                             <SidebarMenuItem>
-                                                <SidebarMenuButton href="/manage/links" isActive={pathname.startsWith('/manage/links')} tooltip="Links">
+                                                <SidebarMenuButton href="/manage/contentsearch" isActive={pathname.startsWith('/manage/contentsearch')} tooltip="Content Search">
                                                     <Link2 />
-                                                    <span>Links</span>
+                                                    <span>Content Search</span>
                                                 </SidebarMenuButton>
                                             </SidebarMenuItem>
                                             <SidebarMenuItem>

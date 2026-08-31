@@ -305,6 +305,16 @@ export function initDb() {
 
     CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp DESC);
     CREATE INDEX IF NOT EXISTS idx_logs_cookieId ON logs(cookieId);
+
+    CREATE TABLE IF NOT EXISTS ContentSearch (
+      id TEXT PRIMARY KEY,
+      forPage TEXT NOT NULL,
+      lookupFor TEXT NOT NULL,
+      pattern TEXT,
+      contentFound JSONB NOT NULL,
+      foundOn TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'not_checked'
+    );
   `);
 
   // Migration for adding parentId to existing table if needed

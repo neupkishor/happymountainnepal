@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ManageLinksContent } from './ManageLinksContent';
-import { getLinkReport } from '@/services/links/get-link-report';
+import { getContentSearchRecords, getLinkReport } from '@/services/links/get-link-report';
 
 function ManageLinksLoadingFallback() {
   return (
@@ -20,7 +20,10 @@ function ManageLinksLoadingFallback() {
 }
 
 export default async function ManageLinksPage() {
-  const report = await getLinkReport();
+  const [report, records] = await Promise.all([getLinkReport(), Promise.resolve(getContentSearchRecords())]);
+  const imageReport = records
+    .filter((record) => record.lookupFor === 'imageinBlog' || record.lookupFor === 'imageInTour')
+    .flatMap((record) => Array.isArray(record.contentFound) ? record.contentFound.map((image: any) => ({ ...image, recordId: record.id, onPage: image.onPage || record.forPage })) : []) as any;
 
-  return <ManageLinksContent report={report} />;
+  return <ManageLinksContent report={report} imageReport={imageReport} />;
 }

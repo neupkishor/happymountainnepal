@@ -29,6 +29,31 @@ export interface LinkReport {
   entries: LinkReportEntry[];
 }
 
+export interface ImageReportEntry {
+  url: string;
+  onPage?: string;
+  statusCode: number | null;
+  statusText: string;
+}
+
+export interface ContentSearchRecord {
+  id: string;
+  forPage: string;
+  lookupFor: string;
+  pattern: string | null;
+  contentFound: unknown;
+  foundOn: string;
+}
+
+export function getContentSearchRecords(): ContentSearchRecord[] {
+  return db.prepare('select id, forPage, lookupFor, pattern, contentFound, foundOn from ContentSearch order by foundOn desc').all().map((row) => {
+    const record = row as Omit<ContentSearchRecord, 'contentFound'> & { contentFound: string };
+    let contentFound: unknown = [];
+    try { contentFound = JSON.parse(record.contentFound); } catch { contentFound = record.contentFound; }
+    return { ...record, contentFound };
+  });
+}
+
 const SITE_ORIGIN = 'https://happymountainnepal.com';
 const SITE_HOST = 'happymountainnepal.com';
 const linkRe = /<a\b[^>]*href\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi;
@@ -189,4 +214,64 @@ export async function getLinkReport(): Promise<LinkReport> {
     summary: createSummary(entries),
     entries,
   };
+}
+
+function collectImageUrls(value: unknown, urls: Set<string>, onPage: string, sources: Map<string, Set<string>>) {
+  if (typeof value === 'string') {
+    if (/^https?:\/\//i.test(value) || value.startsWith('/')) {
+      urls.add(value);
+      if (!sources.has(value)) sources.set(value, new Set());
+      sources.get(value)!.add(onPage);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectImageUrls(item, urls, onPage, sources));
+    return;
+  }
+  if (value && typeof value === 'object') {
+    Object.values(value).forEach((item) => collectImageUrls(item, urls, onPage, sources));
+  }
+}
+
+export async function getImageReport(): Promise<ImageReportEntry[]> {
+  const urls = new Set<string>();
+  const sources = new Map<string, Set<string>>();
+  const addRows = (sql: string, columns: string[], pageColumn?: string, pagePrefix = '/blog') => {
+    for (const row of db.prepare(sql).all() as Array<Record<string, unknown>>) {
+      const onPage = pageColumn && row[pageColumn] ? `${pagePrefix}/${row[pageColumn]}` : 'site-wide';
+      columns.forEach((column) => {
+        const value = row[column];
+        if (typeof value !== 'string' || !value.trim()) return;
+        try {
+          collectImageUrls(JSON.parse(value), urls, onPage, sources);
+        } catch {
+          collectImageUrls(value, urls, onPage, sources);
+        }
+      });
+    }
+  };
+
+  addRows('select slug, image, authorPhoto, content from posts', ['image', 'authorPhoto'], 'slug');
+  addRows('select slug, mainImage, images from packages', ['mainImage', 'images'], 'slug', '/tours');
+  addRows('select image from locations', ['image']);
+  addRows('select logo from partners', ['logo']);
+  addRows('select image from teamMembers', ['image']);
+  addRows('select image from gears', ['image']);
+  addRows('select url from uploads', ['url']);
+
+  for (const row of db.prepare('select slug, content from posts where content is not null').all() as Array<{ slug: string; content: string }>) {
+    for (const match of row.content.matchAll(/<img\b[^>]*\bsrc\s*=\s*(["'])(.*?)\1/gi)) {
+      collectImageUrls(decodeHtml(match[2].trim()), urls, `/blog/${row.slug}`, sources);
+    }
+  }
+
+  const entries = [...urls].map((url): ImageReportEntry => ({
+    url,
+    statusCode: null,
+    statusText: 'Not checked',
+    onPage: [...(sources.get(url) || ['site-wide'])].join(', '),
+  }));
+
+  return entries.sort((left, right) => (left.statusCode ?? 0) - (right.statusCode ?? 0) || left.url.localeCompare(right.url));
 }
