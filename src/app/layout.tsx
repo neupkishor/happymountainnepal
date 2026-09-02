@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '#/components/ui/toast';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ProgressBar } from '@/components/layout/ProgressBar';
 import { HeaderV3 as Header } from '@/components/layout/HeaderV3';

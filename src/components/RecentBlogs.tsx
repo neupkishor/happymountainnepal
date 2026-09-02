@@ -2,9 +2,9 @@
 'use client';
 import { BlogCard } from "./BlogCard";
 import Link from "next/link";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { Skeleton } from './ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { BlogPost } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';

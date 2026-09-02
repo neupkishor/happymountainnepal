@@ -6,9 +6,9 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
-import { Input } from './ui/input';
+import { Input } from '#/components/ui/input';
 import { Search } from 'lucide-react';
-import { Skeleton } from './ui/skeleton';
+import { Skeleton } from '#/components/ui/skeleton';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -159,7 +159,7 @@ export function HeroSection({ initialProfile }: { initialProfile?: any }) {
                   className="bg-white/90 text-foreground placeholder:text-muted-foreground w-full rounded-full py-6 pl-6 pr-16 border-2 border-primary/50 focus:border-primary focus:ring-primary/20 focus:ring-4 transition-all"
                 />
                 <Button
-                  type="submit"
+                  variant="solid"
                   size="icon"
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
@@ -174,7 +174,7 @@ export function HeroSection({ initialProfile }: { initialProfile?: any }) {
                     Explore Tours
                   </Button>
                 </Link>
-                <Button size="lg" variant="secondary" onClick={handleSearchClick}>
+                <Button size="lg" variant="tinted" onClick={handleSearchClick}>
                   <Search className="h-5 w-5 mr-2" />
                   Search for Experience
                 </Button>

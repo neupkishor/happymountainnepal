@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { DeleteReviewDialog } from '@/components/manage/DeleteReviewDialog';
-import { Badge } from '../ui/badge';
+import { Badge } from '#/components/ui/badge';
 import { format } from 'date-fns';
 import { ReviewStars } from '../ReviewStars';
 import { Timestamp } from '@/lib/timestamp'; // Import Timestamp

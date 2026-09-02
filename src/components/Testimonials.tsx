@@ -1,9 +1,8 @@
 'use client';
 import type { ManagedReview } from '@/lib/types';
-import Link from 'next/link';
-import { Button } from './ui/button';
+import { Link } from '#/components//ui/link';
 import { ArrowRight } from 'lucide-react';
-import { Skeleton } from './ui/skeleton';
+import { Skeleton } from '#/components/ui/skeleton';
 import { useState, useEffect } from 'react';
 import { getFiveStarReviews } from '@/lib/db/reviews';
 import { useSiteProfile } from '@/hooks/use-site-profile';
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/carousel"
 import { ReviewCarouselItem } from './ReviewCarouselItem'; // New component for the card
 import Autoplay from "embla-carousel-autoplay"
-import { Card, CardContent } from './ui/card'; // Added import
+import { Card, CardContent } from '#/components/ui/card'; // Added import
 
 export function Testimonials({ initialReviews = [], initialProfile }: { initialReviews?: ManagedReview[], initialProfile?: any }) {
   const [reviews, setReviews] = useState<ManagedReview[]>(initialReviews);
@@ -66,9 +65,9 @@ export function Testimonials({ initialReviews = [], initialProfile }: { initialR
               Real stories from travelers who have explored the Himalayas with us.
             </p>
             <Link href="/reviews" className="mt-6 inline-block">
-              <Button size="lg" variant="outline">
+              <Link variant="outlined">
                 Read All Reviews <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              </Link>
             </Link>
           </div>
 

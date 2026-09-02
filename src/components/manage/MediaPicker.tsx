@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useFormContext, useController } from 'react-hook-form';
 import { SmartImage } from '@/components/ui/smart-image';
-import { Button } from '@/components/ui/button';
+import { Link } from '#/components/ui/link';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, XCircle, Library, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,8 +12,9 @@ import { MediaLibraryDialog } from './MediaLibraryDialog';
 import { FileUploadInput } from './FileUploadInput';
 import { getFileUploads } from '@/lib/db';
 import type { FileUpload } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
-import { Card } from '../ui/card';
+import { useToast } from '#/core/hooks/useToast';
+import { Card } from '#/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface MediaPickerProps {
   name: string;
@@ -102,16 +103,15 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'], ca
               {previewUrl ? 'Selected Image' : 'Select an Image'}
             </h4>
             {previewUrl && (
-              <Button
-                type="button"
-                variant="ghost"
+              <Link
+                variant="plain"
                 size="sm"
                 className="h-7 text-xs text-destructive hover:text-destructive"
                 onClick={handleClearImage}
               >
                 <XCircle className="h-3 w-3 mr-1" />
                 Clear Selection
-              </Button>
+              </Link>
             )}
           </div>
 

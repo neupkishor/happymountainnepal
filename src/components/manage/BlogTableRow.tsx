@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DeleteBlogPostDialog } from './DeleteBlogPostDialog';
-import { Badge } from '../ui/badge';
+import { Badge } from '#/components/ui/badge';
 import { Timestamp } from '@/lib/timestamp';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';

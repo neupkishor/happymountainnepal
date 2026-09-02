@@ -6,11 +6,11 @@ import 'react-quill/dist/quill.snow.css';
 import { MediaLibraryDialog } from '@/components/manage/MediaLibraryDialog';
 import type { Quill } from 'react-quill-new';
 import type { UploadCategory, ImageWithCaption } from '@/lib/types';
-import { Input } from './input';
-import { Button } from './button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { ImageIcon, Link, Trash2, Eraser } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { Label } from './label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
 
 // Dynamically import ReactQuill to ensure it's only loaded on the client side
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false }) as any;

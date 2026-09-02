@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, ArrowRight, Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { getTourById } from '@/lib/db';
 import type { Tour } from '@/lib/types';
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const itineraryItemSchema = z.object({
   day: z.coerce.number().int().min(1),

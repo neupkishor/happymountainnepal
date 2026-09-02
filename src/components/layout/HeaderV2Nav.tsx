@@ -8,7 +8,7 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
+} from '../ui/navigation-menu';
 
 export interface NavLink {
   title: string;

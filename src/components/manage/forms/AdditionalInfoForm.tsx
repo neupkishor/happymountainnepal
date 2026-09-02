@@ -81,7 +81,7 @@ export function AdditionalInfoForm({ tour }: AdditionalInfoFormProps) {
                   <div key={field.id} className="p-4 border rounded-md relative">
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="plain"
                       size="icon"
                       className="absolute top-2 right-2"
                       onClick={() => remove(index)}
@@ -126,7 +126,7 @@ export function AdditionalInfoForm({ tour }: AdditionalInfoFormProps) {
               <div className="flex items-center gap-4">
                 <Button 
                     type="button" 
-                    variant="outline" 
+                    variant="outlined" 
                     onClick={() => append({ title: '', content: '' })}
                     disabled={isPending}
                 >

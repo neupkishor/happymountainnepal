@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, MapPin } from 'lucide-react';
-import { Button } from './ui/button';
-import { Skeleton } from './ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Location } from '@/lib/types';
 
 export function FavoriteDestinations({ initialLocations = [] }: { initialLocations?: Location[] }) {

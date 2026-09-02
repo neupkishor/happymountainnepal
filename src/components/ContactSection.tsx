@@ -2,10 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
-import { Skeleton } from './ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { SiteProfile } from '@/lib/types';
 
 export function ContactSection({ initialProfile }: { initialProfile?: SiteProfile | null }) {

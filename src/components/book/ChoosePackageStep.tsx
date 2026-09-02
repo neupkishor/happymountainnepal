@@ -8,7 +8,7 @@ import type { Tour } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TourCard } from '@/components/TourCard';
 import { CardsGrid } from '../CardsGrid';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
 interface ChoosePackageStepProps {

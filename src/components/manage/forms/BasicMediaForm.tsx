@@ -113,7 +113,7 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
               <div>
                 <h3 className="text-lg font-medium mb-2">Tour Images</h3>
                 <p className="text-sm text-muted-foreground mb-4">Select all images for the tour. Drag and drop to reorder. The first image will be the main cover image.</p>
-                <Button type="button" variant="outline" onClick={() => setIsLibraryOpen(true)}>
+                <Button type="button" variant="outlined" onClick={() => setIsLibraryOpen(true)}>
                   <Library className="mr-2 h-4 w-4" />
                   Select Images from Library
                 </Button>
@@ -138,7 +138,7 @@ export function BasicMediaForm({ tour }: BasicMediaFormProps) {
 
                           <Button
                             type="button"
-                            variant="ghost"
+                            variant="plain"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => removeImage(index)}

@@ -1,8 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Link } from '#/components/ui/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -15,16 +14,12 @@ export function ConfirmationStep() {
                 Your custom trip inquiry has been submitted successfully. Our travel experts will review your request and get back to you with a personalized quote and itinerary within 24-48 hours.
             </p>
             <div className="mt-8 flex gap-4">
-                <Button asChild>
-                    <Link href="/tours">
-                        Explore More Tours
-                    </Link>
-                </Button>
-                <Button asChild variant="outline">
-                    <Link href="/">
-                        Back to Homepage
-                    </Link>
-                </Button>
+                <Link href="/tours" variant="solid">
+                    Explore More Tours
+                </Link>
+                <Link href="/" variant="outlined">
+                    Back to Homepage
+                </Link>
             </div>
         </div>
     )
