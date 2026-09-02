@@ -81,3 +81,12 @@ for repository in "${repositories[@]}"; do
     sync_repository "$repository_url" "$target_directory" "$repository_name"
   fi
 done
+
+logica_setup="$NEUP_DIR/logica/setup.sh"
+if [[ -x "$logica_setup" ]]; then
+  printf 'Running neup.logica setup.\n'
+  "$logica_setup"
+else
+  printf 'Unable to run neup.logica setup: %s is missing or not executable.\n' "$logica_setup" >&2
+  exit 1
+fi
