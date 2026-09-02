@@ -3,18 +3,18 @@
 
 import Link from 'next/link';
 import type { BlogPost } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+import { Button } from '#/components/ui/button';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '#/components/ui/dropdown-menu';
 import { DeleteBlogPostDialog } from './DeleteBlogPostDialog';
 import { Badge } from '#/components/ui/badge';
 import { Timestamp } from '@/lib/timestamp';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '#/components/ui/card';
 import Image from 'next/image';
 
 interface BlogTableRowProps {

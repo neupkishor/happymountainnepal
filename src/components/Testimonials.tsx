@@ -12,7 +12,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"
+} from "#/components/ui/carousel"
 import { ReviewCarouselItem } from './ReviewCarouselItem'; // New component for the card
 import Autoplay from "embla-carousel-autoplay"
 import { Card, CardContent } from '#/components/ui/card'; // Added import
@@ -64,10 +64,8 @@ export function Testimonials({ initialReviews = [], initialProfile }: { initialR
             <p className="mt-2 text-muted-foreground">
               Real stories from travelers who have explored the Himalayas with us.
             </p>
-            <Link href="/reviews" className="mt-6 inline-block">
-              <Link variant="outlined">
-                Read All Reviews <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+            <Link href="/reviews" variant="outlined" className="mt-6 inline-flex items-center">
+              Read All Reviews <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
 

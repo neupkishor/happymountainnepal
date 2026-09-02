@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
+import { Button } from '#/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Input } from '#/components/ui/input';
@@ -115,6 +115,7 @@ export function HeroSection({ initialProfile }: { initialProfile?: any }) {
               fill
               className="object-cover"
               priority
+              loading="eager"
             />
             {/* Dark Overlay inside the motion div or outside? Outside is better to stay consistent */}
           </motion.div>

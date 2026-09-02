@@ -2,7 +2,7 @@
 'use client';
 
 import { Link } from '#/components/ui/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
 
 export function ConfirmationStep() {

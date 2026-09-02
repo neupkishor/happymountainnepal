@@ -23,14 +23,6 @@
       }
     ],
     "paths": {
-      "@/components/ui/AutoHideScrollbar": ["./src/components/ui/AutoHideScrollbar"],
-      "@/components/ui/RichTextEditor": ["./src/components/ui/RichTextEditor"],
-      "@/components/ui/SimpleRichTextEditor": ["./src/components/ui/SimpleRichTextEditor"],
-      "@/components/ui/smart-image": ["./src/components/ui/smart-image"],
-      "@/components/ui/*": [
-        "./src/components/ui/*",
-        "./.neup/components/ui/*"
-      ],
       "@/*": ["./src/*"],
       "#/*": ["./.neup/*"],
       "$/*": ["./base/*"]
