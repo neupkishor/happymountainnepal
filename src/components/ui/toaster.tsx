@@ -1,6 +1,7 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
+import * as React from "react"
 import {
   Toast,
   ToastClose,
@@ -15,9 +16,9 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, name, dismissesOn, actions, icon, ...props }) {
         return (
-          <Toast key={id} {...props}>
+          <ToastItem key={id} id={id} dismissesOn={dismissesOn} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -26,10 +27,20 @@ export function Toaster() {
             </div>
             {action}
             <ToastClose />
-          </Toast>
+          </ToastItem>
         )
       })}
       <ToastViewport />
     </ToastProvider>
   )
+}
+
+function ToastItem({ id, dismissesOn, children, ...props }: React.ComponentProps<typeof Toast> & { id: string; dismissesOn?: number | null }) {
+  const { dismiss } = useToast()
+  React.useEffect(() => {
+    if (dismissesOn == null || dismissesOn <= 0) return
+    const timer = window.setTimeout(() => dismiss(id), dismissesOn * 1000)
+    return () => window.clearTimeout(timer)
+  }, [dismiss, dismissesOn, id])
+  return <Toast {...props}>{children}</Toast>
 }

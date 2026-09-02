@@ -57,3 +57,6 @@ firestore-debug.log
 # public data
 /public
 certificates
+
+#neup.standard system
+.neup
