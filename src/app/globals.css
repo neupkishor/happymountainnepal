@@ -13,9 +13,8 @@
     --card-foreground: 284 20% 10%;
     --popover: 284 50% 99%;
     --popover-foreground: 284 20% 10%;
-    /* base/theme.json primary-600 (#2563EB) */
-    --primary: 221 83% 53%;
-    /* #772A92 - New Purple */
+    /* base/theme.json primary-600 (#68247F) */
+    --primary: 284 55% 32%;
     --primary-foreground: 0 0% 100%;
     /* Light color for on-purple text */
     --secondary: 284 50% 92%;
@@ -23,7 +22,7 @@
     --secondary-foreground: 284 20% 10%;
     --muted: 284 50% 92%;
     --muted-foreground: 284 15% 40%;
-    --accent: 221 83% 53%;
+    --accent: 284 55% 32%;
     /* Use primary color as accent */
     --accent-foreground: 0 0% 100%;
     /* Use primary-foreground for accent text */
@@ -51,14 +50,14 @@
     --card-foreground: 284 10% 95%;
     --popover: 284 10% 10%;
     --popover-foreground: 284 10% 95%;
-    /* base/theme.json primary-500 (#3B82F6) */
-    --primary: 217 91% 60%;
+    /* base/theme.json primary-500 (#772A92) */
+    --primary: 284 55% 37%;
     --primary-foreground: 0 0% 100%;
     --secondary: 284 10% 18%;
     --secondary-foreground: 284 10% 95%;
     --muted: 284 10% 18%;
     --muted-foreground: 284 10% 65%;
-    --accent: 217 91% 60%;
+    --accent: 284 55% 37%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
