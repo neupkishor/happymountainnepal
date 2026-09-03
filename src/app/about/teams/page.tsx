@@ -2,7 +2,7 @@
 'use client';
 
 import { TeamMemberCard } from '@/components/TeamMemberCard';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { getTeamMembers, getTeamGroups } from '@/lib/db/team';
 import type { TeamMember, TeamGroup } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';

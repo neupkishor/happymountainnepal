@@ -1,7 +1,8 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
+import { Link } from "@/components/ui/link";
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, MapPin } from 'lucide-react';
@@ -79,11 +80,9 @@ export function FavoriteDestinations({ initialLocations = [] }: { initialLocatio
             <p className="mt-4 text-lg text-muted-foreground">
               Explore the regions that capture the heart of the Himalayas, each offering a unique adventure.
             </p>
-            <Link href="/tours" className='mt-6 inline-block'>
-              <Button size="lg">
-                Explore All Tours <ArrowRight className="ml-2" />
-              </Button>
-            </Link>
+            <LinkButton href="/tours" className="mt-6" size="lg" variant="solid" postIcon={<ArrowRight />}>
+                Explore All Tours
+              </LinkButton>
           </div>
           <div className="lg:w-2/3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">

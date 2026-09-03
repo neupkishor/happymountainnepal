@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import type { TeamMember } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,10 +46,10 @@ export function TeamTableRow({ member }: TeamTableRowProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/about/teams/${member.slug}`}>View Public Profile</Link>
+              <LinkButton href={`/about/teams/${member.slug}`}>View Public Profile</LinkButton>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/manage/team/${member.id}/edit`}>Edit</Link>
+              <LinkButton href={`/manage/team/${member.id}/edit`}>Edit</LinkButton>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DeleteTeamMemberDialog member={member}>

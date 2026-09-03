@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft, Link as LinkIcon, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
+import { LinkButton } from "@/components/ui/link-button";
 
 export default function LinkedUploadPage() {
     const router = useRouter();
@@ -90,12 +91,10 @@ export default function LinkedUploadPage() {
     return (
         <div className="container mx-auto py-8 px-4 max-w-2xl">
             <div className="mb-8">
-                <Button variant="ghost" asChild className="-ml-4">
-                    <Link href="/manage/uploads">
+                <LinkButton variant="ghost" className="-ml-4" href="/manage/uploads">
                         <ChevronLeft className="h-4 w-4 mr-2" />
                         Back to Uploads
-                    </Link>
-                </Button>
+                    </LinkButton>
             </div>
 
             <Card>

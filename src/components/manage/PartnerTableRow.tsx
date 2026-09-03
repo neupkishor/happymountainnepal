@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import type { Partner } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,7 +46,7 @@ export function PartnerTableRow({ partner }: PartnerTableRowProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/manage/partners/${partner.id}/edit`}>Edit</Link>
+              <LinkButton href={`/manage/partners/${partner.id}/edit`}>Edit</LinkButton>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DeletePartnerDialog partner={partner}>

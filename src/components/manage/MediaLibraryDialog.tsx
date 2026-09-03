@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { getFullUrl } from '@/lib/url-utils';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Badge } from '@/components/ui/badge';
 
 interface MediaLibraryDialogProps {
@@ -227,12 +227,10 @@ export function MediaLibraryDialog({ isOpen, onClose, onSelect, initialSelectedU
               <h3 className="font-semibold text-lg">Manage Media & Upload</h3>
               <p className="text-sm text-muted-foreground">Go to the management page to upload, rename, or organize your media library.</p>
             </div>
-            <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link href="/manage/uploads" target="_blank">
+            <LinkButton variant="outline" className="w-full sm:w-auto" href="/manage/uploads" target="_blank">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Open Media Management
-              </Link>
-            </Button>
+              </LinkButton>
           </div>
 
           <div className="flex-grow flex flex-col gap-4 overflow-hidden">

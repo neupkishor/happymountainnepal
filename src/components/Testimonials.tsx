@@ -1,6 +1,6 @@
 'use client';
 import type { ManagedReview } from '@/lib/types';
-import { Link } from '#/components//ui/link';
+import { LinkButton } from '@/components/ui/link-button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from '#/components/ui/skeleton';
 import { useState, useEffect } from 'react';
@@ -64,9 +64,9 @@ export function Testimonials({ initialReviews = [], initialProfile }: { initialR
             <p className="mt-2 text-muted-foreground">
               Real stories from travelers who have explored the Himalayas with us.
             </p>
-            <Link href="/reviews" variant="outlined" className="mt-6 inline-flex items-center">
-              Read All Reviews <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            <LinkButton href="/reviews" variant="outlined" className="mt-6" postIcon={<ArrowRight className="h-4 w-4" />}>
+              Read All Reviews
+            </LinkButton>
           </div>
 
           <div className="lg:col-span-2">

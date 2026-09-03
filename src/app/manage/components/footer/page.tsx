@@ -14,7 +14,7 @@ import {
     Eye,
     EyeOff
 } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { useToast } from '@/hooks/use-toast';
 
 interface FooterLink {
@@ -119,7 +119,7 @@ export default function FooterManagementPage() {
     const addLink = (sectionIndex: number) => {
         const newSections = [...sections];
         newSections[sectionIndex].links.push({
-            title: 'New Link',
+            title: 'New LinkButton',
             href: '#',
             description: ''
         });
@@ -157,12 +157,10 @@ export default function FooterManagementPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/manage/components">
+                        <LinkButton variant="ghost" size="sm" href="/manage/components">
                                 <ArrowLeft className="h-4 w-4 mr-1" />
                                 Back
-                            </Link>
-                        </Button>
+                            </LinkButton>
                     </div>
                     <h1 className="text-3xl font-bold font-headline mt-2">Footer Navigation</h1>
                     <p className="text-muted-foreground mt-1">
@@ -274,7 +272,7 @@ export default function FooterManagementPage() {
                                                 onClick={() => addLink(sectionIndex)}
                                             >
                                                 <Plus className="h-3 w-3 mr-1" />
-                                                Add Link
+                                                Add LinkButton
                                             </Button>
                                         </div>
 
@@ -289,7 +287,7 @@ export default function FooterManagementPage() {
                                                         <CardContent className="pt-4 space-y-3">
                                                             <div className="flex items-center justify-between">
                                                                 <span className="text-xs text-muted-foreground">
-                                                                    Link {linkIndex + 1}
+                                                                    LinkButton {linkIndex + 1}
                                                                 </span>
                                                                 <Button
                                                                     variant="ghost"
@@ -309,7 +307,7 @@ export default function FooterManagementPage() {
                                                                     id={`link-title-${sectionIndex}-${linkIndex}`}
                                                                     value={link.title}
                                                                     onChange={(e) => updateLink(sectionIndex, linkIndex, 'title', e.target.value)}
-                                                                    placeholder="Link title"
+                                                                    placeholder="LinkButton title"
                                                                     className="h-8"
                                                                 />
                                                             </div>

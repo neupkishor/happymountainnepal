@@ -20,7 +20,7 @@ import {
   XCircle,
   Library,
 } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { addLegalDocument, logFileUpload } from '@/lib/db';
 import { MediaLibraryDialog } from '@/components/manage/MediaLibraryDialog';
 import type { ImageWithCaption } from '@/lib/types';
@@ -141,12 +141,10 @@ export default function UploadLegalDocumentPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Button asChild variant="ghost" className="pl-0 mb-4">
-        <Link href="/manage/legal/documents">
+      <LinkButton variant="ghost" className="pl-0 mb-4" href="/manage/legal/documents">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Documents
-        </Link>
-      </Button>
+        </LinkButton>
 
       <h1 className="text-3xl font-bold !font-headline">
         Upload New Document

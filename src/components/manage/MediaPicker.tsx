@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useFormContext, useController } from 'react-hook-form';
 import { SmartImage } from '@/components/ui/smart-image';
-import { Link } from '#/components/ui/link';
+import { LinkButton } from '@/components/ui/link-button';
 import { Label } from '#/components/ui/label';
 import { Loader2, Upload, XCircle, Library, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -103,7 +103,7 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'], ca
               {previewUrl ? 'Selected Image' : 'Select an Image'}
             </h4>
             {previewUrl && (
-              <Link
+              <LinkButton
                 variant="plain"
                 size="sm"
                 className="h-7 text-xs text-destructive hover:text-destructive"
@@ -111,7 +111,7 @@ export function MediaPicker({ name, label, maxRecent = 7, tags = ['general'], ca
               >
                 <XCircle className="h-3 w-3 mr-1" />
                 Clear Selection
-              </Link>
+              </LinkButton>
             )}
           </div>
 

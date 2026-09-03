@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
+import { Link } from "@/components/ui/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -158,7 +159,7 @@ export function Header() {
         if(link.href && !isSubmenu){
             return (
                 <NavigationMenuItem key={link.title}>
-                    <Link href={link.href} passHref>
+                    <Link href={link.href}>
                         <NavigationMenuLink
                         className={cn(
                             navigationMenuTriggerStyle(),
@@ -256,18 +257,14 @@ export function Header() {
 
 
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/search">
+          <LinkButton variant="ghost" size="icon" href="/search">
               <Search className="h-5 w-5" />
               <span className="sr-only">Search</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/profile">
+            </LinkButton>
+          <LinkButton variant="ghost" size="icon" href="/profile">
               <User className="h-5 w-5" />
               <span className="sr-only">Profile</span>
-            </Link>
-          </Button>
+            </LinkButton>
         </div>
       </div>
     </header>
@@ -283,7 +280,6 @@ const ListItem = React.forwardRef<
       <NavigationMenuLink asChild>
         <Link
           href={href || ''}
-          ref={ref}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Link } from '@/components/ui/link';
+import { LinkButton } from '@/components/ui/link-button';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Check, Save, Settings2 } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
@@ -268,7 +268,7 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
                                         <span>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
                                     )}
                                 </p>
-                                <Link
+                                <LinkButton
                                     variant="plain"
                                     size="sm"
                                     onClick={(e) => {
@@ -278,7 +278,7 @@ export function UploadDialog({ open, onOpenChange, onUploadComplete }: UploadDia
                                 >
                                     <X className="h-4 w-4 mr-2" />
                                     Remove
-                                </Link>
+                                </LinkButton>
                             </div>
                         ) : (
                             <div className="space-y-2">

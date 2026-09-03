@@ -11,7 +11,7 @@ import { getLegalDocuments, getLegalSettings, updateLegalSettings, updateLegalDo
 import type { LegalDocument } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Upload as UploadIcon, Plus, ChevronRight, ShieldCheck, GripVertical } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { Switch } from "@/components/ui/switch";
 import { Reorder, useDragControls } from "framer-motion";
 import { useRef } from 'react';

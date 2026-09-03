@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
+import { Link } from "@/components/ui/link";
 import { Mountain, Search, User, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -164,12 +165,10 @@ export function HeaderV2() {
         </div>
         
         <div className="flex items-center justify-end">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/profile">
+          <LinkButton variant="ghost" size="icon" href="/profile">
               <User className="h-5 w-5" />
               <span className="sr-only">Profile</span>
-            </Link>
-          </Button>
+            </LinkButton>
         </div>
       </div>
     </header>

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -33,12 +33,10 @@ export default async function ErrorDetailPage({ params }: ErrorDetailPageProps) 
     return (
         <div>
             <div className="mb-4">
-                <Button asChild variant="outline" size="sm">
-                    <Link href="/manage/site/errors">
+                <LinkButton variant="outline" size="sm" href="/manage/site/errors">
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to All Errors
-                    </Link>
-                </Button>
+                    </LinkButton>
             </div>
             <Card>
                 <CardHeader>

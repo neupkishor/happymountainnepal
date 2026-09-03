@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -74,19 +74,15 @@ export default async function ComparisonDetailPage({ params }: ComparisonPagePro
           <CardContent className="space-y-4">
             <p className="text-lg">{comparison.winner}</p>
             <div className="flex flex-wrap gap-3">
-              <Button asChild>
-                <Link
+              <LinkButton variant="solid"
                   href={getInquiryLink(
                     `Help me choose: ${comparison.title}`,
                     `I am comparing ${comparison.title}. Please help me decide which trek is the better fit for my dates, fitness, and budget.`
                   )}
                 >
                   Ask us which one fits you
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/tools/trek-planner">Try the Trek Planner</Link>
-              </Button>
+                </LinkButton>
+              <LinkButton variant="outline" href="/tools/trek-planner">Try the Trek Planner</LinkButton>
             </div>
           </CardContent>
         </Card>
@@ -105,9 +101,7 @@ export default async function ComparisonDetailPage({ params }: ComparisonPagePro
                     <p className="text-sm text-muted-foreground">
                       {tour.shortDescription || tour.description.replace(/<[^>]+>/g, "").slice(0, 160)}
                     </p>
-                    <Button asChild size="sm" variant="outline">
-                      <Link href={`/tours/${tour.slug}`}>View trek</Link>
-                    </Button>
+                    <LinkButton size="sm" variant="outline" href={`/tours/${tour.slug}`}>View trek</LinkButton>
                   </CardContent>
                 </Card>
               ))}

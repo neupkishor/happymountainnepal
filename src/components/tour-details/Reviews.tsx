@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { useState } from 'react';
 
 interface ReviewsProps {
@@ -79,9 +79,9 @@ export function Reviews({ reviews, tourId, isLoading = false, hasMore = false, o
             const otherTourName = allToursMap.get(review.reviewFor);
             if (otherTourName) {
               reviewTag = (
-                <Link href={`/tours/${review.reviewFor}`} className="ml-2">
+                <LinkButton href={`/tours/${review.reviewFor}`} className="ml-2">
                   <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5">For: {otherTourName}</Badge>
-                </Link>
+                </LinkButton>
               );
             }
           }
@@ -116,7 +116,7 @@ export function Reviews({ reviews, tourId, isLoading = false, hasMore = false, o
                 </p>
               </div>
 
-              {/* Source Link Row */}
+              {/* Source LinkButton Row */}
               {review.type === 'offSite' && review.originalReviewUrl && (
                 <div className="mt-1">
                   <a

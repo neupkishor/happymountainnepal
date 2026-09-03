@@ -21,7 +21,7 @@ import type { Tour, ManagedReview } from '@/lib/types';
 import { useEffect, useMemo } from 'react';
 import { Chatbot } from '@/components/Chatbot';
 import { getTourChatMessage } from '@/lib/chat-messages';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 
 interface TourDetailClientProps {
   tour: Tour;
@@ -201,11 +201,9 @@ export default function TourDetailClient({ tour, tempUserId }: TourDetailClientP
                         <p className="mt-2 text-sm text-muted-foreground">
                           Price from ${departure.price}. Ask the team about remaining seats and current trail conditions for this departure.
                         </p>
-                        <Button asChild size="sm" variant="outline" className="mt-4">
-                          <Link href={`/contact?subject=${encodeURIComponent(`Departure question for ${tour.name}`)}&message=${encodeURIComponent(`I am interested in the ${tour.name} departure on ${String(departure.date)}. Please share current availability, conditions, and whether this date is a good fit for me.`)}`}>
+                        <LinkButton size="sm" variant="outline" className="mt-4" href={`/contact?subject=${encodeURIComponent(`Departure question for ${tour.name}`)}&message=${encodeURIComponent(`I am interested in the ${tour.name} departure on ${String(departure.date)}. Please share current availability, conditions, and whether this date is a good fit for me.`)}`}>
                             Ask about this date
-                          </Link>
-                        </Button>
+                          </LinkButton>
                       </div>
                     ))}
                   </div>

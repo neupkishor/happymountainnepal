@@ -1,0 +1,271 @@
+Table: partners, Model: Partner
+Fields:
+> id: text, primary key;
+> name: text, required;
+> logo: text, required;
+> description: text, required;
+> link: text, optional
+
+Table: profile, Model: Profile
+Fields:
+> id: text, primary key;
+> basePath: text, optional;
+> reviewCount: int, optional;
+> contactEmail: text, optional;
+> phone: text, optional;
+> address: text, optional;
+> heroTitle: text, optional;
+> heroDescription: text, optional;
+> footerTagline: text, optional;
+> location: text, optional;
+> locationUrl: text, optional;
+> heroImage: text, optional;
+> heroImages: text, optional;
+> heroTransitionInterval: int, optional;
+> socials: text, optional;
+> whyUs: text, optional;
+> chatbot: text, optional
+
+Table: locations, Model: Location
+Fields:
+> id: text, primary key;
+> name: text, required;
+> slug: text, required, unique;
+> description: text, optional;
+> image: text, optional;
+> isFeatured: int, default: 0;
+> parentId: text, references locations.id, optional;
+> createdAt: text, optional
+
+Table: posts, Model: Post
+Fields:
+> id: text, primary key;
+> slug: text, required, unique;
+> title: text, required;
+> excerpt: text, optional;
+> content: text, optional;
+> author: text, optional;
+> authorPhoto: text, optional;
+> image: text, optional;
+> tags: text, optional;
+> metaInformation: text, optional;
+> status: text, optional;
+> searchKeywords: text, optional;
+> createdAt: text, optional
+
+Table: uploads, Model: Upload
+Fields:
+> id: text, primary key;
+> name: text, required;
+> url: text, required, unique;
+> uploadedBy: text, optional;
+> type: text, optional;
+> size: int, optional;
+> tags: text, optional;
+> meta: text, optional;
+> uploadedOn: text, optional;
+> uploadedAt: text, optional;
+> createdAt: text, optional
+
+Table: packages, Model: Package
+Fields:
+> id: text, primary key;
+> name: text, required;
+> slug: text, required, unique;
+> description: text, optional;
+> shortDescription: text, optional;
+> region: text, optional;
+> type: text, optional;
+> difficulty: text, optional;
+> duration: int, optional;
+> price: real, optional;
+> mainImage: text, optional;
+> images: text, optional;
+> itinerary: text, optional;
+> inclusions: text, optional;
+> exclusions: text, optional;
+> departureDates: text, optional;
+> anyDateAvailable: int, default: 0;
+> map: text, optional;
+> reviews: text, optional;
+> status: text, default: draft;
+> faq: text, optional;
+> additionalInfoSections: text, optional;
+> bookingType: text, default: internal;
+> externalBookingUrl: text, optional;
+> gears: text, optional;
+> guides: text, optional;
+> searchKeywords: text, optional;
+> createdAt: text, optional;
+> updatedAt: text, optional;
+> isPopular: int, default: 0;
+> isFeatured: int, default: 0
+
+Table: reviews, Model: Review
+Fields:
+> id: text, primary key;
+> type: text, optional;
+> rating: int, required;
+> author: text, required;
+> userRole: text, optional;
+> comment: text, required;
+> date: text, required;
+> status: text, default: pending;
+> source: text, default: website;
+> packageId: text, references packages.id, optional;
+> userId: text, optional;
+> originalReviewUrl: text, optional;
+> reviewMedia: text, optional;
+> createdAt: text, optional
+
+Table: accounts, Model: Account
+Fields:
+> id: text, primary key;
+> fullName: text, required;
+> email: text, required;
+> phone: text, optional;
+> ipAddress: text, optional;
+> passwordHash: text, optional;
+> createdAt: text, required
+
+Table: activities, Model: Activity
+Fields:
+> id: text, primary key;
+> accountId: text, references accounts.id, required;
+> activityName: text, required;
+> activityInfo: text, optional;
+> fromIp: text, optional;
+> fromLocation: text, optional;
+> activityTime: text, required
+
+Table: errors, Model: Error
+Fields:
+> id: text, primary key;
+> message: text, required;
+> stack: text, optional;
+> componentStack: text, optional;
+> pathname: text, required;
+> createdAt: text, required;
+> context: text, optional
+
+Table: feedbacks, Model: Feedback
+Fields:
+> id: text, primary key;
+> title: text, required;
+> description: text, optional;
+> deadline: text, optional;
+> status: text, default: open;
+> priority: text, default: medium;
+> issuedTo: text, optional;
+> entries: text, optional;
+> createdAt: text, required
+
+Table: gears, Model: Gear
+Fields:
+> id: text, primary key;
+> name: text, required;
+> description: text, optional;
+> image: text, optional;
+> provided: int, default: 0
+
+Table: redirects, Model: Redirect
+Fields:
+> id: text, primary key;
+> source: text, required;
+> destination: text, required;
+> permanent: int, default: 1;
+> createdAt: text, required
+
+Table: paymentSettings, Model: PaymentSetting
+Fields:
+> id: text, primary key;
+> bankName: text, required;
+> accountName: text, required;
+> accountNumber: text, required;
+> swiftCode: text, optional;
+> iban: text, optional;
+> bankAddress: text, optional;
+> additionalInstructions: text, optional;
+> updatedAt: text, required
+
+Table: legal, Model: Legal
+Fields:
+> id: text, primary key;
+> content: text, required;
+> updatedAt: text, required
+
+Table: legalDocuments, Model: LegalDocument
+Fields:
+> id: text, primary key;
+> title: text, required;
+> description: text, optional;
+> url: text, required;
+> createdAt: text, required;
+> isHidden: int, default: 0;
+> orderIndex: int, optional
+
+Table: legalDocumentSettings, Model: LegalDocumentSetting
+Fields:
+> id: text, primary key;
+> requireEmailProtection: int, required, default: 1
+
+Table: teamGroups, Model: TeamGroup
+Fields:
+> id: text, primary key;
+> name: text, required;
+> description: text, optional;
+> orderIndex: int, required, default: 0
+
+Table: teamMembers, Model: TeamMember
+Fields:
+> id: text, primary key;
+> slug: text, required, unique;
+> name: text, required;
+> role: text, required;
+> bio: text, required;
+> image: text, required;
+> groupId: text, references teamGroups.id, optional;
+> orderIndex: int, optional;
+> shortDescription: text, optional;
+> story: text, optional;
+> gallery: text, optional;
+> socials: text, optional
+
+Table: inquiries, Model: Inquiry
+Fields:
+> id: text, primary key;
+> type: text, required;
+> page: text, optional;
+> temporary_id: text, optional;
+> conversation: text, optional;
+> data: text, optional;
+> createdAt: text, required
+
+Table: logs, Model: Log
+Fields:
+> id: text, primary key;
+> accountId: text, references accounts.id, optional;
+> cookieId: text, optional;
+> pageAccessed: text, required;
+> resourceType: text, required;
+> method: text, optional;
+> statusCode: int, optional;
+> referrer: text, optional;
+> userAgent: text, required;
+> ipAddress: text, optional;
+> countryCode: text, optional;
+> timestamp: text, required;
+> isBot: int, default: 0;
+> agentCategory: text, optional;
+> referrerSource: text, optional;
+> metadata: text, optional
+
+Table: ContentSearch, Model: ContentSearch
+Fields:
+> id: text, primary key;
+> forPage: text, required;
+> lookupFor: text, required;
+> pattern: text, optional;
+> contentFound: jsonb, required;
+> foundOn: text, required;
+> status: text, required, default: not_checked

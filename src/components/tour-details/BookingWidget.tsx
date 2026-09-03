@@ -13,7 +13,7 @@ import { Heart } from 'lucide-react';
 import { useWishlist } from '@/context/WishlistContext';
 import { cn } from '@/lib/utils';
 import { Timestamp } from '@/lib/timestamp';
-import Link from 'next/link'; // Import Link
+import { LinkButton } from "@/components/ui/link-button"; // Import LinkButton
 
 interface BookingWidgetProps {
   tour: Tour;
@@ -121,11 +121,9 @@ export function BookingWidget({ tour }: BookingWidgetProps) {
             <p className="text-muted-foreground text-center">
               This tour is booked via an external partner.
             </p>
-            <Button asChild className="w-full text-lg h-12">
-              <Link href={tour.externalBookingUrl || '#'} target="_blank" rel="noopener noreferrer">
+            <LinkButton className="w-full text-lg h-12" variant="solid" href={tour.externalBookingUrl || '#'} target="_blank" rel="noopener noreferrer">
                 Book on External Site
-              </Link>
-            </Button>
+              </LinkButton>
           </div>
         )}
         

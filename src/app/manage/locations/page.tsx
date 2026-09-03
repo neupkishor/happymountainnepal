@@ -1,6 +1,5 @@
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Link } from "@/components/ui/link";
 import { PlusCircle, MapPin, Search } from 'lucide-react';
 import { getLocations } from '@/lib/db/sqlite';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,12 +19,10 @@ export default async function LocationsPage() {
                         Manage trekking and tour locations.
                     </p>
                 </div>
-                <Link href="/manage/locations/create">
-                    <Button>
+                <Link href="/manage/locations/create" className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Location
-                    </Button>
-                </Link>
+                    </Link>
             </div>
 
             {locations.length === 0 ? (
@@ -34,9 +31,7 @@ export default async function LocationsPage() {
                         <MapPin className="mx-auto h-12 w-12 opacity-50 mb-4" />
                         <h3 className="text-lg font-semibold">No locations found</h3>
                         <p>Create your first location to get started.</p>
-                        <Link href="/manage/locations/create" className="mt-4 inline-block">
-                            <Button variant="outline">Create Location</Button>
-                        </Link>
+                        <Link href="/manage/locations/create" className="mt-4 inline-flex rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent">Create Location</Link>
                     </CardContent>
                 </Card>
             ) : (

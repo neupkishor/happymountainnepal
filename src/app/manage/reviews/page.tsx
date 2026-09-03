@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -48,12 +48,10 @@ export default function ReviewsListPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold !font-headline">Customer Reviews</h1>
-        <Button asChild>
-          <Link href="/manage/reviews/create">
+        <LinkButton variant="solid" href="/manage/reviews/create">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Review
-          </Link>
-        </Button>
+          </LinkButton>
       </div>
       <Card>
         <CardHeader>

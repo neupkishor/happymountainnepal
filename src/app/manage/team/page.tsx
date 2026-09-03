@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -380,12 +380,10 @@ export default function TeamManagementPage() {
             <Users className="mr-2 h-4 w-4" />
             Create Group
           </Button>
-          <Button asChild>
-            <Link href="/manage/team/create">
+          <LinkButton variant="solid" href="/manage/team/create">
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Member
-            </Link>
-          </Button>
+            </LinkButton>
         </div>
       </div>
 
@@ -482,11 +480,9 @@ export default function TeamManagementPage() {
                       <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
                      <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" asChild>
-                            <Link href={`/manage/team/${member.id}/edit`}>
+                        <LinkButton size="icon" variant="ghost" href={`/manage/team/${member.id}/edit`}>
                                 <Pencil className="h-4 w-4" />
-                            </Link>
-                        </Button>
+                            </LinkButton>
                         <DeleteTeamMemberDialog member={member}>
                             <Button size="icon" variant="ghost">
                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -547,11 +543,9 @@ export default function TeamManagementPage() {
                       <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
                      <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" asChild>
-                            <Link href={`/manage/team/${member.id}/edit`}>
+                        <LinkButton size="icon" variant="ghost" href={`/manage/team/${member.id}/edit`}>
                                 <Pencil className="h-4 w-4" />
-                            </Link>
-                        </Button>
+                            </LinkButton>
                         <DeleteTeamMemberDialog member={member}>
                             <Button size="icon" variant="ghost">
                                 <Trash2 className="h-4 w-4 text-destructive" />

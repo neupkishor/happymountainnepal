@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { getLegalDocumentById, getLegalSettings } from '@/lib/db';
 import { FileText, ChevronLeft, Edit } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import { DocumentViewer } from './viewer';
 import { AdminPageControl } from '@/components/admin/AdminPageControl';
@@ -43,11 +43,9 @@ export default async function LegalDocumentPage({ params }: { params: Promise<{ 
             <AdminPageControl editPath={`/manage/legal/documents/${id}`} />
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
-                    <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
-                        <Link href="/legal/documents">
+                    <LinkButton variant="ghost" className="pl-0 hover:bg-transparent hover:text-primary" href="/legal/documents">
                             <ChevronLeft className="mr-2 h-4 w-4" /> Back to Documents
-                        </Link>
-                    </Button>
+                        </LinkButton>
                     <div className="flex items-center justify-between mt-2">
                         <h1 className="text-3xl font-bold flex items-center gap-2">
                             <FileText className="h-8 w-8 text-primary" />

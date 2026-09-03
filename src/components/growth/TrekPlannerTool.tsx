@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -183,19 +183,15 @@ export function TrekPlannerTool({ tours }: { tours: Tour[] }) {
                   {tour.shortDescription || tour.description.replace(/<[^>]+>/g, "").slice(0, 160)}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <Button asChild size="sm">
-                    <Link href={`/tours/${tour.slug}`}>View Trek</Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <Link
+                  <LinkButton size="sm" variant="solid" href={`/tours/${tour.slug}`}>View Trek</LinkButton>
+                  <LinkButton size="sm" variant="outline"
                       href={getInquiryLink(
                         `Planner follow-up for ${tour.name}`,
                         `The trek planner recommended ${tour.name}. Please help me confirm if it is the right fit for my month, budget, and fitness.`
                       )}
                     >
                       Ask for Custom Advice
-                    </Link>
-                  </Button>
+                    </LinkButton>
                 </div>
               </div>
             ))}

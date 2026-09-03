@@ -1,6 +1,6 @@
 
 'use client';
-import { Link } from '#/components/ui/link';
+import { LinkButton } from '@/components/ui/link-button';
 import { cn } from '@/lib/utils';
 import { Send } from 'lucide-react';
 
@@ -24,23 +24,23 @@ export function EditPackageNav({ packageId, currentStep }: EditPackageNavProps) 
   return (
     <nav className="flex flex-col gap-2 sticky top-24">
       {steps.map(step => (
-        <Link
+        <LinkButton
           key={step.slug}
           variant={currentStep === step.slug ? 'solid' : 'plain'}
           href={`/manage/packages/${packageId}/${step.slug}`}
           className="justify-start"
         >
           {step.label}
-        </Link>
+        </LinkButton>
       ))}
-      <Link
+      <LinkButton
         href={`/manage/packages/${packageId}/publish`}
         variant={currentStep === 'publish' ? 'solid' : 'plain'}
         className={cn("justify-start mt-2", currentStep === 'publish' && 'ring-2 ring-primary/50')}
       >
         <Send className="mr-2 h-4 w-4" />
         Publish
-      </Link>
+      </LinkButton>
     </nav>
   );
 }

@@ -1,7 +1,7 @@
 
 'use client';
 import { TourCard } from './TourCard';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,11 +72,9 @@ export function PopularPackages({ initialTours = [] }: { initialTours?: Tour[] }
             </div>
         )}
         <div className="text-center mt-12">
-          <Link href="/tours">
-            <Button size="lg">
+          <LinkButton href="/tours" size="lg" variant="solid">
               View All Packages <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+            </LinkButton>
         </div>
       </div>
     </section>

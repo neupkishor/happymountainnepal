@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { loginAccountAction } from '@/app/actions/accounts';
 
 const formSchema = z.object({

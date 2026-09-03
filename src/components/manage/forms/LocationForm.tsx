@@ -22,7 +22,7 @@ import { Loader2, Save, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { MediaPicker } from '../MediaPicker';
 import { Location } from '@/lib/types';
 import {

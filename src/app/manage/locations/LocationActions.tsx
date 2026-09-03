@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -54,11 +54,9 @@ export function LocationActions({ location }: LocationActionsProps) {
 
     return (
         <div className="flex items-center justify-end gap-2">
-            <Link href={`/manage/locations/${location.id}/edit`}>
-                <Button variant="ghost" size="icon">
+            <LinkButton href={`/manage/locations/${location.id}/edit`} size="icon" variant="ghost">
                     <Edit className="h-4 w-4" />
-                </Button>
-            </Link>
+                </LinkButton>
 
             <AlertDialog>
                 <AlertDialogTrigger asChild>

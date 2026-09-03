@@ -2,10 +2,11 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
+import { Link } from "@/components/ui/link";
 import Image from 'next/image';
 import { Mountain, Search, Menu, X, ChevronDown, ChevronRight, Phone, Mail, MapPin, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '#/components/ui/button';
 import { HeaderV3Nav, type NavLink } from './HeaderV3Nav';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -182,7 +183,7 @@ function MobileMenuList({ setMenuOpen, navLinks }: { setMenuOpen: (open: boolean
                   );
                 }
                 return (
-                  <Link
+                  <LinkButton
                     key={link.href}
                     href={link.href!}
                     className="block py-4 border-b border-border/40 last:border-0 hover:text-primary transition-colors"
@@ -192,7 +193,7 @@ function MobileMenuList({ setMenuOpen, navLinks }: { setMenuOpen: (open: boolean
                     {link.description && (
                       <p className="text-sm text-muted-foreground mt-1">{link.description}</p>
                     )}
-                  </Link>
+                  </LinkButton>
                 );
               })}
             </motion.div>
@@ -438,17 +439,14 @@ export function HeaderV3({ initialIsManager = false, initialProfile, initialLink
             {/* Contact Buttons or Manager Edit Button */}
             <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
               {managerEditTarget ? (
-                <Button
+                <LinkButton
                   variant="outline"
                   size="sm"
-                  asChild
                   className="h-9 px-3 border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground transition-all group/edit"
-                >
-                  <Link href={managerEditTarget} className="flex items-center gap-2">
+                 href={managerEditTarget}>
                     <Edit className="h-4 w-4 text-primary group-hover/edit:scale-110 transition-transform" />
                     <span className="hidden sm:inline text-sm font-medium">{managerButtonText}</span>
-                  </Link>
-                </Button>
+                  </LinkButton>
               ) : (
                 <>
                   <Button

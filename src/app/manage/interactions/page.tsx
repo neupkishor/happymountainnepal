@@ -1,7 +1,8 @@
 'use client';
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
+import { Link } from "@/components/ui/link";
 import { formatDistanceToNow } from 'date-fns';
 import {
   Activity,

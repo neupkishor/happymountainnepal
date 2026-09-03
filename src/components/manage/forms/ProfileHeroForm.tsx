@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { MultiMediaPicker } from '../MultiMediaPicker';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 
 const formSchema = z.object({
   heroTitle: z.string().optional(),

@@ -13,7 +13,7 @@ import type { LegalDocument } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Save, Upload as UploadIcon, FileText, Eye, EyeOff } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { cn } from '@/lib/utils';
 
 export default function EditLegalDocumentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -181,12 +181,10 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
     return (
         <div className="max-w-3xl mx-auto">
             <div className="mb-6">
-                <Button asChild variant="ghost" className="pl-0 mb-4">
-                    <Link href="/manage/legal/documents">
+                <LinkButton variant="ghost" className="pl-0 mb-4" href="/manage/legal/documents">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back to Documents
-                    </Link>
-                </Button>
+                    </LinkButton>
                 <h1 className="text-3xl font-bold !font-headline">Edit Document</h1>
             </div>
 
@@ -353,9 +351,7 @@ export default function EditLegalDocumentPage({ params }: { params: Promise<{ id
                     )}
 
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="outline" asChild disabled={isSaving}>
-                            <Link href="/manage/legal/documents">Cancel</Link>
-                        </Button>
+                        <LinkButton variant="outline" href="/manage/legal/documents">Cancel</LinkButton>
                         <Button onClick={handleSave} disabled={isSaving || !title.trim()}>
                             {isSaving ? (
                                 <>

@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 
 const DetailRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div className="flex justify-between items-start py-3 border-b">
@@ -195,12 +195,10 @@ export default function UploadDetailPage() {
     return (
         <div className="container mx-auto py-8 px-4 max-w-4xl">
             <div className="mb-8 flex items-center justify-between">
-                <Button variant="ghost" asChild className="-ml-4">
-                    <Link href="/manage/uploads">
+                <LinkButton variant="ghost" className="-ml-4" href="/manage/uploads">
                         <ChevronLeft className="h-4 w-4 mr-2" />
                         Back to Library
-                    </Link>
-                </Button>
+                    </LinkButton>
                 <div className="flex gap-2">
                     {!isEditing ? (
                         <Button variant="outline" size="sm" onClick={handleEditToggle}>

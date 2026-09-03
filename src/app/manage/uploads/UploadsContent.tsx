@@ -9,7 +9,7 @@ import { UploadDialog } from '@/components/upload/UploadDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { PictureInPicture, ChevronLeft, ChevronRight, Trash2, Plus, Link as LinkIcon, Upload, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { Button } from '@/components/ui/button';
 import type { FileUpload } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -385,4 +385,3 @@ export function UploadsContent() {
         </div >
     );
 }
-

@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -157,7 +157,7 @@ export function ManagePackagesContent({ status = 'published' }: ManagePackagesCo
 
                 <Separator />
 
-                {/* Toggle Link */}
+                {/* Toggle link */}
                 <Link href={toggleLink.href} className="block hover:bg-muted/50 transition-colors">
                     <div className="p-6 flex items-center gap-4">
                         <div className="h-12 w-12 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center flex-shrink-0">

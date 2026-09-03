@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSiteProfile } from '@/hooks/use-site-profile';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 
 const formSchema = z.object({
   basePath: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),

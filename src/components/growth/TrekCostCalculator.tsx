@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -185,12 +185,8 @@ export function TrekCostCalculator({ tours }: { tours: Tour[] }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href={consultationLink}>Request Accurate Quote</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={`/tours/${selectedTour.slug}`}>View Trek Page</Link>
-            </Button>
+            <LinkButton variant="solid" href={consultationLink}>Request Accurate Quote</LinkButton>
+            <LinkButton variant="outline" href={`/tours/${selectedTour.slug}`}>View Trek Page</LinkButton>
           </div>
         </CardContent>
       </Card>

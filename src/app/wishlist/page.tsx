@@ -3,7 +3,7 @@
 import { useWishlist } from '@/context/WishlistContext';
 import { TourCard } from '@/components/TourCard';
 import { Heart } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import type { Tour } from '@/lib/types';
@@ -70,9 +70,7 @@ export default function WishlistPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Browse our tours and click the heart icon to save your favorites.
           </p>
-          <Link href="/tours" className="mt-6 inline-block">
-            <Button>Explore Tours</Button>
-          </Link>
+          <LinkButton href="/tours" className="mt-6 inline-block" variant="solid">Explore Tours</LinkButton>
         </div>
       )}
     </div>

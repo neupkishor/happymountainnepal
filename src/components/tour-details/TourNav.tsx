@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { Tour } from '@/lib/types';

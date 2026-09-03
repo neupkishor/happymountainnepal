@@ -1,6 +1,6 @@
 
 'use client';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import {
   Card,
   CardContent,
@@ -75,11 +75,9 @@ export default function ErrorsPage() {
                       {error.createdAt ? formatDistanceToNow(new Date(error.createdAt as unknown as string), { addSuffix: true }) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button asChild variant="ghost" size="sm">
-                          <Link href={`/manage/site/errors/${error.id}`}>
+                       <LinkButton variant="ghost" size="sm" href={`/manage/site/errors/${error.id}`}>
                             View Details <ArrowRight className="ml-2 h-4 w-4" />
-                          </Link>
-                        </Button>
+                          </LinkButton>
                     </TableCell>
                   </TableRow>
                 ))}

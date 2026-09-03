@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { LinkButton } from "@/components/ui/link-button";
 import { Frown } from 'lucide-react';
 
 export default function NotFoundPage() {
@@ -11,9 +10,7 @@ export default function NotFoundPage() {
       <p className="text-lg text-muted-foreground max-w-md mb-8">
         Oops! The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
       </p>
-      <Link href="/">
-        <Button size="lg">Go to Homepage</Button>
-      </Link>
+      <LinkButton href="/" size="lg" variant="outlined">Go to Homepage</LinkButton>
     </div>
   );
 }

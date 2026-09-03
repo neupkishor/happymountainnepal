@@ -1,7 +1,7 @@
 
 "use client";
 
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import Image from 'next/image';
 import { Button } from '#/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -170,11 +170,9 @@ export function HeroSection({ initialProfile }: { initialProfile?: any }) {
               </form>
             ) : (
               <div className="flex gap-4 justify-center animate-fade-in-up">
-                <Link href="/tours">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <LinkButton href="/tours" size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground" variant="solid">
                     Explore Tours
-                  </Button>
-                </Link>
+                  </LinkButton>
                 <Button size="lg" variant="tinted" onClick={handleSearchClick}>
                   <Search className="h-5 w-5 mr-2" />
                   Search for Experience

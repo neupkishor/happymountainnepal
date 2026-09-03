@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import type { BlogPost } from '@/lib/types';
 import { Button } from '#/components/ui/button';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
@@ -69,10 +69,10 @@ export function BlogManagementCard({ post }: BlogTableRowProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/blog/${post.slug}`} target="_blank">View Public Page</Link>
+              <Link href={`/blog/${post.slug}`} target="_blank" className="flex w-full items-center">View Public Page</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/manage/blog/${post.id}/edit`}>Edit</Link>
+              <Link href={`/manage/blog/${post.id}/edit`} className="flex w-full items-center">Edit</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

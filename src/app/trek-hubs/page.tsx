@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,7 @@ export default function TrekHubsPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {trekHubs.map((hub) => (
-            <Link key={hub.slug} href={`/trek-hubs/${hub.slug}`}>
+            <LinkButton key={hub.slug} href={`/trek-hubs/${hub.slug}`}>
               <Card className="h-full transition-all hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader className="space-y-3">
                   <Badge variant="outline">{hub.audience}</Badge>
@@ -40,7 +40,7 @@ export default function TrekHubsPage() {
                   </div>
                 </CardContent>
               </Card>
-            </Link>
+            </LinkButton>
           ))}
         </div>
       </div>

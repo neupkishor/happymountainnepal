@@ -1,7 +1,7 @@
 'use client';
 
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { formatDistanceToNow } from 'date-fns';
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Link2, Loader2, Search, ShieldQuestion } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -159,7 +159,7 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold !font-headline">Link Scanner</h1>
+          <h1 className="text-3xl font-bold !font-headline">LinkButton Scanner</h1>
           <p className="mt-2 max-w-3xl text-muted-foreground">
             Scan all links used inside blog articles. Blog and tour targets on `happymountainnepal.com`
             are checked against the local database. Other same-site pages and external domains are shown for review.
@@ -304,9 +304,9 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 space-y-2">
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Source page</p>
-                        <Link href={entry.page} target="_blank" className="break-all font-medium text-primary hover:underline">
+                        <LinkButton href={entry.page} target="_blank" className="break-all font-medium text-primary hover:underline">
                           {entry.page}
-                        </Link>
+                        </LinkButton>
                         <p className="truncate text-xs text-muted-foreground">{entry.pageTitle}</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -338,9 +338,9 @@ export function ManageLinksContent({ report, imageReport }: ManageLinksContentPr
                             <span>{entry.target}</span>
                           </a>
                         ) : (
-                          <Link href={entry.target} target="_blank" className="break-all text-primary hover:underline">
+                          <LinkButton href={entry.target} target="_blank" className="break-all text-primary hover:underline">
                             {entry.target}
-                          </Link>
+                          </LinkButton>
                         )}
                       </div>
                     </div>

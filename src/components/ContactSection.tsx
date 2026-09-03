@@ -1,9 +1,9 @@
 
 'use client';
 
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { ArrowRight, Mail, Phone, MapPin } from 'lucide-react';
 import { useSiteProfile } from '@/hooks/use-site-profile';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SiteProfile } from '@/lib/types';
@@ -65,11 +65,9 @@ export function ContactSection({ initialProfile }: { initialProfile?: SiteProfil
           </div>
         )}
 
-        <Link href="/contact" className="mt-12 inline-block">
-          <Button size="lg" className="text-lg">
+        <LinkButton href="/contact" size="lg" className="mt-12 text-lg" variant="solid" postIcon={<ArrowRight />}>
             Send a Message
-          </Button>
-        </Link>
+          </LinkButton>
       </div>
     </section>
   );

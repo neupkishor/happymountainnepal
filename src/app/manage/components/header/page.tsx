@@ -14,7 +14,7 @@ import {
     ChevronRight,
     Pencil
 } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -169,7 +169,7 @@ export default function HeaderManagementPage() {
         const level = currentLevel.path.length + 1;
 
         const newItem: NavLink = {
-            title: 'New Link',
+            title: 'New LinkButton',
             ...(level >= 2 ? { href: '#', description: '' } : {})
         };
 
@@ -243,12 +243,10 @@ export default function HeaderManagementPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link href="/manage/components">
+                        <LinkButton variant="ghost" size="sm" href="/manage/components">
                                 <ArrowLeft className="h-4 w-4 mr-1" />
                                 Back to Components
-                            </Link>
-                        </Button>
+                            </LinkButton>
                     </div>
                     <h1 className="text-3xl font-bold font-headline mt-2">Header Navigation</h1>
                     <p className="text-muted-foreground mt-1">
@@ -361,7 +359,7 @@ export default function HeaderManagementPage() {
                                                     id={`title-${index}`}
                                                     value={item.title}
                                                     onChange={(e) => updateItem(index, 'title', e.target.value)}
-                                                    placeholder="Link title"
+                                                    placeholder="LinkButton title"
                                                 />
                                             </div>
 
@@ -409,7 +407,7 @@ export default function HeaderManagementPage() {
                                                         }
 
                                                         current[path[path.length - 1]].children.push({
-                                                            title: 'New Child Link',
+                                                            title: 'New Child LinkButton',
                                                             href: '#',
                                                             description: ''
                                                         });

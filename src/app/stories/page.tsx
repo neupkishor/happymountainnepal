@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,16 +68,14 @@ export default function StoriesPage() {
             Tell us what kind of experience you want and we will help you plan
             a similar trek around your own dates, budget, and fitness.
           </p>
-          <Button asChild className="mt-6">
-            <Link
+          <LinkButton className="mt-6" variant="solid"
               href={getInquiryLink(
                 "I want a trip like these client stories",
                 "I read the client stories and would like help planning a similar Nepal trek for my own dates and goals."
               )}
             >
               Plan a similar trip
-            </Link>
-          </Button>
+            </LinkButton>
         </div>
       </div>
     </div>

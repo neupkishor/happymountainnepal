@@ -10,7 +10,7 @@ import { InclusionsExclusions } from '@/components/tour-details/InclusionsExclus
 import { FaqSection } from '@/components/tour-details/FaqSection';
 import { AdditionalInfoSection } from '@/components/tour-details/AdditionalInfoSection';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { PenSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { Timestamp } from '@/lib/timestamp';
@@ -27,9 +27,9 @@ type PackageDetailPageProps = {
 const SectionTitle = ({ title, editHref }: { title: string; editHref: string }) => (
   <div className="flex items-center gap-2 mb-6">
     <h2 className="text-2xl font-bold !font-headline">{title}</h2>
-    <Link href={editHref}>
+    <LinkButton href={editHref}>
       <PenSquare className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
-    </Link>
+    </LinkButton>
   </div>
 );
 
@@ -277,7 +277,7 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
         <h2 className="text-2xl font-bold !font-headline mb-6">Billing & Payment</h2>
         <Card>
           <CardHeader>
-            <CardTitle>Payment Link Management</CardTitle>
+            <CardTitle>Payment LinkButton Management</CardTitle>
             <CardDescription>
               Manage payment settings and generate checkout links for this package
             </CardDescription>
@@ -286,11 +286,9 @@ export default async function PackageDetailPage({ params }: PackageDetailPagePro
             <p className="text-sm text-muted-foreground mb-4">
               Configure bank transfer information and share the checkout link with customers for this package.
             </p>
-            <Link href={`/manage/payment?package=${tour.id}`}>
-              <Button className="w-full sm:w-auto">
+            <LinkButton href={`/manage/payment?package=${tour.id}`} className="w-full sm:w-auto" variant="solid">
                 Manage Payment Settings
-              </Button>
-            </Link>
+              </LinkButton>
           </CardContent>
         </Card>
       </div>

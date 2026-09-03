@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getLocationBySlug, getLocationById, getChildLocations, getPosts, getAllPackages } from '@/lib/db/sqlite';
 import { TourCard } from '@/components/TourCard';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, ArrowRight } from 'lucide-react';
@@ -92,9 +92,9 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                 <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
                     {parentLocation && (
-                        <Link href={`/location/${parentLocation.slug}`} className="mb-4 text-white/80 hover:text-white hover:underline text-sm uppercase tracking-wider font-semibold">
+                        <LinkButton href={`/location/${parentLocation.slug}`} className="mb-4 text-white/80 hover:text-white hover:underline text-sm uppercase tracking-wider font-semibold">
                             &infin; Part of {parentLocation.name}
-                        </Link>
+                        </LinkButton>
                     )}
                     <h1 className="text-4xl md:text-6xl font-bold text-white !font-headline mb-4">{location.name}</h1>
                     {location.description && (
@@ -111,9 +111,7 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                 <section>
                     <div className="flex items-center justify-between mb-8">
                         <h2 className="text-3xl font-bold !font-headline">Packages in {location.name}</h2>
-                        <Link href={`/tours?region=${location.name}`}>
-                            <Button variant="outline">View All <ArrowRight className="ml-2 h-4 w-4" /></Button>
-                        </Link>
+                        <LinkButton href={`/tours?region=${location.name}`} variant="outline">View All <ArrowRight className="ml-2 h-4 w-4" /></LinkButton>
                     </div>
                     {tours.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -124,9 +122,7 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                     ) : (
                         <div className="text-center py-12 bg-muted/30 rounded-lg">
                             <p className="text-muted-foreground">No specific packages found for this location yet.</p>
-                            <Link href="/tours" className="mt-4 inline-block">
-                                <Button variant="link">Browse all tours</Button>
-                            </Link>
+                            <LinkButton href="/tours" className="mt-4 inline-block" variant="link">Browse all tours</LinkButton>
                         </div>
                     )}
                 </section>
@@ -137,7 +133,7 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                         <h2 className="text-3xl font-bold !font-headline mb-8">Explore Nearby & Related</h2>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {relatedLocations.map(loc => (
-                                <Link key={loc.id} href={`/location/${loc.slug}`} className="group block relative h-48 rounded-lg overflow-hidden">
+                                <LinkButton key={loc.id} href={`/location/${loc.slug}`} className="group block relative h-48 rounded-lg overflow-hidden">
                                     {loc.image ? (
                                         <Image
                                             src={loc.image}
@@ -157,7 +153,7 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                                             <span className="block text-xs text-white/70 uppercase tracking-widest mt-1">Parent Region</span>
                                         )}
                                     </div>
-                                </Link>
+                                </LinkButton>
                             ))}
                         </div>
                     </section>

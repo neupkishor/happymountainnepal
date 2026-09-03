@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,7 @@ export default function ComparisonsPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {trekComparisons.map((comparison) => (
-            <Link key={comparison.slug} href={`/comparisons/${comparison.slug}`}>
+            <LinkButton key={comparison.slug} href={`/comparisons/${comparison.slug}`}>
               <Card className="h-full transition-all hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader className="space-y-3">
                   <Badge variant="outline">{comparison.decisionStage}</Badge>
@@ -47,7 +47,7 @@ export default function ComparisonsPage() {
                   </div>
                 </CardContent>
               </Card>
-            </Link>
+            </LinkButton>
           ))}
         </div>
       </div>

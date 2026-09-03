@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import type { Tour } from '@/lib/types';
@@ -81,11 +81,9 @@ export function EditPackageLayout({ children, tour, currentStep }: EditPackageLa
         <div className="container max-w-5xl mx-auto flex justify-between items-center">
           <div>
             {prevStep && (
-              <Button variant="outline" asChild>
-                <Link href={`${basePath}/${prevStep}`}>
+              <LinkButton variant="outline" href={`${basePath}/${prevStep}`}>
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                </Link>
-              </Button>
+                </LinkButton>
             )}
           </div>
 
@@ -95,11 +93,9 @@ export function EditPackageLayout({ children, tour, currentStep }: EditPackageLa
 
           <div>
             {nextStep && (
-              <Button asChild>
-                <Link href={`${basePath}/${nextStep}`}>
+              <LinkButton variant="solid" href={`${basePath}/${nextStep}`}>
                   Next <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+                </LinkButton>
             )}
           </div>
         </div>

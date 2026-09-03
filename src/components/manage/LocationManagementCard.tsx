@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import type { Location } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Trash2, Edit, MapPin } from 'lucide-react';

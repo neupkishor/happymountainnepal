@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
@@ -15,11 +15,9 @@ export function CustomizeTrip() {
             <p className="mt-4 text-lg text-muted-foreground">
               Don&apos;t see exactly what you&apos;re looking for? We specialize in creating custom treks and tours tailored to your interests, timeline, and budget.
             </p>
-            <Link href="/customize" className='mt-6 inline-block'>
-              <Button size="lg">
-                Plan Your Custom Trip <ArrowRight className="ml-2" />
-              </Button>
-            </Link>
+            <LinkButton href="/customize" className="mt-6" size="lg" variant="solid" postIcon={<ArrowRight />}>
+                Plan Your Custom Trip
+              </LinkButton>
           </div>
           <div className="relative h-64 md:h-80 rounded-lg overflow-hidden shadow-lg">
              <Image 

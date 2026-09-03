@@ -1,6 +1,6 @@
 
 'use client';
-import Link from 'next/link';
+import { Link } from '@/components/ui/link';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -114,8 +114,8 @@ export function ManageBlogContent({ status = 'published' }: ManageBlogContentPro
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
+        <div className="container mx-auto w-full max-w-6xl px-4 py-8 md:px-6 lg:py-10 space-y-8">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                     <h1 className="text-3xl font-bold !font-headline">
                         {status === 'draft' ? 'Draft Blog Posts' : 'Blog Posts'}
@@ -147,7 +147,7 @@ export function ManageBlogContent({ status = 'published' }: ManageBlogContentPro
 
                 <Separator />
 
-                {/* Drafts / Published Toggle Link */}
+                {/* Drafts / Published Toggle LinkButton */}
                 <Link
                     href={status === 'published' ? "/manage/blog/drafts" : "/manage/blog"}
                     className="block hover:bg-muted/50 transition-colors"

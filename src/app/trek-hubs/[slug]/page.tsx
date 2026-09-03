@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -69,16 +69,14 @@ export default async function TrekHubDetailPage({ params }: TrekHubPageProps) {
                 Use this page as your starting point, then contact us if you
                 want advice tailored to your dates, fitness, and trip goals.
               </div>
-              <Button asChild>
-                <Link
+              <LinkButton variant="solid"
                   href={getInquiryLink(
                     `${hub.title} planning help`,
                     `I am researching ${hub.title}. Please help me narrow the right route, timing, and budget for this trek.`
                   )}
                 >
                   Ask for trek advice
-                </Link>
-              </Button>
+                </LinkButton>
             </CardContent>
           </Card>
         </div>
@@ -99,9 +97,7 @@ export default async function TrekHubDetailPage({ params }: TrekHubPageProps) {
                     <p className="text-sm text-muted-foreground">
                       {tour.shortDescription || tour.description.replace(/<[^>]+>/g, "").slice(0, 160)}
                     </p>
-                    <Button asChild size="sm" variant="outline">
-                      <Link href={`/tours/${tour.slug}`}>View trek</Link>
-                    </Button>
+                    <LinkButton size="sm" variant="outline" href={`/tours/${tour.slug}`}>View trek</LinkButton>
                   </CardContent>
                 </Card>
               ))}

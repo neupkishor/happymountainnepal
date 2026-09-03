@@ -1,6 +1,6 @@
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from "@/components/ui/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { TeamMember } from '@/lib/types';
 import { cn } from '@/lib/utils';

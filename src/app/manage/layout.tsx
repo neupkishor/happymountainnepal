@@ -33,10 +33,10 @@ export default function ManageLayout({
 
     return (
         <SidebarProvider>
-            <div className="min-h-screen">
-                <div className="max-w-[1400px] mx-auto relative">
+            <div className="min-h-screen w-full">
+                <div className="w-full relative">
                     <div className="flex">
-                        <AutoHideScrollbar className="w-64 border-r hidden md:block fixed h-screen flex-shrink-0 max-w-[1400px]">
+                        <AutoHideScrollbar className="w-64 border-r hidden md:block fixed h-screen flex-shrink-0">
                             <Sidebar className="h-full">
                                 <SidebarContent className="p-2 md:p-4 flex flex-col justify-between min-h-full">
                                     <SidebarGroup>

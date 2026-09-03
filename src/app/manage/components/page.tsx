@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Layout, Navigation, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 
 export default function ComponentsPage() {
     return (
@@ -33,12 +33,10 @@ export default function ComponentsPage() {
                             Configure your website's main navigation menu with multi-level support.
                             Supports up to 3 levels of navigation hierarchy.
                         </p>
-                        <Button asChild className="w-full">
-                            <Link href="/manage/components/header">
+                        <LinkButton className="w-full" variant="solid" href="/manage/components/header">
                                 Manage Header
                                 <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
-                        </Button>
+                            </LinkButton>
                     </CardContent>
                 </Card>
 
@@ -59,12 +57,10 @@ export default function ComponentsPage() {
                             Configure your website's footer navigation and link sections.
                             Organize links into categories for better user experience.
                         </p>
-                        <Button asChild className="w-full" variant="outline">
-                            <Link href="/manage/components/footer">
+                        <LinkButton className="w-full" variant="outline" href="/manage/components/footer">
                                 Manage Footer
                                 <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
-                        </Button>
+                            </LinkButton>
                     </CardContent>
                 </Card>
             </div>

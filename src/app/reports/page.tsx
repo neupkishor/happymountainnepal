@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 import { ArrowRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -56,12 +56,10 @@ export default function ReportsPage() {
             help understanding current route conditions, contact our team and we
             will point you in the right direction.
           </p>
-          <Button asChild className="mt-6">
-            <Link href="/contact?subject=Trail%20report%20question&message=I%20have%20a%20question%20about%20current%20trail%20conditions%20for%20my%20planned%20trek.">
+          <LinkButton className="mt-6" variant="solid" href="/contact?subject=Trail%20report%20question&message=I%20have%20a%20question%20about%20current%20trail%20conditions%20for%20my%20planned%20trek.">
               Ask About Current Conditions
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+            </LinkButton>
         </div>
       </div>
     </div>

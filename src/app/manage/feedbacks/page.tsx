@@ -8,7 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Plus, Calendar, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -61,12 +61,10 @@ export default function FeedbacksPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Feedbacks & Tasks</h1>
                     <p className="text-muted-foreground">Manage ongoing site issues and tasks.</p>
                 </div>
-                <Link href="/manage/feedbacks/create">
-                    <Button>
+                <LinkButton href="/manage/feedbacks/create" variant="solid">
                         <Plus className="w-4 h-4 mr-2" />
                         New Feedback
-                    </Button>
-                </Link>
+                    </LinkButton>
             </div>
 
             {loading ? (
@@ -81,7 +79,7 @@ export default function FeedbacksPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {feedbacks.map((feedback) => (
-                        <Link href={`/manage/feedbacks/${feedback.id}`} key={feedback.id} className="block transition-transform hover:scale-[1.02]">
+                        <LinkButton href={`/manage/feedbacks/${feedback.id}`} key={feedback.id} className="block transition-transform hover:scale-[1.02]">
                             <Card className="h-full flex flex-col cursor-pointer border-l-4" style={{
                                 borderLeftColor: feedback.priority === 'high' ? 'red' : feedback.priority === 'medium' ? 'blue' : 'gray'
                             }}>
@@ -137,7 +135,7 @@ export default function FeedbacksPage() {
                                     )}
                                 </CardFooter>
                             </Card>
-                        </Link>
+                        </LinkButton>
                     ))}
                     {feedbacks.length === 0 && (
                         <div className="col-span-full text-center py-12 text-muted-foreground">

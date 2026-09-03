@@ -3,7 +3,7 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSiteProfile } from "@/hooks/use-site-profile";
 import { Image, Info, Share2, ThumbsUp, ArrowRight, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {

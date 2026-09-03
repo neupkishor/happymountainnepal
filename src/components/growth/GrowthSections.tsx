@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
+import { Link } from "@/components/ui/link";
 import Image from "next/image";
 import {
   ArrowRight,
@@ -97,23 +98,19 @@ export function TrustConversionSection({
               </ul>
             </div>
             <div className="flex flex-wrap gap-4 pt-2">
-              <Button asChild size="lg" className="min-w-[220px] rounded-xl px-7">
-                <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+              <LinkButton href={whatsappHref} target="_blank" rel="noopener noreferrer" size="lg" variant="solid" className="min-w-[220px] rounded-xl px-7">
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Talk to a Local Expert
-                </a>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="min-w-[220px] rounded-xl px-7">
-                <Link
+              </LinkButton>
+              <LinkButton size="lg" variant="outline" className="min-w-[220px] rounded-xl px-7"
                   href={getInquiryLink(
                     "Plan my trek",
                     "I would like help planning the right Nepal trek for my dates, budget, and fitness."
                   )}
-                >
+              >
                   <CalendarRange className="mr-2 h-4 w-4" />
                   Plan My Trek
-                </Link>
-              </Button>
+              </LinkButton>
             </div>
           </div>
 
@@ -200,12 +197,10 @@ export function TrailReportsSection() {
               so you can plan with fewer surprises.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/reports">
+          <LinkButton href="/reports" variant="outline">
               View All Reports
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          </LinkButton>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -256,21 +251,19 @@ export function TrekComparisonSection() {
               you commit to the wrong trip.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/comparisons">
+          <LinkButton href="/comparisons" variant="outline">
               Browse Comparisons
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          </LinkButton>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           {trekComparisons.slice(0, 4).map((comparison) => (
-            <Link key={comparison.slug} href={`/comparisons/${comparison.slug}`}>
+            <Link key={comparison.slug} href={`/comparisons/${comparison.slug}`} className="block group">
               <Card className="h-full transition-all hover:-translate-y-1 hover:shadow-lg">
                 <CardContent className="space-y-4 p-6">
                   <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {comparison.decisionStage}
                     </p>
                     <h3 className="text-2xl font-bold !font-headline">
@@ -320,12 +313,10 @@ export function ClientStoriesSection() {
               and how our guides helped them through it.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/stories">
+          <LinkButton href="/stories" variant="outline">
               Read Client Stories
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          </LinkButton>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -379,12 +370,10 @@ export function PlanningToolsSection() {
                 Get a quick budget range for popular Nepal treks and understand
                 how trip style, gear, and extra days can affect the total.
               </p>
-              <Button asChild>
-                <Link href="/tools/cost-calculator">
+              <LinkButton href="/tools/cost-calculator">
                   Open Calculator
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              </LinkButton>
             </CardContent>
           </Card>
 
@@ -400,12 +389,10 @@ export function PlanningToolsSection() {
                 Tell us your month, budget, fitness, and available days to see
                 which trek may suit you best.
               </p>
-              <Button asChild>
-                <Link href="/tools/trek-planner">
+              <LinkButton href="/tools/trek-planner">
                   Open Planner
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              </LinkButton>
             </CardContent>
           </Card>
         </div>
@@ -466,12 +453,10 @@ export function DepartureCalendarPreview({ tours }: { tours: Tour[] }) {
               current route conditions before you book.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/departures">
+          <LinkButton href="/departures" variant="outline">
               Full Departure Calendar
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          </LinkButton>
         </div>
         <div className="grid gap-4 lg:grid-cols-3">
           {upcoming.map(({ tour, departure }, index) => (

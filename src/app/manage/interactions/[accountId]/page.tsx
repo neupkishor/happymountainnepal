@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import { getLogsByIdentifier } from '@/lib/db';
 import { classifyUserAgent, normalizeStoredReferrerSource } from '@/lib/log-classification';
 import type { Log } from '@/lib/types';
@@ -89,12 +89,10 @@ export default function AccountActivityPage({ params }: ActivityPageProps) {
     <Card>
       <CardHeader>
         <div className='mb-4'>
-            <Button asChild variant="outline" size="sm">
-                <Link href="/manage/interactions">
+            <LinkButton variant="outline" size="sm" href="/manage/interactions">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to All Interactions
-                </Link>
-            </Button>
+                </LinkButton>
         </div>
         <CardTitle>User Activity</CardTitle>
         <CardDescription className="font-mono text-xs break-all">

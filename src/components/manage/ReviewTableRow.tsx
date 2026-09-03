@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { LinkButton } from "@/components/ui/link-button";
 import type { ManagedReview } from '@/lib/types';
 import { Button } from '#/components/ui/button';
 import {
@@ -46,9 +46,9 @@ export function ReviewTableRow({ review }: ReviewTableRowProps) {
       </TableCell>
       <TableCell>
         {review.reviewFor ? (
-          <Link href={`/tours/${review.reviewFor}`} className="text-primary hover:underline" target="_blank">
+          <LinkButton href={`/tours/${review.reviewFor}`} className="text-primary hover:underline" target="_blank">
             {review.reviewFor}
-          </Link>
+          </LinkButton>
         ) : (
           <span className="text-muted-foreground">N/A</span>
         )}
@@ -67,7 +67,7 @@ export function ReviewTableRow({ review }: ReviewTableRowProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/manage/reviews/${review.id}/edit`}>Edit</Link>
+              <LinkButton href={`/manage/reviews/${review.id}/edit`}>Edit</LinkButton>
             </DropdownMenuItem>
             {review.type === 'offSite' && review.originalReviewUrl && (
               <DropdownMenuItem asChild>

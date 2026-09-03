@@ -1,7 +1,7 @@
 
 'use client';
 import { BlogCard } from "./BlogCard";
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
@@ -71,11 +71,9 @@ export function RecentBlogs({ initialPosts = [] }: { initialPosts?: BlogPost[] }
           </div>
         )}
         <div className="text-center mt-12">
-          <Link href="/blog">
-            <Button size="lg" variant="outline">
+          <LinkButton href="/blog" size="lg" variant="outline">
               Read More Articles <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+            </LinkButton>
         </div>
       </div>
     </section>

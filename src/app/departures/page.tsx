@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/link-button";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,19 +60,15 @@ export default async function DeparturesPage() {
                     whether this departure is the right fit for your fitness and schedule.
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    <Button asChild size="sm">
-                      <Link
+                    <LinkButton size="sm" variant="solid"
                         href={getInquiryLink(
                           `Departure question for ${tour.name}`,
                           `I want details about the ${tour.name} departure on ${String(departure.date)}. Please tell me about availability, remaining seats, and whether this date is a good fit.`
                         )}
                       >
                         Ask about seats
-                      </Link>
-                    </Button>
-                    <Button asChild size="sm" variant="outline">
-                      <Link href={`/tours/${tour.slug}`}>View trek</Link>
-                    </Button>
+                      </LinkButton>
+                    <LinkButton size="sm" variant="outline" href={`/tours/${tour.slug}`}>View trek</LinkButton>
                   </div>
                 </CardContent>
               </Card>
